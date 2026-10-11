@@ -21,6 +21,18 @@ follow them over any pattern already present in the codebase:
 
 `core.md` takes precedence if any rule conflicts with existing code style.
 
+## Design Docs
+
+Every feature worked on must have a corresponding markdown design file
+under `docs/design/`, describing how it works (architecture, data model,
+key decisions):
+
+- New feature (e.g. a new Django app, a major module): create a new design
+  file at `docs/design/<feature-name>.md`.
+- Change to an existing feature: update its existing design file in place
+  instead of creating a new one. Only create a new file if no equivalent
+  design file exists yet for that feature.
+
 ## Project Overview
 
 A minimal Django template (`config/`) configured for deployment on Railway
