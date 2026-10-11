@@ -8,12 +8,15 @@ PGPORT ?= 5432
 
 export PGDATABASE PGUSER PGPASSWORD PGHOST PGPORT
 
-.PHONY: help db_setup db_migrate run_server create_app
+.PHONY: help install db_setup db_migrate db_shell db_seed run_server create_app
 
 help: ## Show this list of available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 		| sort \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+install: ## Install Poetry dependencies
+	poetry install
 
 db_setup: ## Install PostgreSQL if missing and create the project database
 	@command -v psql >/dev/null 2>&1 || sudo apt-get install -y postgresql
@@ -25,6 +28,12 @@ db_setup: ## Install PostgreSQL if missing and create the project database
 
 db_migrate: ## Run Django database migrations
 	poetry run python manage.py migrate
+
+db_shell: ## Open a psql shell on the project database
+	PGPASSWORD=$(PGPASSWORD) psql -h $(PGHOST) -p $(PGPORT) -U $(PGUSER) -d $(PGDATABASE)
+
+db_seed: ## Seed the database with baseline records (e.g. default admin user)
+	poetry run python manage.py seed
 
 run_server: ## Run the Django development server
 	poetry run python manage.py runserver
