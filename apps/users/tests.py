@@ -60,6 +60,74 @@ class CurrentUserViewTests(APITestCase):
         self.assertEqual(response.data['username'], 'bob')
 
 
+class SignupViewTests(APITestCase):
+    VALID_PAYLOAD = {
+        'username': 'carol',
+        'email': 'carol@example.com',
+        'password': 'v3ry-s3cure-pass',
+    }
+
+    def test_valid_payload_creates_user(self) -> None:
+        response = self.client.post(reverse('users:signup'), self.VALID_PAYLOAD)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['username'], 'carol')
+        self.assertEqual(response.data['email'], 'carol@example.com')
+        self.assertNotIn('password', response.data)
+        user = User.objects.get(username='carol')
+        self.assertTrue(user.check_password(self.VALID_PAYLOAD['password']))
+
+    def test_created_user_can_obtain_token(self) -> None:
+        self.client.post(reverse('users:signup'), self.VALID_PAYLOAD)
+
+        response = self.client.post(
+            reverse('users:token_obtain_pair'),
+            {'username': 'carol', 'password': self.VALID_PAYLOAD['password']},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_duplicate_username_is_rejected(self) -> None:
+        User.objects.create_user(username='carol', email='other@example.com', password='x')
+
+        response = self.client.post(reverse('users:signup'), self.VALID_PAYLOAD)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('username', response.data)
+
+    def test_duplicate_email_is_rejected_case_insensitively(self) -> None:
+        User.objects.create_user(username='other', email='Carol@Example.com', password='x')
+
+        response = self.client.post(reverse('users:signup'), self.VALID_PAYLOAD)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email', response.data)
+
+    def test_missing_fields_are_rejected(self) -> None:
+        response = self.client.post(reverse('users:signup'), {})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(set(response.data), {'username', 'email', 'password'})
+
+    def test_weak_password_is_rejected(self) -> None:
+        payload = {**self.VALID_PAYLOAD, 'password': '12345678'}
+
+        response = self.client.post(reverse('users:signup'), payload)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
+        self.assertFalse(User.objects.filter(username='carol').exists())
+
+    def test_invalid_authorization_header_does_not_block_signup(self) -> None:
+        response = self.client.post(
+            reverse('users:signup'),
+            self.VALID_PAYLOAD,
+            HTTP_AUTHORIZATION='Bearer not-a-valid-token',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
 class SeedCommandTests(TestCase):
     def test_creates_admin_user_when_missing(self) -> None:
         call_command('seed', stdout=StringIO())
