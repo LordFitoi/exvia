@@ -23,13 +23,17 @@ follow them over any pattern already present in the codebase:
 
 ## Project Overview
 
-A minimal Django template (`mysite/`) configured for deployment on Railway
+A minimal Django template (`config/`) configured for deployment on Railway
 (see [railway.json](railway.json)): migrate, collectstatic, then serve with
 gunicorn.
 
 - Python 3.11 ([runtime.txt](runtime.txt))
 - Dependencies managed with Poetry ([pyproject.toml](pyproject.toml))
 - Static files served via whitenoise
+- No Django apps exist yet — `config/urls.py` only routes `admin/`. New apps
+  live under `apps/`. When adding one, register it in `INSTALLED_APPS`
+  ([config/settings.py](config/settings.py)) and wire its URLs into
+  `config/urls.py`.
 
 ## Common Commands
 
@@ -38,3 +42,9 @@ poetry install
 python manage.py migrate
 python manage.py runserver
 ```
+
+`DATABASES` in [config/settings.py](config/settings.py) always connects to
+Postgres via `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGHOST`, `PGPORT` — these
+are read with `os.environ[...]` (no default, no SQLite fallback), so every
+`manage.py` command fails with a `KeyError` unless all five are exported
+first.
