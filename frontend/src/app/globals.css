@@ -21,3 +21,8 @@
   justify-content: center;
   padding-block: calc(var(--space-8) + var(--safe-top)) calc(var(--space-8) + var(--safe-bottom));
 }
+
+/* Map screen: full-bleed, fills the column above the tab bar */
+.app-shell > .map {
+  flex: 1;
+}

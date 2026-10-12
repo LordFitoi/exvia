@@ -1,0 +1,49 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
+import type { GeolocationState } from '@/types/geolocation'
+
+const WATCH_OPTIONS: PositionOptions = {
+  enableHighAccuracy: true,
+  maximumAge: 10_000,
+  timeout: 20_000,
+}
+
+const PENDING_STATE: GeolocationState = { status: 'pending', coordinates: null }
+const DENIED_STATE: GeolocationState = { status: 'denied', coordinates: null }
+const UNAVAILABLE_STATE: GeolocationState = { status: 'unavailable', coordinates: null }
+
+const toReadyState = ({ coords }: GeolocationPosition): GeolocationState => ({
+  status: 'ready',
+  coordinates: { longitude: coords.longitude, latitude: coords.latitude },
+})
+
+// A timeout or a lost signal after a first fix keeps the last known position on screen.
+const toErrorState = (
+  error: GeolocationPositionError,
+  previous: GeolocationState,
+): GeolocationState => {
+  if (error.code === error.PERMISSION_DENIED) return DENIED_STATE
+  return previous.coordinates ? previous : UNAVAILABLE_STATE
+}
+
+const isGeolocationSupported = (): boolean =>
+  typeof navigator !== 'undefined' && 'geolocation' in navigator
+
+export const useGeolocation = (): GeolocationState => {
+  const [state, setState] = useState<GeolocationState>(PENDING_STATE)
+  const isSupported = isGeolocationSupported()
+
+  useEffect(() => {
+    if (!isSupported) return
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => setState(toReadyState(position)),
+      (error) => setState((previous) => toErrorState(error, previous)),
+      WATCH_OPTIONS,
+    )
+    return () => navigator.geolocation.clearWatch(watchId)
+  }, [isSupported])
+
+  return isSupported ? state : UNAVAILABLE_STATE
+}

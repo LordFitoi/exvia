@@ -47,6 +47,13 @@
   stroke-dasharray: 1 9;
 }
 
+/* Grayscale base map: filters only the Mapbox tile canvas, so markers, routes
+   and controls keep their colors. Put it on .map next to a Mapbox GL canvas. */
+.map-grayscale .mapboxgl-canvas { filter: grayscale(1); }
+
+/* Mapbox GL sets position: relative on its container; keep the canvas full-bleed */
+.map-canvas.mapboxgl-map { position: absolute; }
+
 /* Floating layer: search at the top, controls on the right */
 .map-overlay {
   position: absolute;
@@ -120,7 +127,7 @@
   white-space: nowrap;
 }
 
-/* Current user location: dot with a pulsing halo */
+/* Current user location: dot with a pulsing halo and a "You" label below */
 .marker-me {
   position: absolute;
   inline-size: 1.125rem;

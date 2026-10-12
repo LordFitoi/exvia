@@ -1,6 +1,6 @@
 # Frontend screens and navigation
 
-The mobile app shell in [frontend/](../../frontend/): five screens, a
+The mobile app shell in [frontend/](../../frontend/): six screens, a
 session kept in the browser, and a bottom tab bar that exists only while
 logged in. Screens use the guide's CSS and patterns
 ([ui-ux-style-guide.md](ui-ux-style-guide.md)); the API is the one described
@@ -16,14 +16,15 @@ layout that wraps its pages in `AuthGuard`.
 | `(auth)` | `/login` | Log in | anonymous only |
 | `(auth)` | `/signup` | Create account | anonymous only |
 | `(app)` | `/` | Home | authenticated only |
+| `(app)` | `/map` | Map, see [map.md](map.md) | authenticated only |
 | `(app)` | `/clans` | Clans | authenticated only |
 | `(app)` | `/profile` | Profile, with log out | authenticated only |
 
 - Logged out: only login and signup are reachable. Any other path redirects
   to `/login`, and there is no tab bar.
 - Logged in: `(app)/layout.tsx` renders `TabBar` under every screen (Home,
-  Clans, Profile; Home first and Profile last for Serial Position, 3 items for
-  Hick and Miller). `/login` and `/signup` redirect to `/`.
+  Map, Clans, Profile; Home first and Profile last for Serial Position, 4
+  items for Hick and Miller). `/login` and `/signup` redirect to `/`.
 - The current tab is marked with `aria-current="page"`, which the guide's CSS
   styles. Paths are compared without the trailing slash because
   `trailingSlash: true` is set in [next.config.ts](../../frontend/next.config.ts).

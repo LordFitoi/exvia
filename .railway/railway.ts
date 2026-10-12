@@ -1,4 +1,4 @@
-import { defineRailway, github, group, postgres, project, service, volume } from "railway/iac";
+import { defineRailway, github, group, postgres, preserve, project, service, volume } from "railway/iac";
 
 const GITHUB_REPO = "LordFitoi/exvia";
 const APP_DOMAIN = "exvia.up.railway.app";
@@ -42,7 +42,11 @@ export default defineRailway(() => {
     build: { builder: "RAILPACK", buildCommand: "pnpm build" },
     start: "pnpm start",
     networking: { serviceDomains: { [APP_DOMAIN]: {} } },
-    env: { BACKEND_URL: BACKEND_PRIVATE_URL },
+    env: {
+      BACKEND_URL: BACKEND_PRIVATE_URL,
+      // Mapbox public token, set once in the Railway dashboard; preserve() keeps it on apply.
+      NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: preserve(),
+    },
   });
 
   return project("Exvia", {

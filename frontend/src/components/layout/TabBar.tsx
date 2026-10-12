@@ -11,6 +11,7 @@ interface TabDestination {
 
 const TABS: readonly TabDestination[] = [
   { href: '/', label: 'Home', iconClass: 'icon-home' },
+  { href: '/map', label: 'Map', iconClass: 'icon-pin' },
   { href: '/clans', label: 'Clans', iconClass: 'icon-users' },
   { href: '/profile', label: 'Profile', iconClass: 'icon-user' },
 ]
