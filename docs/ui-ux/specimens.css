@@ -1,0 +1,157 @@
+/* Foundation specimens for foundations.html: palette swatches, spacing bars,
+   radius boxes, shadow boxes and the icon grid. Guide only: not part of the
+   product UI. Swatch classes map one palette step each to its token. */
+
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
+  gap: var(--space-3);
+}
+
+.swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-caption);
+}
+
+.swatch-chip {
+  block-size: 4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.swatch-name { font-weight: var(--weight-semibold); }
+.swatch-token { font-family: var(--font-mono); color: var(--color-text-muted); }
+
+.sw-primary-lighter { background: var(--color-primary-lighter); }
+.sw-primary-light { background: var(--color-primary-light); }
+.sw-primary { background: var(--color-primary); }
+.sw-primary-dark { background: var(--color-primary-dark); }
+.sw-primary-darker { background: var(--color-primary-darker); }
+.sw-secondary-lighter { background: var(--color-secondary-lighter); }
+.sw-secondary-light { background: var(--color-secondary-light); }
+.sw-secondary { background: var(--color-secondary); }
+.sw-secondary-dark { background: var(--color-secondary-dark); }
+.sw-secondary-darker { background: var(--color-secondary-darker); }
+.sw-info-lighter { background: var(--color-info-lighter); }
+.sw-info-light { background: var(--color-info-light); }
+.sw-info { background: var(--color-info); }
+.sw-info-dark { background: var(--color-info-dark); }
+.sw-info-darker { background: var(--color-info-darker); }
+.sw-success-lighter { background: var(--color-success-lighter); }
+.sw-success-light { background: var(--color-success-light); }
+.sw-success { background: var(--color-success); }
+.sw-success-dark { background: var(--color-success-dark); }
+.sw-success-darker { background: var(--color-success-darker); }
+.sw-warning-lighter { background: var(--color-warning-lighter); }
+.sw-warning-light { background: var(--color-warning-light); }
+.sw-warning { background: var(--color-warning); }
+.sw-warning-dark { background: var(--color-warning-dark); }
+.sw-warning-darker { background: var(--color-warning-darker); }
+.sw-error-lighter { background: var(--color-error-lighter); }
+.sw-error-light { background: var(--color-error-light); }
+.sw-error { background: var(--color-error); }
+.sw-error-dark { background: var(--color-error-dark); }
+.sw-error-darker { background: var(--color-error-darker); }
+
+.sw-grey-100 { background: var(--color-grey-100); }
+.sw-grey-200 { background: var(--color-grey-200); }
+.sw-grey-300 { background: var(--color-grey-300); }
+.sw-grey-400 { background: var(--color-grey-400); }
+.sw-grey-500 { background: var(--color-grey-500); }
+.sw-grey-600 { background: var(--color-grey-600); }
+.sw-grey-700 { background: var(--color-grey-700); }
+.sw-grey-800 { background: var(--color-grey-800); }
+.sw-grey-900 { background: var(--color-grey-900); }
+
+.sw-bg { background: var(--color-bg); }
+.sw-surface { background: var(--color-surface); }
+.sw-neutral { background: var(--color-surface-neutral); }
+.sw-sunken { background: var(--color-surface-sunken); }
+.sw-border { background: var(--color-border-strong); }
+.sw-text { background: var(--color-text); }
+.sw-muted { background: var(--color-text-muted); }
+.sw-primary-soft { background: var(--color-primary-soft); }
+
+/* Scale bars for spacing */
+.scale-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-caption);
+}
+
+.scale-label { inline-size: 5rem; font-family: var(--font-mono); color: var(--color-text-muted); }
+.scale-bar { block-size: 0.75rem; border-radius: var(--radius-xs); background: var(--color-primary); }
+.scale-1 { inline-size: var(--space-1); }
+.scale-2 { inline-size: var(--space-2); }
+.scale-3 { inline-size: var(--space-3); }
+.scale-4 { inline-size: var(--space-4); }
+.scale-6 { inline-size: var(--space-6); }
+.scale-8 { inline-size: var(--space-8); }
+.scale-12 { inline-size: var(--space-12); }
+.scale-16 { inline-size: var(--space-16); }
+
+.radius-box {
+  inline-size: 4rem;
+  block-size: 4rem;
+  border: 2px solid var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.radius-xs { border-radius: var(--radius-xs); }
+.radius-sm { border-radius: var(--radius-sm); }
+.radius-md { border-radius: var(--radius-md); }
+.radius-lg { border-radius: var(--radius-lg); }
+.radius-xl { border-radius: var(--radius-xl); }
+.radius-full { border-radius: var(--radius-full); }
+
+/* Shadow boxes: each shows one elevation token on the page background */
+.shadow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: var(--space-4);
+  padding: var(--space-2);
+}
+
+.shadow-box {
+  display: grid;
+  place-items: center;
+  block-size: 5rem;
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  text-align: center;
+}
+
+.shadow-z4 { box-shadow: var(--shadow-z4); }
+.shadow-z8 { box-shadow: var(--shadow-z8); }
+.shadow-z16 { box-shadow: var(--shadow-z16); }
+.shadow-z24 { box-shadow: var(--shadow-z24); }
+.shadow-card { box-shadow: var(--shadow-card); }
+.shadow-dropdown { box-shadow: var(--shadow-dropdown); }
+.shadow-dialog { box-shadow: var(--shadow-dialog); }
+.shadow-primary { box-shadow: var(--shadow-primary); }
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr));
+  gap: var(--space-2);
+}
+
+.icon-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-neutral);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.icon-cell .icon { color: var(--color-text); }

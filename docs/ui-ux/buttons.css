@@ -1,0 +1,211 @@
+/* Buttons (Minimals): 8px corners and a bold label. The default is the neutral
+   ink button (the "inherit" contained button); primary green marks the one
+   key action of a screen. A tone class (primary, error) picks the color and a
+   variant class (soft, outline, text) picks the fill style, so they combine.
+   Large (48px) is the default size for touch. Small is 36px and keeps a 44px
+   hit area through base.css. */
+
+.button {
+  --tone: var(--color-ink);
+  --tone-hover: var(--color-ink-hover);
+  --tone-contrast: var(--color-on-ink);
+  --tone-tint: var(--color-grey-500);
+  --tone-text: var(--color-text);
+  --tone-outline: var(--tint-strong);
+  --tone-shadow: var(--shadow-z8);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: var(--control-height-md);
+  min-inline-size: var(--button-min-width);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--tone);
+  color: var(--tone-contrast);
+  font-size: var(--text-button-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-button);
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.button:active { opacity: 0.72; }
+
+/* Tones */
+.button-primary {
+  --tone: var(--color-primary);
+  --tone-hover: var(--color-primary-dark);
+  --tone-contrast: var(--color-on-primary);
+  --tone-tint: var(--color-primary);
+  --tone-text: var(--color-primary-text);
+  --tone-outline: var(--tint-outline);
+  --tone-shadow: var(--shadow-primary);
+}
+
+.button-error {
+  --tone: var(--color-error);
+  --tone-hover: var(--color-error-dark);
+  --tone-contrast: var(--color-on-error);
+  --tone-tint: var(--color-error);
+  --tone-text: var(--color-error-text);
+  --tone-outline: var(--tint-outline);
+  --tone-shadow: var(--shadow-error);
+}
+
+/* Variants */
+.button-soft {
+  background: color-mix(in srgb, var(--tone-tint) var(--tint-soft), transparent);
+  color: var(--tone-text);
+}
+
+.button-outline {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--tone-tint) var(--tone-outline), transparent);
+  color: var(--tone-text);
+}
+
+.button-text {
+  min-inline-size: var(--tap-target);
+  padding-inline: var(--space-2);
+  background: transparent;
+  color: var(--tone-text);
+}
+
+/* Sizes */
+.button-sm {
+  min-block-size: var(--control-height-sm);
+  min-inline-size: var(--tap-target);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-body2);
+}
+
+.button-lg { min-block-size: var(--control-height); }
+
+.button-block {
+  display: flex;
+  inline-size: 100%;
+}
+
+/* Pointer hover: contained buttons darken and lift, tinted ones deepen */
+@media (hover: hover) {
+  .button:hover {
+    background: var(--tone-hover);
+    box-shadow: var(--tone-shadow);
+  }
+
+  .button-soft:hover {
+    background: color-mix(in srgb, var(--tone-tint) var(--tint-strong), transparent);
+    box-shadow: none;
+  }
+
+  .button-outline:hover {
+    border-color: currentColor;
+    background: color-mix(in srgb, var(--tone-tint) var(--tint-hover), transparent);
+    box-shadow: 0 0 0 0.75px currentColor;
+  }
+
+  .button-text:hover {
+    background: color-mix(in srgb, var(--tone-tint) var(--tint-hover), transparent);
+    box-shadow: none;
+  }
+}
+
+.button:disabled,
+.button[aria-disabled="true"] {
+  border-color: transparent;
+  background: var(--color-action-disabled-bg);
+  color: var(--color-action-disabled);
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.button-outline:disabled { background: transparent; border-color: var(--color-action-disabled-bg); }
+.button-text:disabled { background: transparent; }
+
+/* Icon-only buttons need an aria-label. Round, 44px, tinted on hover */
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  inline-size: var(--tap-target);
+  block-size: var(--tap-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-muted);
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.icon-button:active { opacity: 0.6; }
+
+.icon-button-raised {
+  background: var(--material-overlay);
+  backdrop-filter: var(--blur-overlay);
+  box-shadow: var(--shadow-z8);
+  color: var(--color-text);
+}
+
+@media (hover: hover) {
+  .icon-button:hover { background: var(--color-surface-selected); }
+}
+
+/* Floating action button: one per screen, bottom right above the tab bar */
+.fab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--control-height-md);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-primary);
+  font-size: var(--text-button-lg);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-button);
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.fab:active { opacity: 0.72; }
+
+@media (hover: hover) {
+  .fab:hover { background: var(--color-primary-dark); box-shadow: none; }
+}
+
+/* Loading: swap the label for a spinner, keep the width */
+.button-loading {
+  --spinner: var(--tone-contrast);
+
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.button-soft.button-loading,
+.button-outline.button-loading,
+.button-text.button-loading { --spinner: var(--tone-text); }
+
+.button-loading::after {
+  content: "";
+  position: absolute;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border: 2px solid var(--spinner);
+  border-block-start-color: transparent;
+  border-radius: var(--radius-full);
+  animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button-loading::after { animation-duration: 2s; }
+}

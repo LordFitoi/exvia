@@ -1,0 +1,192 @@
+/* Style guide page chrome only. Not part of the product UI (see exvia-ui.css). */
+
+.guide-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px dashed var(--color-border);
+  background: var(--material-bar);
+  backdrop-filter: var(--blur-bar);
+}
+
+.guide-brand {
+  font-family: var(--font-display);
+  font-size: var(--text-h5);
+  font-weight: var(--weight-extrabold);
+  color: var(--color-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* On phones the links take their own scrollable row under the brand */
+.guide-nav {
+  display: flex;
+  order: 3;
+  flex-basis: 100%;
+  gap: var(--space-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.guide-nav a {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: var(--text-body2);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.guide-nav a[aria-current="page"] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-text);
+}
+
+@media (hover: hover) {
+  .guide-nav a:hover { background: var(--color-surface-sunken); }
+  .guide-nav a[aria-current="page"]:hover { background: var(--color-primary-soft); }
+}
+
+.guide-main {
+  inline-size: min(100% - var(--space-8), 64rem);
+  margin-inline: auto;
+  padding-block: var(--space-8) var(--space-16);
+}
+
+.guide-main-wide { inline-size: min(100% - var(--space-8), 90rem); }
+
+.guide-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-block-end: var(--space-8);
+}
+
+.guide-hero p { max-inline-size: 40rem; color: var(--color-text-muted); }
+
+.guide-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-block: var(--space-8);
+  border-block-start: 1px dashed var(--color-border);
+  scroll-margin-block-start: var(--space-16);
+}
+
+.guide-section > p { max-inline-size: 40rem; color: var(--color-text-muted); }
+
+/* Specimen: a labelled dashed box that shows one component */
+.specimen-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.specimen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.specimen-title {
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.guide-code {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-sunken);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  overflow-x: auto;
+}
+
+.guide-rules {
+  display: grid;
+  gap: var(--space-2);
+  padding-inline-start: var(--space-5);
+  list-style: disc;
+  color: var(--color-text-muted);
+}
+
+.guide-rules strong { color: var(--color-text); }
+
+/* UX laws table: component, laws, how Exvia applies them */
+.guide-table-wrap {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow-x: auto;
+}
+
+.guide-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body2);
+  text-align: start;
+}
+
+.guide-table th,
+.guide-table td {
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px dashed var(--color-border);
+  vertical-align: top;
+}
+
+.guide-table th {
+  text-align: start;
+  background: var(--color-surface-neutral);
+  color: var(--color-text-muted);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+.guide-table tbody tr:last-child td { border-block-end: 0; }
+.guide-table td:first-child { font-weight: var(--weight-semibold); white-space: nowrap; }
+
+/* Reserve room for the open dropdown menu and frame the static dialog */
+.dropdown-spacer { block-size: 9.5rem; }
+
+.dialog-preview {
+  display: grid;
+  place-items: center;
+  padding: var(--space-6) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-scrim);
+}
+
+.sheet-preview {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-block-start: var(--space-12);
+  border-radius: var(--radius-lg);
+  background: var(--color-scrim);
+  overflow: hidden;
+}
+
+@media (min-width: 48rem) {
+  .guide-header { flex-wrap: nowrap; }
+  .guide-nav { order: 0; flex-basis: auto; }
+  .guide-main { padding-block-start: var(--space-12); }
+  .guide-hero h1 { font-size: 3.625rem; }
+  .specimen-grid { grid-template-columns: repeat(2, 1fr); }
+  .specimen-wide { grid-column: 1 / -1; }
+}
+
+@media (min-width: 72rem) {
+  .guide-hero h1 { font-size: 4rem; }
+}

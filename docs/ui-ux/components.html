@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141a21" media="(prefers-color-scheme: dark)">
+  <title>Exvia UI/UX Style Guide: Controls</title>
+  <link rel="stylesheet" href="exvia-ui.css">
+  <link rel="stylesheet" href="styleguide.css">
+  <script src="theme.js" defer></script>
+  <script src="slider.js" defer></script>
+</head>
+<body>
+  <header class="guide-header">
+    <a class="guide-brand" href="index.html">Exvia UI</a>
+    <nav class="guide-nav" aria-label="Style guide">
+      <a href="index.html">Overview</a>
+      <a href="foundations.html">Foundations</a>
+      <a href="components.html" aria-current="page">Controls</a>
+      <a href="forms.html">Forms</a>
+      <a href="content.html">Content</a>
+      <a href="patterns.html">Screens</a>
+    </nav>
+    <button id="theme-toggle" class="button button-soft button-sm" type="button">Theme: system</button>
+  </header>
+
+  <main class="guide-main">
+    <section class="guide-hero">
+      <p class="text-overline">Controls</p>
+      <h1>Building blocks</h1>
+      <p>Each component is a reusable class (BEM-light, hyphenated). Variants add a modifier class; states use ARIA attributes (<code>aria-pressed</code>, <code>aria-selected</code>, <code>aria-current</code>, <code>aria-invalid</code>).</p>
+    </section>
+
+    <section class="guide-section" id="buttons" aria-labelledby="buttons-title">
+      <h2 id="buttons-title">Buttons</h2>
+      <p>Minimals buttons: 8px corners and a bold label. A tone (<code>button-primary</code>, <code>button-error</code>) picks the color and a variant (<code>button-soft</code>, <code>button-outline</code>, <code>button-text</code>) picks the fill, so they combine. Use one filled button per screen for the key action (Von Restorff, Occam). Everything else is soft, outlined or text. The default is 48px tall and at least 120px wide (Fitts).</p>
+      <div class="specimen-grid">
+        <div class="specimen">
+          <span class="specimen-title">Contained</span>
+          <div class="cluster">
+            <button class="button" type="button">Neutral</button>
+            <button class="button button-primary" type="button">Primary</button>
+            <button class="button button-error" type="button">Error</button>
+          </div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Soft: secondary and destructive actions</span>
+          <div class="cluster">
+            <button class="button button-soft" type="button">Neutral</button>
+            <button class="button button-soft button-primary" type="button">Primary</button>
+            <button class="button button-soft button-error" type="button">Delete</button>
+          </div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Outlined and text</span>
+          <div class="cluster">
+            <button class="button button-outline" type="button">Outlined</button>
+            <button class="button button-outline button-primary" type="button">Primary</button>
+            <button class="button button-text button-primary" type="button">Text</button>
+          </div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Sizes: 36 small (44 hit area), 48, 56</span>
+          <div class="cluster">
+            <button class="button button-sm" type="button">Small</button>
+            <button class="button" type="button"><span class="icon icon-plus" aria-hidden="true"></span>Default</button>
+            <button class="button button-lg" type="button">Large</button>
+          </div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">States</span>
+          <div class="cluster">
+            <button class="button" type="button" disabled>Disabled</button>
+            <button class="button button-primary button-loading" type="button" aria-busy="true">Saving</button>
+          </div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Icon buttons and FAB</span>
+          <div class="cluster">
+            <button class="icon-button" type="button" aria-label="Notifications"><span class="icon icon-bell" aria-hidden="true"></span></button>
+            <button class="icon-button icon-button-raised" type="button" aria-label="My location"><span class="icon icon-locate" aria-hidden="true"></span></button>
+            <button class="fab" type="button"><span class="icon icon-plus" aria-hidden="true"></span>New ride</button>
+          </div>
+        </div>
+        <div class="specimen specimen-wide">
+          <span class="specimen-title">Full-width block with social proof</span>
+          <button class="button button-primary button-lg button-block" type="button">Join clan</button>
+          <p class="text-caption">128 riders &middot; 3 rides this week</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="guide-section" id="selection" aria-labelledby="selection-title">
+      <h2 id="selection-title">Selection controls</h2>
+      <p>Checkbox, radio and switch are restyled native inputs, primary green when selected. Show 5 options or fewer at once (Hick); preselect the common choice.</p>
+      <div class="specimen-grid">
+        <div class="specimen">
+          <span class="specimen-title">Checkbox and radio</span>
+          <label class="choice"><input type="checkbox" checked>Share my live location</label>
+          <label class="choice"><input type="checkbox">Notify me about new rides</label>
+          <label class="choice"><input type="radio" name="vis" checked>Public profile</label>
+          <label class="choice"><input type="radio" name="vis">Clan members only</label>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Settings list: switches default to the safe choice</span>
+          <ul class="list">
+            <li><label class="list-item"><span class="list-item-body"><span class="list-item-title">Ride reminders</span><span class="list-item-meta">1 hour before each ride</span></span><input class="switch" type="checkbox" role="switch" checked></label></li>
+            <li><label class="list-item"><span class="list-item-body"><span class="list-item-title">Clan notices</span><span class="list-item-meta">Posts from your clans</span></span><input class="switch" type="checkbox" role="switch" checked></label></li>
+            <li><label class="list-item"><span class="list-item-body"><span class="list-item-title">Weekly summary</span><span class="list-item-meta">Sunday evening email</span></span><input class="switch" type="checkbox" role="switch"></label></li>
+          </ul>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Slider</span>
+          <div class="field">
+            <label class="field-label" for="range-radius">Search radius: 40 km</label>
+            <input class="slider" id="range-radius" type="range" min="5" max="100" value="40">
+          </div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Segmented control: 2 to 4 views</span>
+          <div class="segmented" role="group" aria-label="Map view">
+            <button class="segmented-option" type="button" aria-pressed="true">Map</button>
+            <button class="segmented-option" type="button" aria-pressed="false">List</button>
+            <button class="segmented-option" type="button" aria-pressed="false">Saved</button>
+          </div>
+        </div>
+        <div class="specimen specimen-wide">
+          <span class="specimen-title">Filter chips: 3 to 5, the default first</span>
+          <div class="chip-row" role="group" aria-label="Ride type">
+            <button class="chip" type="button" aria-pressed="true">All</button>
+            <button class="chip" type="button" aria-pressed="false">Weekly</button>
+            <button class="chip" type="button" aria-pressed="false">One-off</button>
+            <button class="chip" type="button" aria-pressed="false">Nearby</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

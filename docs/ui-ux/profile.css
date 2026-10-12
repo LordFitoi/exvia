@@ -1,0 +1,133 @@
+/* Profile: header, stats, medical info, garage and emergency contacts. */
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-4) var(--space-2);
+  text-align: center;
+}
+
+.profile-avatar { position: relative; }
+
+.profile-avatar-edit {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-end: 0;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: 2px solid var(--color-bg);
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+}
+
+.profile-name {
+  font-family: var(--font-sans);
+  font-size: var(--text-h4);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-normal);
+}
+
+.profile-bio {
+  max-inline-size: 22rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-body2);
+  line-height: var(--leading-compact);
+}
+
+/* Stats widget: three big numbers on one card, dashed dividers */
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding-block: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-stat + .profile-stat { border-inline-start: 1px dashed var(--color-border); }
+
+.profile-stat-value {
+  font-size: var(--text-h3);
+  line-height: var(--leading-normal);
+}
+
+/* Section heading with an optional action on the right */
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: var(--space-3);
+}
+
+.section-heading h3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-h6);
+  font-weight: var(--weight-semibold);
+}
+
+/* Blood type tag: the one place the error color is used decoratively,
+   because red is how people recognise medical information */
+.blood-type {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border-radius: var(--radius-full);
+  background: var(--color-error-soft);
+  color: var(--color-error-text);
+  font-weight: var(--weight-bold);
+}
+
+/* Garage: horizontal scroll-snap of vehicle cards. The padding keeps the
+   card shadows from being clipped by the scroll box */
+.garage {
+  display: flex;
+  gap: var(--space-3);
+  margin: calc(var(--space-1) * -1) calc(var(--space-4) * -1) calc(var(--space-8) * -1);
+  padding: var(--space-1) var(--space-4) var(--space-8);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.vehicle-card {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-3);
+  inline-size: 70%;
+  scroll-snap-align: start;
+}
+
+.vehicle-plate {
+  align-self: flex-start;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caps);
+}
+
+/* Emergency contact row: the call button is a large, obvious target */
+.contact-call {
+  background: var(--color-success-soft);
+  color: var(--color-success-text);
+}
+
+@media (hover: hover) {
+  .profile-avatar-edit:hover { background: var(--color-ink-hover); }
+
+  .contact-call:hover {
+    background: color-mix(in srgb, var(--color-success) var(--tint-strong), transparent);
+  }
+}

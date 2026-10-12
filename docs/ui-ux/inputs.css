@@ -1,0 +1,201 @@
+/* Text fields (Minimals outlined input): 56px tall, hairline border, 8px
+   corners. Hover darkens the border and focus draws a 2px ink border. The
+   label stays above the field instead of floating (Jakob's Law). Inputs use
+   1rem text so iOS Safari does not zoom on focus. */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field-label {
+  font-size: var(--text-body2);
+  font-weight: var(--weight-semibold);
+}
+
+.field-hint,
+.field-error {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.field-error { color: var(--color-error-text); }
+
+/* Help link that belongs to the field: 8px away, left aligned */
+.field .link-action { align-self: flex-start; }
+
+/* Control shell: input, select and textarea share it */
+.input,
+.select,
+.textarea {
+  inline-size: 100%;
+  min-block-size: var(--control-height);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  caret-color: var(--color-primary);
+  font-size: var(--text-body1);
+  line-height: var(--leading-normal);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .input:hover:not(:focus, :disabled),
+  .select:hover:not(:focus, :disabled),
+  .textarea:hover:not(:focus, :disabled) { border-color: var(--color-text); }
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-ink);
+  box-shadow: inset 0 0 0 1px var(--color-ink);
+}
+
+.input:disabled,
+.select:disabled,
+.textarea:disabled {
+  border-color: var(--color-action-disabled-bg);
+  color: var(--color-text-faint);
+}
+
+.input[aria-invalid="true"],
+.select[aria-invalid="true"],
+.textarea[aria-invalid="true"] {
+  border-color: var(--color-error);
+  box-shadow: inset 0 0 0 1px var(--color-error);
+}
+
+/* Bounded height keeps long answers short (Parkinson's Law) */
+.textarea {
+  min-block-size: 7.5rem;
+  max-block-size: 15rem;
+  resize: vertical;
+}
+
+/* Input with a leading icon */
+.input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-group .icon {
+  position: absolute;
+  inset-inline-start: var(--space-4);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.input-group .input { padding-inline-start: calc(var(--space-4) + 1.25rem + var(--space-3)); }
+
+/* Search field: Minimals filled input, tinted instead of outlined */
+.input-search {
+  min-block-size: var(--control-height-md);
+  padding-block: var(--space-3);
+  border-color: transparent;
+  background: var(--color-surface-sunken);
+}
+
+@media (hover: hover) {
+  .input-search:hover:not(:focus) { background: var(--color-surface-selected); border-color: transparent; }
+}
+
+/* Native select: best mobile UX (OS picker). Chevron drawn with a mask layer */
+.select-wrap { position: relative; }
+
+.select {
+  appearance: none;
+  padding-inline-end: calc(var(--space-4) + 1rem + var(--space-3));
+}
+
+.select-wrap::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: var(--space-4);
+  inset-block-start: 50%;
+  inline-size: 1rem;
+  block-size: 1rem;
+  translate: 0 -50%;
+  background: var(--color-text-muted);
+  mask: var(--icon) center / contain no-repeat;
+  pointer-events: none;
+  --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* Pull-down menu: <details> gives open/close without JS */
+.dropdown { position: relative; }
+
+.dropdown > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-block-size: var(--control-height);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  list-style: none;
+  cursor: pointer;
+}
+
+.dropdown > summary::-webkit-details-marker { display: none; }
+
+.dropdown > summary:focus-visible {
+  outline: none;
+  border-color: var(--color-ink);
+  box-shadow: inset 0 0 0 1px var(--color-ink);
+}
+
+.dropdown > summary .icon { color: var(--color-text-muted); }
+.dropdown[open] > summary .icon-chevron-down { rotate: 180deg; }
+
+/* Popover paper: blurred, padded, soft shadow. Options are menu items */
+.dropdown-menu {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--space-2));
+  z-index: var(--z-bar);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--material-overlay);
+  backdrop-filter: var(--blur-overlay);
+  box-shadow: var(--shadow-dropdown);
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  inline-size: 100%;
+  min-block-size: var(--tap-target);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  font-size: var(--text-body2);
+  text-align: start;
+}
+
+.dropdown-option:active { background: var(--color-surface-sunken); }
+
+.dropdown-option[aria-selected="true"] {
+  background: var(--color-surface-selected);
+  font-weight: var(--weight-semibold);
+}
+
+@media (hover: hover) {
+  .dropdown-option:hover,
+  .dropdown-option[aria-selected="true"]:hover { background: var(--color-surface-sunken); }
+}

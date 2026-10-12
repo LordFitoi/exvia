@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141a21" media="(prefers-color-scheme: dark)">
+  <title>Exvia UI/UX Style Guide: Forms</title>
+  <link rel="stylesheet" href="exvia-ui.css">
+  <link rel="stylesheet" href="styleguide.css">
+  <script src="theme.js" defer></script>
+</head>
+<body>
+  <header class="guide-header">
+    <a class="guide-brand" href="index.html">Exvia UI</a>
+    <nav class="guide-nav" aria-label="Style guide">
+      <a href="index.html">Overview</a>
+      <a href="foundations.html">Foundations</a>
+      <a href="components.html">Controls</a>
+      <a href="forms.html" aria-current="page">Forms</a>
+      <a href="content.html">Content</a>
+      <a href="patterns.html">Screens</a>
+    </nav>
+    <button id="theme-toggle" class="button button-soft button-sm" type="button">Theme: system</button>
+  </header>
+
+  <main class="guide-main">
+    <section class="guide-hero">
+      <p class="text-overline">Forms</p>
+      <h1>Ask less, guide more</h1>
+      <p>Fields, menus and the patterns that keep long forms easy: chunking, progressive disclosure and a visible sense of progress.</p>
+    </section>
+
+    <section class="guide-section" id="inputs" aria-labelledby="inputs-title">
+      <h2 id="inputs-title">Inputs</h2>
+      <p>Minimals outlined fields, 56px tall. Labels stay visible above the field and placeholders are examples, never labels. Accept any reasonable format (Postel): trim spaces, ignore case, allow dashes in phone numbers. Errors say how to fix the problem and appear below with <code>aria-invalid</code> and <code>aria-describedby</code>.</p>
+      <div class="specimen-grid">
+        <form class="specimen stack" action="#">
+          <span class="specimen-title">Text fields</span>
+          <div class="field">
+            <label class="field-label" for="in-name">Full name</label>
+            <input class="input" id="in-name" type="text" autocomplete="name" placeholder="Marta Ruiz">
+          </div>
+          <div class="field">
+            <label class="field-label" for="in-email">Email</label>
+            <div class="input-group">
+              <span class="icon icon-mail" aria-hidden="true"></span>
+              <input class="input" id="in-email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com">
+            </div>
+            <span class="field-hint">We only use it to sign you in.</span>
+          </div>
+          <div class="field">
+            <label class="field-label" for="in-phone">Phone</label>
+            <input class="input" id="in-phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+1 555 010 2030">
+            <span class="field-hint">Spaces and dashes are fine.</span>
+          </div>
+        </form>
+        <form class="specimen stack" action="#">
+          <span class="specimen-title">States</span>
+          <div class="field">
+            <label class="field-label" for="in-pass">Password</label>
+            <input class="input" id="in-pass" type="password" autocomplete="current-password" value="abc" aria-invalid="true" aria-describedby="in-pass-error">
+            <span class="field-error" id="in-pass-error">Use at least 8 characters.</span>
+          </div>
+          <div class="field">
+            <label class="field-label" for="in-plate">License plate</label>
+            <input class="input" id="in-plate" type="text" value="LOCKED-01" disabled>
+          </div>
+          <div class="field">
+            <label class="field-label" for="in-bio">Bio</label>
+            <textarea class="textarea" id="in-bio" maxlength="160" aria-describedby="in-bio-hint" placeholder="Tell riders about yourself"></textarea>
+            <span class="field-hint" id="in-bio-hint">160 characters max.</span>
+          </div>
+          <div class="input-group">
+            <span class="icon icon-search" aria-hidden="true"></span>
+            <input class="input input-search" type="search" aria-label="Search clans" placeholder="Search clans">
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="guide-section" id="selects" aria-labelledby="selects-title">
+      <h2 id="selects-title">Select and dropdown</h2>
+      <p>Prefer the native <code>select</code> on mobile: it opens the OS picker. Use the custom dropdown for short lists (7 options or fewer) that need rich rows. Group longer lists, and preselect the common choice.</p>
+      <div class="specimen-grid">
+        <div class="specimen">
+          <span class="specimen-title">Native select</span>
+          <div class="field">
+            <label class="field-label" for="sel-blood">Blood type</label>
+            <div class="select-wrap">
+              <select class="select" id="sel-blood">
+                <option>A+</option>
+                <option>A-</option>
+                <option selected>O+</option>
+                <option>O-</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Custom dropdown (open)</span>
+          <details class="dropdown" open>
+            <summary><span>Weekly ride</span><span class="icon icon-chevron-down" aria-hidden="true"></span></summary>
+            <ul class="dropdown-menu" role="listbox" aria-label="Event type">
+              <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="true">Weekly ride<span class="icon icon-check" aria-hidden="true"></span></button></li>
+              <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">One-off event</button></li>
+              <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">Track day</button></li>
+            </ul>
+          </details>
+          <div class="dropdown-spacer"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="guide-section" id="steps" aria-labelledby="steps-title">
+      <h2 id="steps-title">Forms and steps</h2>
+      <p>Split long forms into fieldsets of 3 to 4 fields (Chunking). Fields sit 16px apart and fieldsets 32px apart (Proximity). Fold optional fields in a disclosure (Tesler). In a multi-step flow, say where the person is and how much is left (Goal-Gradient). Set <code>--progress</code> (0 to 1) per instance.</p>
+      <div class="specimen-grid">
+        <form class="specimen" action="#">
+          <span class="specimen-title">Create ride, step 2 of 4</span>
+          <div class="stack-xl">
+            <div class="stepper">
+              <div class="stepper-header"><span class="stepper-label">Step 2 of 4: Details</span><span class="text-caption">About 1 min left</span></div>
+              <div class="progress" role="progressbar" aria-label="Create ride progress" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="--progress: 0.5"></div></div>
+            </div>
+            <fieldset class="form-section">
+              <legend class="form-section-title">Meeting point</legend>
+              <div class="field">
+                <label class="field-label" for="ride-place">Place</label>
+                <div class="input-group">
+                  <span class="icon icon-pin" aria-hidden="true"></span>
+                  <input class="input" id="ride-place" type="text" autocomplete="off" placeholder="Lighthouse parking">
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label" for="ride-when">Date and time</label>
+                <input class="input" id="ride-when" type="datetime-local">
+              </div>
+            </fieldset>
+            <fieldset class="form-section">
+              <legend class="form-section-title">Route</legend>
+              <div class="field">
+                <label class="field-label" for="ride-level">Difficulty</label>
+                <div class="select-wrap">
+                  <select class="select" id="ride-level">
+                    <option>Easy</option>
+                    <option selected>Moderate</option>
+                    <option>Hard</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label" for="ride-notes">Notes</label>
+                <textarea class="textarea" id="ride-notes" maxlength="160" aria-describedby="ride-notes-hint" placeholder="Pace, stops, what to bring"></textarea>
+                <span class="field-hint" id="ride-notes-hint">160 characters max.</span>
+              </div>
+            </fieldset>
+            <details class="disclosure">
+              <summary>More options<span class="icon icon-chevron-down" aria-hidden="true"></span></summary>
+              <div class="disclosure-body">
+                <div class="field">
+                  <label class="field-label" for="ride-max">Max riders</label>
+                  <input class="input" id="ride-max" type="number" inputmode="numeric" min="2" max="50" placeholder="No limit">
+                </div>
+                <label class="choice"><input type="checkbox" checked>Allow guests</label>
+              </div>
+            </details>
+            <div class="stack-sm">
+              <button class="button button-primary button-lg button-block" type="submit">Next: Review</button>
+              <button class="button button-text button-block" type="button">Back</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

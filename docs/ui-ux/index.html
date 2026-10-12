@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141a21" media="(prefers-color-scheme: dark)">
+  <title>Exvia UI/UX Style Guide: Overview</title>
+  <link rel="stylesheet" href="exvia-ui.css">
+  <link rel="stylesheet" href="styleguide.css">
+  <script src="theme.js" defer></script>
+</head>
+<body>
+  <header class="guide-header">
+    <a class="guide-brand" href="index.html">Exvia UI</a>
+    <nav class="guide-nav" aria-label="Style guide">
+      <a href="index.html" aria-current="page">Overview</a>
+      <a href="foundations.html">Foundations</a>
+      <a href="components.html">Controls</a>
+      <a href="forms.html">Forms</a>
+      <a href="content.html">Content</a>
+      <a href="patterns.html">Screens</a>
+    </nav>
+    <button id="theme-toggle" class="button button-soft button-sm" type="button">Theme: system</button>
+  </header>
+
+  <main class="guide-main">
+    <section class="guide-hero">
+      <p class="text-overline">Style guide v2</p>
+      <h1>Calm, fast, thumb-first.</h1>
+      <p>Exvia is a mobile PWA for riders: clans, rides, maps and a personal garage. Its visual language is the Minimals design system (minimals.cc): Public Sans and Barlow type, a green primary, soft layered shadows and 16px cards. On top of it sit the mobile rules and the UX laws from <code>docs/base</code>. Design for a 360px wide phone first, then scale up.</p>
+    </section>
+
+    <section class="guide-section" id="principles" aria-labelledby="principles-title">
+      <h2 id="principles-title">Principles</h2>
+      <h3 class="text-subtitle">Look and feel (Minimals)</h3>
+      <ul class="guide-rules">
+        <li><strong>Minimals first.</strong> Color, type, radius, shadow and component styling follow the Minimals theme. Exvia only adds the mobile structure.</li>
+        <li><strong>Soft depth.</strong> Cards float on a layered shadow with 16px corners, dashed hairlines divide rows, and bars and sheets are blurred paper.</li>
+        <li><strong>Neutral ink, one green.</strong> Default buttons are ink. Primary green marks the one key action, the current tab and selected controls. Status colors appear as soft tints.</li>
+        <li><strong>Data voice.</strong> Distances, times and counts are set in Barlow bold with tabular figures, so numbers read like instruments.</li>
+        <li><strong>Light and dark.</strong> Every color token is a <code>light-dark()</code> pair that follows the OS setting.</li>
+      </ul>
+      <h3 class="text-subtitle">Interaction rules (UX laws)</h3>
+      <ul class="guide-rules">
+        <li><strong>Thumb zone (Fitts).</strong> Navigation, primary buttons and the sheet live in the bottom half. The main action is 48px tall and at least 120px wide.</li>
+        <li><strong>44px hit area (Fitts).</strong> Everything tappable has a 44px target. Compact controls (small buttons, chips, segments) look 36px or less and extend their hit area.</li>
+        <li><strong>Under 400ms (Doherty).</strong> Transitions take 150 to 300ms. Show a skeleton shaped like the content, update optimistically, never leave a blank screen.</li>
+        <li><strong>Group by distance (Proximity, Chunking).</strong> 8px inside a group, 16px between siblings, 32px between groups. Split long forms into fieldsets of 3 to 4 fields.</li>
+        <li><strong>Few choices (Hick, Miller).</strong> 3 to 5 tab bar destinations, 2 to 4 segments, at most 5 chips and 7 menu options. Group or fold the rest.</li>
+        <li><strong>Reveal progressively (Cognitive Load, Tesler).</strong> Start from smart defaults, fold advanced options in a disclosure, and use sheets for secondary flows instead of dialogs.</li>
+        <li><strong>Every state has a way forward (Peak-End, Goal-Gradient, Zeigarnik).</strong> Empty, success and error views carry an icon, a message and one action. Multi-step flows say "Step 2 of 4". Unfinished work shows what is left.</li>
+      </ul>
+    </section>
+
+    <section class="guide-section" id="laws" aria-labelledby="laws-title">
+      <h2 id="laws-title">UX laws by component</h2>
+      <p>How the laws in <code>docs/base/ux-laws.md</code> and the component map in <code>ux-code-pattern.md</code> show up in this guide. Check the row for the component you build.</p>
+      <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead>
+            <tr><th scope="col">Component</th><th scope="col">Laws</th><th scope="col">How Exvia applies them</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Buttons</td><td>Fitts, Von Restorff, Occam</td><td>One filled primary per screen, 48px by default. Destructive actions are soft error and sit away from the primary.</td></tr>
+            <tr><td>Forms</td><td>Proximity, Chunking, Postel, Hick</td><td>Labels above fields, fieldsets of 3 to 4 fields, lenient input types, defaults preselected.</td></tr>
+            <tr><td>Navigation</td><td>Jakob, Serial Position, Miller</td><td>Bottom tab bar with 3 to 5 items, Home first and Profile last.</td></tr>
+            <tr><td>Lists</td><td>Miller, Chunking, Selective Attention</td><td>Grouped rows, muted secondary info, "Showing 10 of 128" with a Show more action.</td></tr>
+            <tr><td>Cards</td><td>Common Region, Similarity, Proximity</td><td>Every card shares one structure and the 16px radius. The shadow defines the region.</td></tr>
+            <tr><td>Sheets and dialogs</td><td>Cognitive Load, Flow, Tesler</td><td>Sheets for secondary flows with a visible close. Dialogs only confirm destructive actions.</td></tr>
+            <tr><td>Feedback</td><td>Doherty, Von Restorff, Peak-End</td><td>Skeletons match the content, toasts appear in 200ms, empty, success and error views end in one action.</td></tr>
+            <tr><td>Progress</td><td>Goal-Gradient, Zeigarnik</td><td>Stepper with the count and time left, profile completion bar with what is missing.</td></tr>
+            <tr><td>Search</td><td>Postel, Doherty, Jakob</td><td>Search on top, tolerant of case and spaces, results as the person types.</td></tr>
+            <tr><td>Settings</td><td>Tesler, Hick, Choice Overload</td><td>Switches with sensible defaults, advanced options folded away.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="guide-section" id="layout" aria-labelledby="layout-title">
+      <h2 id="layout-title">Layout and PWA</h2>
+      <p>Every screen is a single column inside <code>.screen</code> (max 30rem). On larger viewports the column stays centered; do not stretch content.</p>
+      <ul class="guide-rules">
+        <li><strong>App shell.</strong> Blurred top bar (56px), scrolling content, blurred tab bar with 3 to 5 destinations.</li>
+        <li><strong>Safe areas.</strong> Use <code>--safe-top</code> and <code>--safe-bottom</code> on bars so content clears the notch and home indicator. Requires <code>viewport-fit=cover</code>.</li>
+        <li><strong>Breakpoints.</strong> Mobile base, <code>48rem</code> tablet, <code>72rem</code> desktop. Use <code>min-width</code> only.</li>
+        <li><strong>Desktop navigation (Jakob).</strong> From 72rem the tab bar must move to a left rail or the top bar, never stay at the bottom. No desktop shell exists yet.</li>
+        <li><strong>Standalone mode.</strong> The manifest uses <code>display: standalone</code> and a <code>theme_color</code> matching <code>--color-bg</code>, with a <code>theme-color</code> meta per color scheme.</li>
+        <li><strong>Overscroll.</strong> Body disables vertical overscroll bounce to avoid accidental pull-to-refresh; opt in per list.</li>
+        <li><strong>Offline.</strong> Show skeletons while loading and an alert when offline. Never block the screen on the network.</li>
+        <li><strong>Inputs.</strong> Set <code>type</code>, <code>inputmode</code> and <code>autocomplete</code> so the right keyboard appears, and accept any reasonable format.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,173 @@
+/* Surfaces and content (Minimals): cards float on a soft layered shadow with
+   16px corners, labels are 24px soft tints, chips are 8px soft tints, and
+   separators are dashed hairlines like Minimals dividers. */
+
+.card {
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.card-outlined {
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+}
+
+.card-flush { padding: 0; overflow: hidden; }
+
+/* Grouped list: one rounded block, dashed hairlines between rows */
+.list {
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--tap-target);
+  padding: var(--space-3) var(--space-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.list > * + * { border-block-start: 1px dashed var(--color-border); }
+
+a.list-item:active { background: var(--color-surface-sunken); }
+
+@media (hover: hover) {
+  a.list-item:hover { background: var(--color-surface-sunken); }
+}
+
+.list-item-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.list-item-title {
+  font-size: var(--text-body2);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-compact);
+}
+
+.list-item-meta {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.list-item > .icon-chevron-right {
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--color-text-faint);
+}
+
+/* Icon tile: neutral square with an ink glyph, tinted by tone for emphasis */
+.list-item-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-neutral);
+  color: var(--color-text);
+}
+
+.list-item-icon-primary { background: var(--color-primary-soft); color: var(--color-primary-text); }
+.list-item-icon-success { background: var(--color-success-soft); color: var(--color-success-text); }
+.list-item-icon-error { background: var(--color-error-soft); color: var(--color-error-text); }
+
+.list-item-icon-lg {
+  inline-size: 4rem;
+  block-size: 4rem;
+  border-radius: var(--radius-full);
+}
+
+.list-item-icon-lg .icon { inline-size: 2rem; block-size: 2rem; }
+
+/* Avatar: neutral disc with initials */
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-full);
+  background: light-dark(var(--color-grey-300), var(--color-grey-700));
+  color: var(--color-text-muted);
+  font-size: var(--text-body2);
+  font-weight: var(--weight-medium);
+  overflow: hidden;
+}
+
+.avatar-sm { inline-size: 2rem; block-size: 2rem; font-size: var(--text-caption); }
+.avatar-lg { inline-size: 4rem; block-size: 4rem; font-size: var(--text-h5); }
+.avatar-xl { inline-size: 6.25rem; block-size: 6.25rem; font-size: var(--text-h3); }
+
+.avatar-stack { display: flex; }
+.avatar-stack .avatar { border: 2px solid var(--color-surface); }
+.avatar-stack .avatar + .avatar { margin-inline-start: calc(var(--space-2) * -1); }
+
+/* Badge (Minimals label): status text. Chip: filter the user can toggle */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-inline-size: 1.5rem;
+  block-size: 1.5rem;
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-selected);
+  color: var(--color-text);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
+  white-space: nowrap;
+}
+
+.badge-primary { background: var(--color-primary-soft); color: var(--color-primary-text); }
+.badge-secondary { background: var(--color-secondary-soft); color: var(--color-secondary-text); }
+.badge-success { background: var(--color-success-soft); color: var(--color-success-text); }
+.badge-warning { background: var(--color-warning-soft); color: var(--color-warning-text); }
+.badge-error { background: var(--color-error-soft); color: var(--color-error-text); }
+.badge-info { background: var(--color-info-soft); color: var(--color-info-text); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--control-height-sm);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-selected);
+  color: var(--color-text);
+  font-size: var(--text-body2);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+}
+
+@media (hover: hover) {
+  .chip:hover { background: var(--color-border-strong); }
+  .chip[aria-pressed="true"]:hover { background: var(--color-ink-hover); }
+}
+
+/* Padding gives the 44px hit area of each chip room inside the scroll box */
+.chip-row {
+  display: flex;
+  gap: var(--space-2);
+  margin-block: calc(var(--space-2) * -1);
+  padding-block: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}

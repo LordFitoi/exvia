@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141a21" media="(prefers-color-scheme: dark)">
+  <title>Exvia UI/UX Style Guide: Screens</title>
+  <link rel="stylesheet" href="exvia-ui.css">
+  <link rel="stylesheet" href="styleguide.css">
+  <link rel="stylesheet" href="devices.css">
+  <script src="theme.js" defer></script>
+</head>
+<body>
+  <header class="guide-header">
+    <a class="guide-brand" href="index.html">Exvia UI</a>
+    <nav class="guide-nav" aria-label="Style guide">
+      <a href="index.html">Overview</a>
+      <a href="foundations.html">Foundations</a>
+      <a href="components.html">Controls</a>
+      <a href="forms.html">Forms</a>
+      <a href="content.html">Content</a>
+      <a href="patterns.html" aria-current="page">Screens</a>
+    </nav>
+    <button id="theme-toggle" class="button button-soft button-sm" type="button">Theme: system</button>
+  </header>
+
+  <main class="guide-main guide-main-wide">
+    <section class="guide-hero">
+      <p class="text-overline">Screens</p>
+      <h1>Mobile layouts</h1>
+      <p>Reference screens composed from the components. Each frame is a 393pt phone: top bar, scrolling body, tab bar. Groups sit 32px apart and items inside a group closer, and each screen has one filled button.</p>
+    </section>
+
+    <div class="phone-row">
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="phone-body">
+            <div class="profile-header">
+              <span class="list-item-icon list-item-icon-lg list-item-icon-primary" aria-hidden="true"><span class="icon icon-lg icon-navigation"></span></span>
+              <h2 class="text-heading">Welcome back</h2>
+              <p class="text-small text-muted">Sign in to see your clans and rides.</p>
+            </div>
+            <form class="stack-lg" action="#">
+              <div class="stack">
+                <div class="field">
+                  <label class="field-label" for="si-email">Email</label>
+                  <input class="input" id="si-email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com">
+                </div>
+                <div class="field">
+                  <label class="field-label" for="si-pass">Password</label>
+                  <input class="input" id="si-pass" type="password" autocomplete="current-password">
+                  <a class="link-action" href="#">Forgot password?</a>
+                </div>
+              </div>
+              <div class="stack-sm">
+                <button class="button button-primary button-lg button-block" type="submit">Sign in</button>
+                <button class="button button-soft button-block" type="button">Create account</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <figcaption class="phone-caption">Sign in: one filled action, the help link sits with its field</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <header class="app-bar app-bar-plain">
+            <button class="icon-button" type="button" aria-label="Notifications"><span class="icon icon-bell" aria-hidden="true"></span></button>
+          </header>
+          <div class="phone-body">
+            <h2 class="text-heading">Home</h2>
+            <section class="stack-sm" aria-labelledby="next-ride-title">
+              <h3 class="text-overline" id="next-ride-title">Next ride</h3>
+              <article class="card ride-card">
+                <div class="ride-head">
+                  <div class="ride-date"><span class="ride-date-day data">14</span><span class="ride-date-month">Sep</span></div>
+                  <div class="stack-sm">
+                    <h4 class="text-subtitle">Coast loop</h4>
+                    <div class="ride-meta">
+                      <span class="ride-meta-row"><span class="icon icon-sm icon-pin" aria-hidden="true"></span>Lighthouse parking</span>
+                      <span class="ride-meta-row"><span class="icon icon-sm icon-users" aria-hidden="true"></span>Night Owls</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="ride-footer">
+                  <div class="avatar-stack" aria-label="12 riders going">
+                    <span class="avatar avatar-sm">MR</span><span class="avatar avatar-sm">JD</span><span class="avatar avatar-sm">+10</span>
+                  </div>
+                  <button class="button button-primary" type="button">I'm going</button>
+                </div>
+              </article>
+            </section>
+            <section class="stack" aria-labelledby="feed-title">
+              <h3 class="text-overline" id="feed-title">From your clans</h3>
+              <div class="chip-row" role="group" aria-label="Feed filter">
+                <button class="chip" type="button" aria-pressed="true">All</button>
+                <button class="chip" type="button" aria-pressed="false">Notices</button>
+                <button class="chip" type="button" aria-pressed="false">Rides</button>
+              </div>
+              <article class="card">
+                <div class="notice-author">
+                  <span class="avatar">MR</span>
+                  <div><h4 class="text-subtitle">Marta Ruiz</h4><p class="text-caption">Night Owls &middot; 2h ago</p></div>
+                </div>
+                <p class="text-small">Fuel stop moved to the north station. Bring a jacket, it gets cold near the coast.</p>
+                <div class="notice-image"></div>
+              </article>
+              <div class="alert alert-warning"><span class="icon icon-alert" aria-hidden="true"></span>Rain expected on Sunday.</div>
+            </section>
+          </div>
+          <nav class="tab-bar" aria-label="Main">
+            <a class="tab-bar-item" href="#" aria-current="page"><span class="icon icon-lg icon-home" aria-hidden="true"></span>Home</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-pin" aria-hidden="true"></span>Map</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-users" aria-hidden="true"></span>Clans</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-user" aria-hidden="true"></span>Profile</a>
+          </nav>
+        </div>
+        <figcaption class="phone-caption">Home: the next ride first, one primary action, then the feed</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="map">
+            <svg class="map-canvas" viewBox="0 0 360 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+              <rect class="map-land" width="360" height="700"></rect>
+              <path class="map-water" d="M0 520 C80 470 140 560 230 520 S330 440 360 470 V700 H0Z"></path>
+              <path class="map-park" d="M20 60 H150 V170 H20Z M240 250 H340 V340 H240Z"></path>
+              <path class="map-road" d="M0 120 H360 M0 300 H360 M0 420 H360 M90 0 V560 M250 0 V560"></path>
+              <path class="map-road map-road-major" d="M0 210 C120 180 200 260 360 200"></path>
+              <path class="map-route-casing" d="M100 240 C100 200 180 190 190 160 S250 120 250 90 L250 70"></path>
+              <path class="map-route" d="M100 240 C100 200 180 190 190 160 S250 120 250 90 L250 70"></path>
+              <path class="map-route-walk" d="M100 240 C100 270 140 300 180 330"></path>
+            </svg>
+            <div class="map-overlay">
+              <div class="input-group map-search">
+                <span class="icon icon-search" aria-hidden="true"></span>
+                <input class="input input-search" type="search" aria-label="Search places or rides" placeholder="Search places or rides">
+              </div>
+              <div class="map-controls">
+                <button class="icon-button" type="button" aria-label="Zoom in"><span class="icon icon-plus" aria-hidden="true"></span></button>
+                <button class="icon-button" type="button" aria-label="Zoom out"><span class="icon icon-minus" aria-hidden="true"></span></button>
+                <button class="icon-button" type="button" aria-label="My location"><span class="icon icon-locate" aria-hidden="true"></span></button>
+              </div>
+            </div>
+            <button class="marker marker-start marker-pos-a" type="button" aria-label="Start: Harbour"><span class="icon icon-sm icon-flag" aria-hidden="true"></span></button>
+            <button class="marker marker-primary marker-pos-b" type="button" aria-label="Meeting point: Lighthouse"><span class="icon icon-sm icon-pin" aria-hidden="true"></span><span class="marker-label">Lighthouse</span></button>
+            <button class="marker marker-pos-c" type="button" aria-label="Rider: Jon Diaz"><span class="icon icon-sm icon-bike" aria-hidden="true"></span></button>
+            <span class="marker-me marker-pos-me" role="img" aria-label="You are here"></span>
+            <div class="sheet map-sheet" role="region" aria-label="Selected ride">
+              <span class="sheet-handle"></span>
+              <div class="section-heading"><h3>Coast loop</h3><span class="badge badge-primary">Weekly</span></div>
+              <div class="route-stats">
+                <div class="route-stat"><span class="route-stat-value data">142 km</span><span class="text-caption">Distance</span></div>
+                <div class="route-stat"><span class="route-stat-value data">3h 10m</span><span class="text-caption">Duration</span></div>
+                <div class="route-stat"><span class="route-stat-value data">12</span><span class="text-caption">Riders</span></div>
+              </div>
+              <button class="button button-primary button-lg button-block" type="button"><span class="icon icon-navigation" aria-hidden="true"></span>Start route</button>
+            </div>
+          </div>
+          <nav class="tab-bar" aria-label="Main">
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-home" aria-hidden="true"></span>Home</a>
+            <a class="tab-bar-item" href="#" aria-current="page"><span class="icon icon-lg icon-pin" aria-hidden="true"></span>Map</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-users" aria-hidden="true"></span>Clans</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-user" aria-hidden="true"></span>Profile</a>
+          </nav>
+        </div>
+        <figcaption class="phone-caption">Map: full-bleed canvas, floating search and controls, bottom sheet</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <header class="app-bar">
+            <h2 class="app-bar-title">Profile</h2>
+            <button class="button button-text button-primary" type="button">Edit</button>
+          </header>
+          <div class="phone-body">
+            <div class="profile-header">
+              <div class="profile-avatar">
+                <span class="avatar avatar-xl">MR</span>
+                <button class="icon-button profile-avatar-edit" type="button" aria-label="Change photo"><span class="icon icon-sm icon-edit" aria-hidden="true"></span></button>
+              </div>
+              <h3 class="profile-name">Marta Ruiz</h3>
+              <p class="profile-bio">Weekend rider. Coffee stops, coastal roads and the occasional gravel detour.</p>
+            </div>
+            <article class="card stack stack-sm">
+              <div class="stepper">
+                <div class="stepper-header"><span class="stepper-label">Profile 80% complete</span><span class="text-caption">1 step left</span></div>
+                <div class="progress" role="progressbar" aria-label="Profile completion" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="--progress: 0.8"></div></div>
+              </div>
+              <a class="link-action" href="#">Add a second emergency contact</a>
+            </article>
+            <div class="profile-stats">
+              <div class="profile-stat"><span class="profile-stat-value data">48</span><span class="text-caption">Rides</span></div>
+              <div class="profile-stat"><span class="profile-stat-value data">3</span><span class="text-caption">Clans</span></div>
+              <div class="profile-stat"><span class="profile-stat-value data">2</span><span class="text-caption">Bikes</span></div>
+            </div>
+            <div class="list">
+              <div class="list-item"><span class="blood-type">O+</span><span class="list-item-body"><span class="list-item-title">Blood type</span><span class="list-item-meta">Shown to emergency contacts</span></span></div>
+            </div>
+            <section aria-labelledby="garage-title">
+              <div class="section-heading"><h3 id="garage-title">Garage</h3><a class="link-action" href="#">Add</a></div>
+              <div class="garage">
+                <article class="card vehicle-card">
+                  <span class="list-item-icon"><span class="icon icon-bike" aria-hidden="true"></span></span>
+                  <div><h4 class="text-subtitle">Triumph Tiger 900</h4><p class="text-caption">2022 &middot; Matte grey</p></div>
+                  <span class="vehicle-plate">KJ 22 FTR</span>
+                </article>
+                <article class="card vehicle-card">
+                  <span class="list-item-icon"><span class="icon icon-bike" aria-hidden="true"></span></span>
+                  <div><h4 class="text-subtitle">Honda CB500F</h4><p class="text-caption">2019 &middot; Red</p></div>
+                  <span class="vehicle-plate">HX 19 CBR</span>
+                </article>
+              </div>
+            </section>
+            <section aria-labelledby="contacts-title">
+              <div class="section-heading"><h3 id="contacts-title">Emergency contacts</h3></div>
+              <ul class="list">
+                <li class="list-item">
+                  <span class="avatar">LR</span>
+                  <span class="list-item-body"><span class="list-item-title">Luis Ruiz</span><span class="list-item-meta">Brother</span></span>
+                  <button class="icon-button contact-call" type="button" aria-label="Call Luis Ruiz"><span class="icon icon-phone" aria-hidden="true"></span></button>
+                </li>
+              </ul>
+            </section>
+          </div>
+          <nav class="tab-bar" aria-label="Main">
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-home" aria-hidden="true"></span>Home</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-pin" aria-hidden="true"></span>Map</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-users" aria-hidden="true"></span>Clans</a>
+            <a class="tab-bar-item" href="#" aria-current="page"><span class="icon icon-lg icon-user" aria-hidden="true"></span>Profile</a>
+          </nav>
+        </div>
+        <figcaption class="phone-caption">Profile: what is missing first, then stats, medical info, garage, contacts</figcaption>
+      </figure>
+    </div>
+  </main>
+</body>
+</html>

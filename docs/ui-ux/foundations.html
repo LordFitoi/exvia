@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141a21" media="(prefers-color-scheme: dark)">
+  <title>Exvia UI/UX Style Guide: Foundations</title>
+  <link rel="stylesheet" href="exvia-ui.css">
+  <link rel="stylesheet" href="styleguide.css">
+  <link rel="stylesheet" href="specimens.css">
+  <script src="theme.js" defer></script>
+</head>
+<body>
+  <header class="guide-header">
+    <a class="guide-brand" href="index.html">Exvia UI</a>
+    <nav class="guide-nav" aria-label="Style guide">
+      <a href="index.html">Overview</a>
+      <a href="foundations.html" aria-current="page">Foundations</a>
+      <a href="components.html">Controls</a>
+      <a href="forms.html">Forms</a>
+      <a href="content.html">Content</a>
+      <a href="patterns.html">Screens</a>
+    </nav>
+    <button id="theme-toggle" class="button button-soft button-sm" type="button">Theme: system</button>
+  </header>
+
+  <main class="guide-main">
+    <section class="guide-hero">
+      <p class="text-overline">Foundations</p>
+      <h1>Color, type, space</h1>
+      <p>The tokens every component is built from. They mirror the Minimals design system, so a token here maps one to one to a token in Minimals and, later, to the Tailwind theme of the frontend.</p>
+    </section>
+
+    <section class="guide-section" id="color" aria-labelledby="color-title">
+      <h2 id="color-title">Color</h2>
+      <p>Always use tokens, never raw hex values. Fills use the main shade. Text and icons that carry meaning use <code>--color-*-text</code>: the dark shade on light surfaces (darker for success and warning) and the light shade on dark ones, which keeps them above 4.5:1 on their soft tints. White on main primary green is 3.1:1 (3.2:1 on error). That is how Minimals ships it, so keep those labels 15px bold, or set <code>--color-on-primary</code> to <code>--color-grey-800</code> (5:1) when AA is required.</p>
+      <h3 class="text-subtitle">Primary (--color-primary)</h3>
+      <ul class="swatch-grid">
+        <li class="swatch"><span class="swatch-chip sw-primary-lighter"></span><span class="swatch-name">Lighter</span><span class="swatch-token">#C8FAD6</span></li>
+        <li class="swatch"><span class="swatch-chip sw-primary-light"></span><span class="swatch-name">Light</span><span class="swatch-token">#5BE49B</span></li>
+        <li class="swatch"><span class="swatch-chip sw-primary"></span><span class="swatch-name">Main</span><span class="swatch-token">#00A76F</span></li>
+        <li class="swatch"><span class="swatch-chip sw-primary-dark"></span><span class="swatch-name">Dark</span><span class="swatch-token">#007867</span></li>
+        <li class="swatch"><span class="swatch-chip sw-primary-darker"></span><span class="swatch-name">Darker</span><span class="swatch-token">#004B50</span></li>
+      </ul>
+      <h3 class="text-subtitle">Secondary (--color-secondary)</h3>
+      <ul class="swatch-grid">
+        <li class="swatch"><span class="swatch-chip sw-secondary-lighter"></span><span class="swatch-name">Lighter</span><span class="swatch-token">#EFD6FF</span></li>
+        <li class="swatch"><span class="swatch-chip sw-secondary-light"></span><span class="swatch-name">Light</span><span class="swatch-token">#C684FF</span></li>
+        <li class="swatch"><span class="swatch-chip sw-secondary"></span><span class="swatch-name">Main</span><span class="swatch-token">#8E33FF</span></li>
+        <li class="swatch"><span class="swatch-chip sw-secondary-dark"></span><span class="swatch-name">Dark</span><span class="swatch-token">#5119B7</span></li>
+        <li class="swatch"><span class="swatch-chip sw-secondary-darker"></span><span class="swatch-name">Darker</span><span class="swatch-token">#27097A</span></li>
+      </ul>
+      <h3 class="text-subtitle">Info (--color-info)</h3>
+      <ul class="swatch-grid">
+        <li class="swatch"><span class="swatch-chip sw-info-lighter"></span><span class="swatch-name">Lighter</span><span class="swatch-token">#CAFDF5</span></li>
+        <li class="swatch"><span class="swatch-chip sw-info-light"></span><span class="swatch-name">Light</span><span class="swatch-token">#61F3F3</span></li>
+        <li class="swatch"><span class="swatch-chip sw-info"></span><span class="swatch-name">Main</span><span class="swatch-token">#00B8D9</span></li>
+        <li class="swatch"><span class="swatch-chip sw-info-dark"></span><span class="swatch-name">Dark</span><span class="swatch-token">#006C9C</span></li>
+        <li class="swatch"><span class="swatch-chip sw-info-darker"></span><span class="swatch-name">Darker</span><span class="swatch-token">#003768</span></li>
+      </ul>
+      <h3 class="text-subtitle">Success (--color-success)</h3>
+      <ul class="swatch-grid">
+        <li class="swatch"><span class="swatch-chip sw-success-lighter"></span><span class="swatch-name">Lighter</span><span class="swatch-token">#D3FCD2</span></li>
+        <li class="swatch"><span class="swatch-chip sw-success-light"></span><span class="swatch-name">Light</span><span class="swatch-token">#77ED8B</span></li>
+        <li class="swatch"><span class="swatch-chip sw-success"></span><span class="swatch-name">Main</span><span class="swatch-token">#22C55E</span></li>
+        <li class="swatch"><span class="swatch-chip sw-success-dark"></span><span class="swatch-name">Dark</span><span class="swatch-token">#118D57</span></li>
+        <li class="swatch"><span class="swatch-chip sw-success-darker"></span><span class="swatch-name">Darker</span><span class="swatch-token">#065E49</span></li>
+      </ul>
+      <h3 class="text-subtitle">Warning (--color-warning)</h3>
+      <ul class="swatch-grid">
+        <li class="swatch"><span class="swatch-chip sw-warning-lighter"></span><span class="swatch-name">Lighter</span><span class="swatch-token">#FFF5CC</span></li>
+        <li class="swatch"><span class="swatch-chip sw-warning-light"></span><span class="swatch-name">Light</span><span class="swatch-token">#FFD666</span></li>
+        <li class="swatch"><span class="swatch-chip sw-warning"></span><span class="swatch-name">Main</span><span class="swatch-token">#FFAB00</span></li>
+        <li class="swatch"><span class="swatch-chip sw-warning-dark"></span><span class="swatch-name">Dark</span><span class="swatch-token">#B76E00</span></li>
+        <li class="swatch"><span class="swatch-chip sw-warning-darker"></span><span class="swatch-name">Darker</span><span class="swatch-token">#7A4100</span></li>
+      </ul>
+      <h3 class="text-subtitle">Error (--color-error)</h3>
+      <ul class="swatch-grid">
+        <li class="swatch"><span class="swatch-chip sw-error-lighter"></span><span class="swatch-name">Lighter</span><span class="swatch-token">#FFE9D5</span></li>
+        <li class="swatch"><span class="swatch-chip sw-error-light"></span><span class="swatch-name">Light</span><span class="swatch-token">#FFAC82</span></li>
+        <li class="swatch"><span class="swatch-chip sw-error"></span><span class="swatch-name">Main</span><span class="swatch-token">#FF5630</span></li>
+        <li class="swatch"><span class="swatch-chip sw-error-dark"></span><span class="swatch-name">Dark</span><span class="swatch-token">#B71D18</span></li>
+        <li class="swatch"><span class="swatch-chip sw-error-darker"></span><span class="swatch-name">Darker</span><span class="swatch-token">#7A0916</span></li>
+      </ul>
+      <h3 class="text-subtitle">Grey (--color-grey-*)</h3>
+      <ul class="swatch-grid">
+        <li class="swatch"><span class="swatch-chip sw-grey-100"></span><span class="swatch-name">100</span><span class="swatch-token">#F9FAFB</span></li>
+        <li class="swatch"><span class="swatch-chip sw-grey-200"></span><span class="swatch-name">200</span><span class="swatch-token">#F4F6F8</span></li>
+        <li class="swatch"><span class="swatch-chip sw-grey-300"></span><span class="swatch-name">300</span><span class="swatch-token">#DFE3E8</span></li>
+        <li class="swatch"><span class="swatch-chip sw-grey-400"></span><span class="swatch-name">400</span><span class="swatch-token">#C4CDD5</span></li>
+        <li class="swatch"><span class="swatch-chip sw-grey-500"></span><span class="swatch-name">500</span><span class="swatch-token">#919EAB</span></li>
+        <li class="swatch"><span class="swatch-chip sw-grey-600"></span><span class="swatch-name">600</span><span class="swatch-token">#637381</span></li>
+        <li class="swatch"><span class="swatch-chip sw-grey-700"></span><span class="swatch-name">700</span><span class="swatch-token">#454F5B</span></li>
+        <li class="swatch"><span class="swatch-chip sw-grey-800"></span><span class="swatch-name">800</span><span class="swatch-token">#1C252E</span></li>
+        <li class="swatch"><span class="swatch-chip sw-grey-900"></span><span class="swatch-name">900</span><span class="swatch-token">#141A21</span></li>
+      </ul>
+      <h3 class="text-subtitle">Surfaces and text roles</h3>
+      <ul class="swatch-grid">
+        <li class="swatch"><span class="swatch-chip sw-bg"></span><span class="swatch-name">Background</span><span class="swatch-token">--color-bg</span></li>
+        <li class="swatch"><span class="swatch-chip sw-surface"></span><span class="swatch-name">Surface (paper)</span><span class="swatch-token">--color-surface</span></li>
+        <li class="swatch"><span class="swatch-chip sw-neutral"></span><span class="swatch-name">Neutral</span><span class="swatch-token">--color-surface-neutral</span></li>
+        <li class="swatch"><span class="swatch-chip sw-sunken"></span><span class="swatch-name">Hover tint</span><span class="swatch-token">--color-surface-sunken</span></li>
+        <li class="swatch"><span class="swatch-chip sw-border"></span><span class="swatch-name">Border strong</span><span class="swatch-token">--color-border-strong</span></li>
+        <li class="swatch"><span class="swatch-chip sw-text"></span><span class="swatch-name">Text and ink</span><span class="swatch-token">--color-text</span></li>
+        <li class="swatch"><span class="swatch-chip sw-muted"></span><span class="swatch-name">Text muted</span><span class="swatch-token">--color-text-muted</span></li>
+        <li class="swatch"><span class="swatch-chip sw-primary-soft"></span><span class="swatch-name">Soft tint (16%)</span><span class="swatch-token">--color-primary-soft</span></li>
+      </ul>
+    </section>
+
+    <section class="guide-section" id="typography" aria-labelledby="type-title">
+      <h2 id="type-title">Typography</h2>
+      <p>Public Sans for interface text and Barlow for the display headings (h1 to h3), both vendored in <code>fonts/</code> under the SIL Open Font License so the guide works offline. Sizes are the Minimals mobile sizes in <code>rem</code>. The app column is capped at 30rem, so they do not grow with the viewport. Input text is never smaller than 1rem.</p>
+      <div class="specimen-grid">
+        <div class="specimen">
+          <span class="specimen-title">Headings</span>
+          <span class="text-caption">h1 &middot; Barlow 800 &middot; 2.5rem (40)</span>
+          <p class="text-display">Sunday ride</p>
+          <span class="text-caption">h2 &middot; Barlow 800 &middot; 2rem (32)</span>
+          <p class="text-title">Meet at the lake</p>
+          <span class="text-caption">h3 &middot; Barlow 700 &middot; 1.5rem (24)</span>
+          <p class="text-heading">Route details</p>
+          <span class="text-caption">h4 &middot; Public Sans 700 &middot; 1.25rem (20)</span>
+          <p class="text-subheading">Fuel stop</p>
+          <span class="text-caption">Subtitle (h6) &middot; Public Sans 600 &middot; 1.0625rem (17)</span>
+          <p class="text-subtitle">Night Owls</p>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Body and data</span>
+          <span class="text-caption">Body 1 &middot; 1rem (16) regular</span>
+          <p>Riders gather at 7:30 for a relaxed 120 km loop through the hills, with a coffee stop halfway.</p>
+          <span class="text-caption">Body 2 &middot; 0.875rem (14), the working size</span>
+          <p class="text-small text-muted">Posted by Marta, 2 hours ago</p>
+          <span class="text-caption">Caption &middot; 0.75rem (12)</span>
+          <p class="text-caption">Updated just now</p>
+          <span class="text-caption">Overline &middot; 0.75rem (12) bold caps</span>
+          <p class="text-overline">Upcoming rides</p>
+          <span class="text-caption">Data &middot; Barlow 700 with tabular figures</span>
+          <p class="data text-subheading">142 km &middot; 3h 10m</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="guide-section" id="spacing" aria-labelledby="spacing-title">
+      <h2 id="spacing-title">Spacing, radius and elevation</h2>
+      <p>Spacing follows a 4px base and the Law of Proximity: 8px inside a group (label and field, heading and content), 16px between siblings, 24px between related blocks and 32px between groups. Prefer <code>gap</code> over margins. Screens have a 16px side gutter.</p>
+      <div class="specimen-grid">
+        <div class="specimen">
+          <span class="specimen-title">Spacing scale</span>
+          <div class="scale-row"><span class="scale-label">space-1 4</span><span class="scale-bar scale-1"></span></div>
+          <div class="scale-row"><span class="scale-label">space-2 8</span><span class="scale-bar scale-2"></span></div>
+          <div class="scale-row"><span class="scale-label">space-3 12</span><span class="scale-bar scale-3"></span></div>
+          <div class="scale-row"><span class="scale-label">space-4 16</span><span class="scale-bar scale-4"></span></div>
+          <div class="scale-row"><span class="scale-label">space-6 24</span><span class="scale-bar scale-6"></span></div>
+          <div class="scale-row"><span class="scale-label">space-8 32</span><span class="scale-bar scale-8"></span></div>
+          <div class="scale-row"><span class="scale-label">space-12 48</span><span class="scale-bar scale-12"></span></div>
+          <div class="scale-row"><span class="scale-label">space-16 64</span><span class="scale-bar scale-16"></span></div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Radius</span>
+          <div class="cluster">
+            <span class="radius-box radius-xs"></span>
+            <span class="radius-box radius-sm"></span>
+            <span class="radius-box radius-md"></span>
+            <span class="radius-box radius-lg"></span>
+            <span class="radius-box radius-xl"></span>
+            <span class="radius-box radius-full"></span>
+          </div>
+          <p class="text-caption">xs 6 (labels, menu items) &middot; sm 8 (buttons, fields, chips) &middot; md 12 (tiles, popovers) &middot; lg 16 (cards, dialogs) &middot; xl 24 (sheets) &middot; full (avatars, switches)</p>
+        </div>
+        <div class="specimen specimen-wide">
+          <span class="specimen-title">Elevation: soft, layered shadows</span>
+          <div class="shadow-grid">
+            <div class="shadow-box shadow-z4">z4</div>
+            <div class="shadow-box shadow-z8">z8: hover lift</div>
+            <div class="shadow-box shadow-z16">z16: toast</div>
+            <div class="shadow-box shadow-z24">z24</div>
+            <div class="shadow-box shadow-card">card: cards, lists</div>
+            <div class="shadow-box shadow-dropdown">dropdown: menus</div>
+            <div class="shadow-box shadow-dialog">dialog</div>
+            <div class="shadow-box shadow-primary">primary: key action</div>
+          </div>
+          <p class="text-caption">Shadows are grey in light mode and black in dark mode. Tint (hover, soft, outline) is the color at 8%, 16% and 48%.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="guide-section" id="icons" aria-labelledby="icons-title">
+      <h2 id="icons-title">Iconography</h2>
+      <p>24px outline icons with a 2px stroke, rendered as CSS masks so they inherit <code>currentColor</code>. Mark decorative icons <code>aria-hidden="true"</code>; icon-only buttons need an <code>aria-label</code>. Use conventional glyphs only (Mental Model).</p>
+      <div class="guide-code">&lt;span class="icon icon-pin" aria-hidden="true"&gt;&lt;/span&gt;</div>
+      <ul class="icon-grid">
+        <li class="icon-cell"><span class="icon icon-lg icon-pin" aria-hidden="true"></span>pin</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-home" aria-hidden="true"></span>home</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-users" aria-hidden="true"></span>users</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-user" aria-hidden="true"></span>user</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-navigation" aria-hidden="true"></span>navigation</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-search" aria-hidden="true"></span>search</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-plus" aria-hidden="true"></span>plus</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-minus" aria-hidden="true"></span>minus</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-check" aria-hidden="true"></span>check</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-x" aria-hidden="true"></span>x</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-bell" aria-hidden="true"></span>bell</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-calendar" aria-hidden="true"></span>calendar</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-bike" aria-hidden="true"></span>bike</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-droplet" aria-hidden="true"></span>droplet</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-phone" aria-hidden="true"></span>phone</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-mail" aria-hidden="true"></span>mail</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-lock" aria-hidden="true"></span>lock</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-info" aria-hidden="true"></span>info</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-alert" aria-hidden="true"></span>alert</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-edit" aria-hidden="true"></span>edit</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-locate" aria-hidden="true"></span>locate</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-flag" aria-hidden="true"></span>flag</li>
+        <li class="icon-cell"><span class="icon icon-lg icon-chevron-down" aria-hidden="true"></span>chevron</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

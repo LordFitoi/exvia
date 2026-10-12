@@ -20,6 +20,12 @@ follow them over any pattern already present in the codebase:
 - [docs/base/react.md](docs/base/react.md) — applies to any React components
 - [docs/base/css.md](docs/base/css.md) — applies to any vanilla CSS/SCSS/CSS Modules
 - [docs/base/html.md](docs/base/html.md) — applies to any HTML templates
+- [docs/base/ux-laws.md](docs/base/ux-laws.md) — applies to any UX/UI work
+  (components, layouts, styling): all 30 Laws of UX with definition,
+  violation signals, and code fix
+- [docs/base/ux-code-pattern.md](docs/base/ux-code-pattern.md) — applies to
+  any UX/UI work: maps each component type (form, dashboard, modal, etc.)
+  to the UX laws that apply, with code patterns per law
 
 `core.md` takes precedence if any rule conflicts with existing code style.
 

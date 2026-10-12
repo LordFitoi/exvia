@@ -8,7 +8,9 @@ PGPORT ?= 5432
 
 export PGDATABASE PGUSER PGPASSWORD PGHOST PGPORT
 
-.PHONY: help install railway_install railway_login db_setup db_migrate db_shell db_seed run_server run_frontend railway_plan railway_apply create_app
+STYLEGUIDE = docs/ui-ux/index.html
+
+.PHONY: help install railway_install railway_login db_setup db_migrate db_shell db_seed run_server run_frontend open_styleguide railway_plan railway_apply create_app
 
 ##@ Help
 
@@ -48,6 +50,13 @@ run_server: ## Run the Django development server
 
 run_frontend: ## Run the Next.js development server (frontend/)
 	cd frontend && corepack pnpm dev
+
+open_styleguide: ## Open the UI/UX style guide (docs/ui-ux/) in the browser
+	@if command -v wslview >/dev/null 2>&1; then wslview $(STYLEGUIDE); \
+	elif command -v explorer.exe >/dev/null 2>&1; then explorer.exe "$$(wslpath -w $(STYLEGUIDE))" || true; \
+	elif command -v xdg-open >/dev/null 2>&1; then xdg-open $(STYLEGUIDE); \
+	elif command -v open >/dev/null 2>&1; then open $(STYLEGUIDE); \
+	else echo "No browser opener found. Open $(CURDIR)/$(STYLEGUIDE) manually."; exit 1; fi
 
 ##@ Railway
 
