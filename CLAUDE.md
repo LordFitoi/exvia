@@ -15,6 +15,8 @@ follow them over any pattern already present in the codebase:
 - [docs/base/python.md](docs/base/python.md) — always applies: this is a
   Python/Django project
 - [docs/base/typescript.md](docs/base/typescript.md) — applies to any `.ts`/`.tsx` code
+- [docs/base/next.md](docs/base/next.md) — applies to any Next.js code
+  (`frontend/`)
 - [docs/base/react.md](docs/base/react.md) — applies to any React components
 - [docs/base/css.md](docs/base/css.md) — applies to any vanilla CSS/SCSS/CSS Modules
 - [docs/base/html.md](docs/base/html.md) — applies to any HTML templates
