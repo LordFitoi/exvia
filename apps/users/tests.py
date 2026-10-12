@@ -1,13 +1,20 @@
-from io import StringIO
+import tempfile
+from io import BytesIO, StringIO
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
-from django.test import TestCase
+from django.db import IntegrityError
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from PIL import Image
+
 from apps.users.management.commands.seed import DEFAULT_ADMIN_USERNAME
+from apps.users.models import BloodType, Contact, UserProfile, Vehicle
 
 
 class TokenObtainTests(APITestCase):
@@ -141,3 +148,73 @@ class SeedCommandTests(TestCase):
         call_command('seed', stdout=StringIO())
 
         self.assertEqual(User.objects.filter(username=DEFAULT_ADMIN_USERNAME).count(), 1)
+
+
+def build_avatar_upload() -> SimpleUploadedFile:
+    buffer = BytesIO()
+    Image.new('RGB', (4, 4)).save(buffer, format='PNG')
+    return SimpleUploadedFile('me.png', buffer.getvalue(), content_type='image/png')
+
+
+class UserProfileModelTests(TestCase):
+    def setUp(self) -> None:
+        self.user = User.objects.create_user(username='dave', password='s3cr3t-pass')
+
+    def test_profile_defaults_are_empty_and_timestamped(self) -> None:
+        profile = UserProfile.objects.create(user=self.user)
+
+        self.assertFalse(profile.avatar)
+        self.assertEqual(profile.description, '')
+        self.assertEqual(profile.blood_type, '')
+        self.assertIsNotNone(profile.created_at)
+        self.assertIsNotNone(profile.updated_at)
+
+    def test_user_can_have_only_one_profile(self) -> None:
+        UserProfile.objects.create(user=self.user)
+
+        with self.assertRaises(IntegrityError):
+            UserProfile.objects.create(user=self.user)
+
+    def test_updated_at_changes_on_save(self) -> None:
+        profile = UserProfile.objects.create(user=self.user)
+        created_updated_at = profile.updated_at
+
+        profile.description = 'Rider and mechanic'
+        profile.save()
+
+        self.assertGreater(profile.updated_at, created_updated_at)
+        self.assertEqual(profile.created_at, UserProfile.objects.get().created_at)
+
+    def test_blood_type_rejects_unknown_value(self) -> None:
+        profile = UserProfile(user=self.user, blood_type='Z+')
+
+        with self.assertRaises(ValidationError):
+            profile.full_clean()
+
+        profile.blood_type = BloodType.O_NEGATIVE
+        profile.full_clean()
+
+    def test_avatar_is_stored_in_media_root(self) -> None:
+        with tempfile.TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
+            profile = UserProfile.objects.create(user=self.user, avatar=build_avatar_upload())
+
+            self.assertTrue(profile.avatar.name.startswith('avatars/'))
+            self.assertTrue(profile.avatar.storage.exists(profile.avatar.name))
+
+    def test_contacts_and_vehicles_are_reachable_from_profile(self) -> None:
+        profile = UserProfile.objects.create(user=self.user)
+        Contact.objects.create(profile=profile, name='Eve', phone_number='+34600000000')
+        Vehicle.objects.create(profile=profile, brand='Yamaha', model='MT-07', year=2022)
+
+        self.assertEqual(profile.emergency_contacts.count(), 1)
+        self.assertEqual(profile.vehicles.get().model, 'MT-07')
+
+    def test_deleting_profile_deletes_contacts_and_vehicles(self) -> None:
+        profile = UserProfile.objects.create(user=self.user)
+        Contact.objects.create(profile=profile, name='Eve', phone_number='+34600000000')
+        Vehicle.objects.create(profile=profile, brand='Yamaha', model='MT-07')
+
+        profile.delete()
+
+        self.assertEqual(Contact.objects.count(), 0)
+        self.assertEqual(Vehicle.objects.count(), 0)
