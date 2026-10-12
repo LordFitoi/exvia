@@ -29,6 +29,10 @@ class UserProfile(TimeStampedModel):
     emergency_contacts: 'models.Manager[Contact]'
     vehicles: 'models.Manager[Vehicle]'
 
+    class Meta:
+        verbose_name = 'Profile'
+        verbose_name_plural = 'Profiles'
+
     def __str__(self) -> str:
         return f'Profile of {self.user.username}'
 

@@ -161,7 +161,7 @@ class UserProfileModelTests(TestCase):
         self.user = User.objects.create_user(username='dave', password='s3cr3t-pass')
 
     def test_profile_defaults_are_empty_and_timestamped(self) -> None:
-        profile = UserProfile.objects.create(user=self.user)
+        profile = self.user.profile
 
         self.assertFalse(profile.avatar)
         self.assertEqual(profile.description, '')
@@ -170,13 +170,11 @@ class UserProfileModelTests(TestCase):
         self.assertIsNotNone(profile.updated_at)
 
     def test_user_can_have_only_one_profile(self) -> None:
-        UserProfile.objects.create(user=self.user)
-
         with self.assertRaises(IntegrityError):
             UserProfile.objects.create(user=self.user)
 
     def test_updated_at_changes_on_save(self) -> None:
-        profile = UserProfile.objects.create(user=self.user)
+        profile = self.user.profile
         created_updated_at = profile.updated_at
 
         profile.description = 'Rider and mechanic'
@@ -186,7 +184,8 @@ class UserProfileModelTests(TestCase):
         self.assertEqual(profile.created_at, UserProfile.objects.get().created_at)
 
     def test_blood_type_rejects_unknown_value(self) -> None:
-        profile = UserProfile(user=self.user, blood_type='Z+')
+        profile = self.user.profile
+        profile.blood_type = 'Z+'
 
         with self.assertRaises(ValidationError):
             profile.full_clean()
@@ -196,13 +195,15 @@ class UserProfileModelTests(TestCase):
 
     def test_avatar_is_stored_in_media_root(self) -> None:
         with tempfile.TemporaryDirectory() as media_root, override_settings(MEDIA_ROOT=media_root):
-            profile = UserProfile.objects.create(user=self.user, avatar=build_avatar_upload())
+            profile = self.user.profile
+            profile.avatar = build_avatar_upload()
+            profile.save()
 
             self.assertTrue(profile.avatar.name.startswith('avatars/'))
             self.assertTrue(profile.avatar.storage.exists(profile.avatar.name))
 
     def test_contacts_and_vehicles_are_reachable_from_profile(self) -> None:
-        profile = UserProfile.objects.create(user=self.user)
+        profile = self.user.profile
         Contact.objects.create(profile=profile, name='Eve', phone_number='+34600000000')
         Vehicle.objects.create(profile=profile, brand='Yamaha', model='MT-07', year=2022)
 
@@ -210,7 +211,7 @@ class UserProfileModelTests(TestCase):
         self.assertEqual(profile.vehicles.get().model, 'MT-07')
 
     def test_deleting_profile_deletes_contacts_and_vehicles(self) -> None:
-        profile = UserProfile.objects.create(user=self.user)
+        profile = self.user.profile
         Contact.objects.create(profile=profile, name='Eve', phone_number='+34600000000')
         Vehicle.objects.create(profile=profile, brand='Yamaha', model='MT-07')
 
@@ -218,3 +219,92 @@ class UserProfileModelTests(TestCase):
 
         self.assertEqual(Contact.objects.count(), 0)
         self.assertEqual(Vehicle.objects.count(), 0)
+
+
+class ProfileAutoCreationTests(APITestCase):
+    def test_create_user_creates_profile(self) -> None:
+        user = User.objects.create_user(username='gina', password='s3cr3t-pass')
+
+        self.assertEqual(UserProfile.objects.filter(user=user).count(), 1)
+
+    def test_create_superuser_creates_profile(self) -> None:
+        user = User.objects.create_superuser(username='root', password='s3cr3t-pass')
+
+        self.assertTrue(UserProfile.objects.filter(user=user).exists())
+
+    def test_signup_endpoint_creates_profile(self) -> None:
+        response = self.client.post(
+            reverse('users:signup'),
+            {'username': 'hank', 'email': 'hank@example.com', 'password': 'v3ry-s3cure-pass'},
+        )
+
+        self.assertTrue(UserProfile.objects.filter(user_id=response.data['id']).exists())
+
+    def test_saving_existing_user_does_not_create_another_profile(self) -> None:
+        user = User.objects.create_user(username='ivy', password='s3cr3t-pass')
+
+        user.email = 'ivy@example.com'
+        user.save()
+
+        self.assertEqual(UserProfile.objects.filter(user=user).count(), 1)
+
+    def test_deleting_user_deletes_profile(self) -> None:
+        user = User.objects.create_user(username='jon', password='s3cr3t-pass')
+
+        user.delete()
+
+        self.assertEqual(UserProfile.objects.count(), 0)
+
+
+class UserAdminTests(TestCase):
+    def setUp(self) -> None:
+        self.superuser = User.objects.create_superuser(
+            username='root', email='root@example.com', password='s3cr3t-pass'
+        )
+        self.client.force_login(self.superuser)
+        self.profile = self.superuser.profile
+        Contact.objects.create(profile=self.profile, name='Eve', phone_number='+34600000000')
+        Vehicle.objects.create(profile=self.profile, brand='Yamaha', model='MT-07')
+
+    def test_dashboard_lists_users_app_and_profiles(self) -> None:
+        response = self.client.get(reverse('admin:index'))
+
+        self.assertContains(response, reverse('admin:users_userprofile_changelist'))
+        self.assertContains(response, 'Profiles</a>')
+        self.assertNotContains(response, 'User profiles')
+
+    def test_user_pages_load(self) -> None:
+        for url in (
+            reverse('admin:auth_user_changelist'),
+            reverse('admin:auth_user_add'),
+            reverse('admin:auth_user_change', args=[self.superuser.pk]),
+        ):
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
+
+    def test_user_add_form_creates_user_with_profile(self) -> None:
+        add_url = reverse('admin:auth_user_add')
+        self.assertNotContains(self.client.get(add_url), 'id_profile-0-description')
+
+        self.client.post(add_url, {
+            'username': 'kim',
+            'password1': 'v3ry-s3cure-pass',
+            'password2': 'v3ry-s3cure-pass',
+        })
+
+        self.assertTrue(UserProfile.objects.filter(user__username='kim').exists())
+
+    def test_user_change_page_embeds_profile_inline(self) -> None:
+        response = self.client.get(reverse('admin:auth_user_change', args=[self.superuser.pk]))
+
+        self.assertContains(response, 'id_profile-0-description')
+
+    def test_profile_pages_load_with_contact_and_vehicle_inlines(self) -> None:
+        changelist = self.client.get(reverse('admin:users_userprofile_changelist'))
+        change = self.client.get(reverse('admin:users_userprofile_change', args=[self.profile.pk]))
+        add = self.client.get(reverse('admin:users_userprofile_add'))
+
+        self.assertContains(changelist, 'Profile of root')
+        self.assertContains(change, 'Eve')
+        self.assertContains(change, 'MT-07')
+        self.assertEqual(add.status_code, status.HTTP_200_OK)
