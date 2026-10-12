@@ -2,6 +2,8 @@ import { isRecord } from '@/services/typeGuards'
 import type { FieldErrors } from '@/types/auth'
 
 const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.'
+const REQUEST_TIMEOUT_MS = 15000
+const TIMEOUT_ERROR_MESSAGE = 'The server is taking too long to respond. Please try again.'
 const NETWORK_ERROR_MESSAGE = 'Could not reach the server. Check your connection and try again.'
 
 export class ApiError extends Error {
@@ -58,10 +60,16 @@ export const requestJson = async (
 
   let response: Response
   try {
-    response = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined })
+    response = await fetch(path, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    })
   } catch (error) {
     console.error(`Request ${method} ${path} failed`, error)
-    throw new ApiError(0, NETWORK_ERROR_MESSAGE)
+    const isTimeout = error instanceof DOMException && error.name === 'TimeoutError'
+    throw new ApiError(0, isTimeout ? TIMEOUT_ERROR_MESSAGE : NETWORK_ERROR_MESSAGE)
   }
 
   const payload = await readJson(response)

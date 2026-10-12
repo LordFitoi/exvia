@@ -66,6 +66,12 @@ for the names the form owns) or one form-level alert. Fields come from
 submit button shows the guide's `button-loading` state. Login uses the
 username (what `token/` accepts), not the email.
 
+Every request has a 15 second timeout (`requestJson`). A backend that accepts
+the connection but never answers would otherwise leave the login button
+spinning, or the app on its loading skeleton at startup, forever; now it ends
+with "The server is taking too long to respond" (or, at startup, the login
+screen).
+
 ## Placeholder content
 
 Home and Clans have no backend endpoints yet, so they show the guide's empty
