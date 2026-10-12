@@ -29,6 +29,26 @@ follow them over any pattern already present in the codebase:
 
 `core.md` takes precedence if any rule conflicts with existing code style.
 
+## Frontend Style Guide
+
+All frontend UI (`frontend/`) must follow the style guide in
+[docs/ui-ux/](docs/ui-ux/) (overview in
+[docs/design/ui-ux-style-guide.md](docs/design/ui-ux-style-guide.md)). Read
+the relevant guide pages before building or changing any component, screen,
+or style:
+
+- Use the design tokens from [tokens.css](docs/ui-ux/tokens.css) (colors,
+  type, spacing, radius, elevation) instead of hard-coded values.
+- Reuse the documented components and patterns (buttons, forms, cards,
+  lists, navigation, sheets, dialogs, full screens in
+  [patterns.html](docs/ui-ux/patterns.html)) rather than inventing new
+  ones. If a needed component is missing, add it to the style guide first,
+  then use it.
+- Keep it mobile-first, with the 44px minimum hit area, and support light
+  and dark themes.
+- The style guide takes precedence over ad-hoc styling already in
+  `frontend/`. The UX law docs above still apply on top of it.
+
 ## Design Docs
 
 Every feature worked on must have a corresponding markdown design file
