@@ -8,7 +8,7 @@ PGPORT ?= 5432
 
 export PGDATABASE PGUSER PGPASSWORD PGHOST PGPORT
 
-.PHONY: help install db_setup db_migrate db_shell db_seed run_server create_app
+.PHONY: help install db_setup db_migrate db_shell db_seed run_server run_frontend create_app
 
 help: ## Show this list of available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -37,6 +37,9 @@ db_seed: ## Seed the database with baseline records (e.g. default admin user)
 
 run_server: ## Run the Django development server
 	poetry run python manage.py runserver
+
+run_frontend: ## Run the Next.js development server (frontend/)
+	cd frontend && corepack pnpm dev
 
 create_app: ## Create a new Django app under apps/ (usage: make create_app name=<app_name>)
 	@if [ -z "$(name)" ]; then echo "Usage: make create_app name=<app_name>"; exit 1; fi
