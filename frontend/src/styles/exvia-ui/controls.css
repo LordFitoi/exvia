@@ -1,0 +1,148 @@
+/* Selection controls (Minimals): rounded-square checkbox, round radio and a
+   small switch, all primary green when selected. They are restyled native
+   inputs, so keyboard and screen readers keep working. The label row is the
+   44px tap target. */
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--tap-target);
+  font-size: var(--text-body2);
+}
+
+.choice input {
+  appearance: none;
+  display: grid;
+  place-content: center;
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin: 0;
+  border: 2px solid var(--color-text-muted);
+  border-radius: var(--radius-xs);
+  background: transparent;
+}
+
+.choice input[type="radio"] { border-radius: var(--radius-full); }
+
+.choice input:checked {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.choice input[type="checkbox"]:checked::after {
+  content: "";
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  background: var(--color-on-primary);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.choice input[type="radio"]:checked::after {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--color-on-primary);
+}
+
+.choice input:disabled { opacity: 0.48; }
+
+/* Hover halo, like the Minimals state layer around the control */
+@media (hover: hover) {
+  .choice:hover input:not(:disabled) { box-shadow: 0 0 0 0.5rem var(--color-surface-sunken); }
+}
+
+/* Switch: <input type="checkbox" role="switch">. The primary track fades in
+   over the grey one and the thumb slides, both transform or opacity only */
+.switch {
+  appearance: none;
+  position: relative;
+  flex: none;
+  inline-size: 2.125rem;
+  block-size: 1.25rem;
+  margin: 0;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-grey-500) var(--tint-outline), transparent);
+}
+
+.switch::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-primary);
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-out);
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 0.1875rem;
+  inset-inline-start: 0.1875rem;
+  inline-size: 0.875rem;
+  block-size: 0.875rem;
+  border-radius: var(--radius-full);
+  background: var(--color-on-primary);
+  box-shadow: var(--shadow-z1);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.switch:checked::before { opacity: 1; }
+.switch:checked::after { transform: translateX(0.875rem); }
+.switch:disabled { opacity: 0.48; }
+
+/* Range slider: 4px rail filled with primary up to --value (the current
+   percentage, set from the value like a controlled component) and a white
+   thumb. The input is 44px tall so the whole band is touchable. */
+.slider {
+  --value: 0%;
+
+  appearance: none;
+  inline-size: 100%;
+  block-size: var(--tap-target);
+  margin: 0;
+  background: transparent;
+}
+
+.slider::-webkit-slider-runnable-track {
+  block-size: 0.25rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    to right,
+    var(--color-primary) var(--value),
+    var(--color-border-strong) var(--value)
+  );
+}
+
+.slider::-moz-range-track {
+  block-size: 0.25rem;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    to right,
+    var(--color-primary) var(--value),
+    var(--color-border-strong) var(--value)
+  );
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-block-start: -0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-on-primary);
+  box-shadow: var(--shadow-z1);
+}
+
+.slider::-moz-range-thumb {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-on-primary);
+  box-shadow: var(--shadow-z1);
+}

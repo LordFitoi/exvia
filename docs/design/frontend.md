@@ -1,13 +1,17 @@
 # Frontend
 
 Next.js web client, separate from the Django backend. It lives in
-[frontend/](../../frontend/) and currently contains only the stock
-`create-next-app` starter page; no API calls to the backend exist yet.
+[frontend/](../../frontend/) and implements the mobile screens described in
+[frontend-screens.md](frontend-screens.md): login, signup, home, clans and
+profile, with a bottom tab bar once logged in. It talks to the backend only
+for authentication.
 
 ## Stack
 
 - Next.js (App Router, `src/` directory), React, TypeScript
-- Tailwind CSS for styling (preferred by [react.md](../base/react.md))
+- Tailwind CSS is installed (preferred by [react.md](../base/react.md)), but
+  screens are styled with the style guide's own CSS classes; see
+  [frontend-screens.md](frontend-screens.md#styling)
 - ESLint with `eslint-config-next`
 - Import alias `@/*` maps to `frontend/src/*`
 - Package manager: pnpm, pinned through `packageManager` in

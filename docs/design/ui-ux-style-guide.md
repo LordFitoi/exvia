@@ -136,9 +136,13 @@ tab bar must move to a left rail from `72rem`; there is no desktop shell yet.
 
 ## Using it in the Next.js frontend
 
-The frontend uses Tailwind CSS ([frontend.md](frontend.md)). When the guide is
-adopted there, map `tokens.css` into the Tailwind theme (`@theme`) instead of
-duplicating values (the token names follow Minimals: `primary`, `secondary`,
-`info`, `success`, `warning`, `error`, `grey`), and port the component
-classes to React components. Treat the guide as the visual spec; the CSS here
-is the reference implementation.
+The frontend ([frontend-screens.md](frontend-screens.md)) uses the guide's CSS
+as is: the product files (`exvia-ui.css` and everything it imports, plus the
+fonts) are copied to `frontend/src/styles/exvia-ui/` and the React components
+use the documented class names. Re-copy them when `docs/ui-ux/` changes. The
+guide pages themselves (`styleguide.css`, `specimens.css`, `devices.css`,
+`theme.js`) are not part of the product.
+
+Porting the tokens to a Tailwind `@theme` instead (token names follow
+Minimals: `primary`, `secondary`, `info`, `success`, `warning`, `error`,
+`grey`) is still possible, but nothing needs it yet.

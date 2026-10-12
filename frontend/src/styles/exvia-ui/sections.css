@@ -1,0 +1,79 @@
+/* Sections that chunk and pace content: form sections (fieldset + legend),
+   progressive disclosure, the step indicator and the "show more" footer. */
+
+/* Form section (Chunking): 3 to 4 fields under one visible legend */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-section-title {
+  margin-block-end: var(--space-3);
+  padding: 0;
+  font-size: var(--text-h6);
+  font-weight: var(--weight-semibold);
+}
+
+/* Disclosure (Cognitive Load, Tesler's Law): advanced options stay folded */
+.disclosure { border-block: 1px dashed var(--color-border); }
+
+.disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-block-size: var(--control-height-md);
+  font-size: var(--text-body2);
+  font-weight: var(--weight-semibold);
+  list-style: none;
+  cursor: pointer;
+}
+
+.disclosure > summary::-webkit-details-marker { display: none; }
+
+.disclosure > summary .icon {
+  color: var(--color-text-muted);
+  transition: rotate var(--duration-base) var(--ease-out);
+}
+
+.disclosure[open] > summary .icon-chevron-down { rotate: 180deg; }
+
+.disclosure-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-block: var(--space-2) var(--space-4);
+}
+
+/* Stepper (Goal-Gradient Effect): "Step 2 of 4", what is left, and a bar */
+.stepper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.stepper-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.stepper-label {
+  font-size: var(--text-body2);
+  font-weight: var(--weight-semibold);
+}
+
+/* List footer: how much is shown, and one action to see more */
+.list-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-4);
+}

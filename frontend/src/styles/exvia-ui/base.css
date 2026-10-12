@@ -1,0 +1,210 @@
+/* Reset, element defaults and layout helpers. Mobile first. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-body1);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  font-synthesis: none;
+  overscroll-behavior-y: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+.text-display,
+.text-title,
+.text-heading,
+.text-subheading,
+.text-subtitle {
+  text-wrap: balance;
+}
+
+/* Heading styles are also classes, so the visual size never dictates the
+   h-level. Minimals sets h1 to h3 in Barlow and the rest in Public Sans */
+h1, .text-display {
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  font-weight: var(--weight-extrabold);
+  line-height: var(--leading-h1);
+}
+
+h2, .text-title {
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  font-weight: var(--weight-extrabold);
+  line-height: var(--leading-h2);
+}
+
+h3, .text-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-normal);
+}
+
+h4, .text-subheading {
+  font-family: var(--font-sans);
+  font-size: var(--text-h4);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-normal);
+}
+
+.text-subtitle {
+  font-family: var(--font-sans);
+  font-size: var(--text-h6);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-normal);
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: var(--color-primary-text);
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+svg {
+  display: block;
+  max-inline-size: 100%;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Typography helpers: body2 is the working size, caption is secondary info */
+.text-muted { color: var(--color-text-muted); }
+.text-small { font-size: var(--text-body2); line-height: var(--leading-compact); }
+.text-caption { font-size: var(--text-caption); color: var(--color-text-muted); }
+
+/* Data voice: distances, times and counts use Barlow bold with tabular figures */
+.data {
+  font-family: var(--font-display);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.text-overline {
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* Layout helpers. Proximity: 8px inside a group, 16px between siblings,
+   24px between related blocks, 32px between groups (stack-xl) */
+.stack,
+.stack-sm,
+.stack-lg,
+.stack-xl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stack-sm { gap: var(--space-2); }
+.stack-lg { gap: var(--space-6); }
+.stack-xl { gap: var(--space-8); }
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.screen {
+  inline-size: min(100%, var(--app-max-width));
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Text link that acts like a button: 44px hit area, underline on hover */
+.link-action {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--text-body2);
+  font-weight: var(--weight-semibold);
+}
+
+/* Compact controls look small but keep a 44px hit area (Fitts's Law). The
+   pseudo-element grows the target only where the control is under 44px */
+.button-sm,
+.chip,
+.segmented-option,
+.link-action {
+  position: relative;
+}
+
+.button-sm::before,
+.chip::before,
+.segmented-option::before,
+.link-action::before,
+.profile-avatar-edit::before,
+.marker::before {
+  content: "";
+  position: absolute;
+  inset: min(0px, calc((100% - var(--tap-target)) / 2));
+}
+
+@media (hover: hover) {
+  .link-action:hover { text-decoration: underline; }
+}

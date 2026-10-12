@@ -1,0 +1,115 @@
+/* Feedback (Minimals): alerts are lighter-tinted blocks with a darker text
+   shade, toasts are floating paper cards, progress is a rounded bar, and
+   skeletons pulse in the shape of the content they replace. */
+
+.alert {
+  --alert-bg: light-dark(var(--color-info-lighter), var(--color-info-darker));
+  --alert-text: light-dark(var(--color-info-darker), var(--color-info-lighter));
+
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--alert-bg);
+  color: var(--alert-text);
+  font-size: var(--text-body2);
+  line-height: var(--leading-compact);
+}
+
+.alert .icon { margin-block-start: 0.125rem; }
+
+.alert-success {
+  --alert-bg: light-dark(var(--color-success-lighter), var(--color-success-darker));
+  --alert-text: light-dark(var(--color-success-darker), var(--color-success-lighter));
+}
+
+.alert-warning {
+  --alert-bg: light-dark(var(--color-warning-lighter), var(--color-warning-darker));
+  --alert-text: light-dark(var(--color-warning-darker), var(--color-warning-lighter));
+}
+
+.alert-error {
+  --alert-bg: light-dark(var(--color-error-lighter), var(--color-error-darker));
+  --alert-text: light-dark(var(--color-error-darker), var(--color-error-lighter));
+}
+
+/* Toast: appears within 200ms, never blocks, auto-dismisses */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-z16);
+  color: var(--color-text);
+  font-size: var(--text-body2);
+  font-weight: var(--weight-semibold);
+  animation: toast-in var(--duration-base) var(--ease-out);
+}
+
+.toast .icon { color: var(--color-success-text); }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(1rem); }
+}
+
+/* Progress: --progress is a 0 to 1 number set per instance */
+.progress {
+  block-size: 0.25rem;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-primary) var(--tint-track), transparent);
+  overflow: hidden;
+}
+
+.progress-bar {
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--color-primary);
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left;
+  transition: transform var(--duration-slow) var(--ease-out);
+}
+
+/* Skeleton: build it from the same shapes as the loaded content */
+.skeleton {
+  display: block;
+  block-size: 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-selected);
+  animation: skeleton-pulse 1.5s ease-in-out 0.5s infinite;
+}
+
+.skeleton-title { inline-size: 60%; block-size: 1.25rem; }
+.skeleton-line { inline-size: 90%; }
+
+.skeleton-avatar {
+  flex: none;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-full);
+}
+
+@keyframes skeleton-pulse {
+  50% { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+/* State view: empty, success and error screens share one layout: a large
+   tinted icon, a title, one sentence and one next action (Peak-End Rule) */
+.state-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+
+.state-view p { max-inline-size: 20rem; }
+.state-view .list-item-icon { margin-block-end: var(--space-2); }
+.state-view .button { margin-block-start: var(--space-4); }

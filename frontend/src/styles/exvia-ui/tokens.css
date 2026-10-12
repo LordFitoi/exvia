@@ -1,0 +1,231 @@
+/* Exvia design tokens, mirroring the Minimals design system (minimals.cc):
+   green primary, soft tinted variants, layered shadows, 8px and 16px radii,
+   Public Sans body and Barlow headings. Structure stays mobile-first: 44px
+   targets, bottom bars, sheets, and fast (under 400ms) motion.
+   Colors use light-dark(): the first value is light, the second is dark.
+   The theme follows prefers-color-scheme unless <html data-theme> is set. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Grey scale */
+  --color-grey-50: #fcfdfd;
+  --color-grey-100: #f9fafb;
+  --color-grey-200: #f4f6f8;
+  --color-grey-300: #dfe3e8;
+  --color-grey-400: #c4cdd5;
+  --color-grey-500: #919eab;
+  --color-grey-600: #637381;
+  --color-grey-700: #454f5b;
+  --color-grey-800: #1c252e;
+  --color-grey-900: #141a21;
+
+  /* Brand and status palettes: lighter, light, main, dark, darker, contrast */
+  --color-primary-lighter: #c8fad6;
+  --color-primary-light: #5be49b;
+  --color-primary: #00a76f;
+  --color-primary-dark: #007867;
+  --color-primary-darker: #004b50;
+  --color-on-primary: #ffffff;
+
+  --color-secondary-lighter: #efd6ff;
+  --color-secondary-light: #c684ff;
+  --color-secondary: #8e33ff;
+  --color-secondary-dark: #5119b7;
+  --color-secondary-darker: #27097a;
+  --color-on-secondary: #ffffff;
+
+  --color-info-lighter: #cafdf5;
+  --color-info-light: #61f3f3;
+  --color-info: #00b8d9;
+  --color-info-dark: #006c9c;
+  --color-info-darker: #003768;
+  --color-on-info: #ffffff;
+
+  --color-success-lighter: #d3fcd2;
+  --color-success-light: #77ed8b;
+  --color-success: #22c55e;
+  --color-success-dark: #118d57;
+  --color-success-darker: #065e49;
+  --color-on-success: #ffffff;
+
+  --color-warning-lighter: #fff5cc;
+  --color-warning-light: #ffd666;
+  --color-warning: #ffab00;
+  --color-warning-dark: #b76e00;
+  --color-warning-darker: #7a4100;
+  --color-on-warning: #1c252e;
+
+  --color-error-lighter: #ffe9d5;
+  --color-error-light: #ffac82;
+  --color-error: #ff5630;
+  --color-error-dark: #b71d18;
+  --color-error-darker: #7a0916;
+  --color-on-error: #ffffff;
+
+  /* Tints: alpha of a color over the surface, used for soft and hover states */
+  --tint-hover: 8%;
+  --tint-border: 20%;
+  --tint-soft: 16%;
+  --tint-track: 24%;
+  --tint-strong: 32%;
+  --tint-outline: 48%;
+
+  /* Readable text for each palette, 4.5:1 or better on its soft tint: the dark
+     shade on light (darker for success and warning, whose dark shade is only
+     3.7:1), the light shade on dark */
+  --color-primary-text: light-dark(var(--color-primary-dark), var(--color-primary-light));
+  --color-secondary-text: light-dark(var(--color-secondary-dark), var(--color-secondary-light));
+  --color-info-text: light-dark(var(--color-info-dark), var(--color-info-light));
+  --color-success-text: light-dark(var(--color-success-darker), var(--color-success-light));
+  --color-warning-text: light-dark(var(--color-warning-darker), var(--color-warning-light));
+  --color-error-text: light-dark(var(--color-error-dark), var(--color-error-light));
+
+  /* Soft backgrounds: the palette color at 16% */
+  --color-primary-soft: color-mix(in srgb, var(--color-primary) var(--tint-soft), transparent);
+  --color-secondary-soft: color-mix(in srgb, var(--color-secondary) var(--tint-soft), transparent);
+  --color-info-soft: color-mix(in srgb, var(--color-info) var(--tint-soft), transparent);
+  --color-success-soft: color-mix(in srgb, var(--color-success) var(--tint-soft), transparent);
+  --color-warning-soft: color-mix(in srgb, var(--color-warning) var(--tint-soft), transparent);
+  --color-error-soft: color-mix(in srgb, var(--color-error) var(--tint-soft), transparent);
+
+  /* Surfaces: white page and paper, depth comes from shadow and neutral tone */
+  --color-bg: light-dark(#ffffff, var(--color-grey-900));
+  --color-surface: light-dark(#ffffff, var(--color-grey-800));
+  --color-surface-neutral: light-dark(var(--color-grey-200), #28323d);
+  --color-surface-sunken: color-mix(in srgb, var(--color-grey-500) var(--tint-hover), transparent);
+  --color-surface-selected: color-mix(in srgb, var(--color-grey-500) var(--tint-soft), transparent);
+  --color-border: color-mix(in srgb, var(--color-grey-500) var(--tint-border), transparent);
+  --color-border-strong: color-mix(in srgb, var(--color-grey-500) var(--tint-strong), transparent);
+
+  /* Ink: the neutral "inherit" button and primary text */
+  --color-text: light-dark(var(--color-grey-800), #ffffff);
+  --color-text-muted: light-dark(var(--color-grey-600), var(--color-grey-500));
+  --color-text-faint: light-dark(var(--color-grey-500), var(--color-grey-600));
+  --color-ink: var(--color-text);
+  --color-on-ink: light-dark(#ffffff, var(--color-grey-800));
+  --color-ink-hover: light-dark(var(--color-grey-700), var(--color-grey-400));
+  --color-action-disabled: color-mix(in srgb, var(--color-grey-500) 80%, transparent);
+  --color-action-disabled-bg: color-mix(in srgb, var(--color-grey-500) 24%, transparent);
+  --color-scrim: color-mix(in srgb, var(--color-grey-800) 48%, transparent);
+  --color-device: light-dark(#1d1d1f, #3a3a3c);
+
+  /* Shadows: grey in light mode, black in dark mode */
+  --shadow-color: light-dark(var(--color-grey-500), #000000);
+  --shadow-12: color-mix(in srgb, var(--shadow-color) 12%, transparent);
+  --shadow-16: color-mix(in srgb, var(--shadow-color) 16%, transparent);
+  --shadow-20: color-mix(in srgb, var(--shadow-color) 20%, transparent);
+  --shadow-24: color-mix(in srgb, var(--shadow-color) 24%, transparent);
+  --shadow-z1: 0 1px 2px 0 var(--shadow-16);
+  --shadow-z4: 0 4px 8px 0 var(--shadow-16);
+  --shadow-z8: 0 8px 16px 0 var(--shadow-16);
+  --shadow-z12: 0 12px 24px -4px var(--shadow-16);
+  --shadow-z16: 0 16px 32px -4px var(--shadow-16);
+  --shadow-z20: 0 20px 40px -4px var(--shadow-16);
+  --shadow-z24: 0 24px 48px 0 var(--shadow-16);
+  --shadow-card: 0 0 2px 0 var(--shadow-20), 0 12px 24px -4px var(--shadow-12);
+  --shadow-dropdown: 0 0 2px 0 var(--shadow-24), -20px 20px 40px -4px var(--shadow-24);
+  --shadow-dialog: -40px 40px 80px -8px color-mix(in srgb, #000000 24%, transparent);
+  --shadow-sheet: 0 -12px 24px -4px var(--shadow-16);
+  --shadow-primary: 0 8px 16px 0 color-mix(in srgb, var(--color-primary) 24%, transparent);
+  --shadow-error: 0 8px 16px 0 color-mix(in srgb, var(--color-error) 24%, transparent);
+
+  /* Materials: translucent, blurred layers for bars, sheets and map controls */
+  --material-bar: color-mix(in srgb, var(--color-bg) 80%, transparent);
+  --material-overlay: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  --blur-bar: blur(6px);
+  --blur-overlay: blur(20px);
+
+  /* Map surfaces: muted tints of the palette so the route is the only strong color */
+  --map-land: var(--color-surface-neutral);
+  --map-park: color-mix(in srgb, var(--color-success) var(--tint-soft), var(--color-surface-neutral));
+  --map-water: color-mix(in srgb, var(--color-info) var(--tint-soft), var(--color-surface-neutral));
+  --map-road: var(--color-surface);
+  --map-road-major: color-mix(in srgb, var(--color-warning) var(--tint-strong), var(--color-surface));
+
+  /* Typography: Public Sans body, Barlow display (h1 to h3), mono for plates */
+  --font-sans: "Public Sans Variable", "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Barlow", var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --text-caption: 0.75rem;
+  --text-body2: 0.875rem;
+  --text-button-lg: 0.9375rem;
+  --text-body1: 1rem;
+  --text-h6: 1.0625rem;
+  --text-h5: 1.125rem;
+  --text-h4: 1.25rem;
+  --text-h3: 1.5rem;
+  --text-h2: 2rem;
+  --text-h1: 2.5rem;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+  --leading-h1: 1.25;
+  --leading-h2: 1.3333;
+  --leading-normal: 1.5;
+  --leading-compact: 1.5714;
+  --leading-button: 1.7143;
+  --tracking-caps: 0.08em;
+
+  /* Spacing (4px base). Related items sit 8px apart, groups 32px apart */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Radius: 8px controls, 16px cards, 6px labels, pills for status and handles */
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 62rem;
+
+  /* Motion: every interactive transition stays under 400ms (Doherty threshold) */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout */
+  --tap-target: 2.75rem;
+  --control-height: 3.5rem;
+  --control-height-md: 3rem;
+  --control-height-sm: 2.25rem;
+  --button-min-width: 7.5rem;
+  --bar-height: 3.5rem;
+  --app-max-width: 30rem;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* Stacking */
+  --z-bar: 10;
+  --z-sheet: 20;
+  --z-toast: 30;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0.01ms;
+    --duration-base: 0.01ms;
+    --duration-slow: 0.01ms;
+  }
+}

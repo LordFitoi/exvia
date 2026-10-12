@@ -1,0 +1,87 @@
+/* Clan and ride cards: the main feed content. */
+
+.clan-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.clan-cover {
+  aspect-ratio: 16 / 9;
+  background: var(--color-primary-soft);
+}
+
+/* Ride card: date block + details + RSVP */
+.ride-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ride-head {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.ride-date {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  inline-size: 3.5rem;
+  block-size: 3.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-neutral);
+  line-height: 1.1;
+}
+
+.ride-date-day {
+  font-size: var(--text-h4);
+  line-height: 1.1;
+}
+
+/* Muted on purpose: the month is reference info, not an alert (Selective Attention) */
+.ride-date-month {
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.ride-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-body2);
+}
+
+.ride-meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ride-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* Notice: announcement posted by a clan */
+.notice-author {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block-end: var(--space-3);
+}
+
+.notice-image {
+  aspect-ratio: 16 / 9;
+  margin-block-start: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-neutral);
+}
