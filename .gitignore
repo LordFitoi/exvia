@@ -133,3 +133,6 @@ cython_debug/
 pyrightconfig.json
 ### Uploaded media ###
 media/
+
+### Node ###
+node_modules/

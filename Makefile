@@ -8,15 +8,21 @@ PGPORT ?= 5432
 
 export PGDATABASE PGUSER PGPASSWORD PGHOST PGPORT
 
-.PHONY: help install db_setup db_migrate db_shell db_seed run_server run_frontend create_app
+.PHONY: help install railway_install railway_login db_setup db_migrate db_shell db_seed run_server run_frontend railway_plan railway_apply create_app
+
+##@ Help
 
 help: ## Show this list of available commands
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
-		| sort \
-		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@awk 'BEGIN {FS = ":.*?## "} \
+		/^##@/ {printf "\n\033[1m%s\033[0m\n", substr($$0, 5)} \
+		/^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+##@ Setup
 
 install: ## Install Poetry dependencies
 	poetry install
+
+##@ Database
 
 db_setup: ## Install PostgreSQL if missing and create the project database
 	@command -v psql >/dev/null 2>&1 || sudo apt-get install -y postgresql
@@ -35,11 +41,32 @@ db_shell: ## Open a psql shell on the project database
 db_seed: ## Seed the database with baseline records (e.g. default admin user)
 	poetry run python manage.py seed
 
+##@ Run
+
 run_server: ## Run the Django development server
 	poetry run python manage.py runserver
 
 run_frontend: ## Run the Next.js development server (frontend/)
 	cd frontend && corepack pnpm dev
+
+##@ Railway
+
+RAILWAY = .railway/node_modules/.bin/railway
+
+railway_install: ## Install the Railway CLI and IaC SDK into .railway/
+	cd .railway && corepack pnpm install
+
+railway_login: railway_install ## Log in to Railway (browserless) and link this directory to a project
+	$(RAILWAY) login --browserless
+	$(RAILWAY) link
+
+railway_plan: railway_install ## Preview Railway infrastructure changes (.railway/railway.ts)
+	cd .railway && corepack pnpm run plan
+
+railway_apply: railway_install ## Apply Railway infrastructure changes (.railway/railway.ts)
+	cd .railway && corepack pnpm run apply
+
+##@ Scaffolding
 
 create_app: ## Create a new Django app under apps/ (usage: make create_app name=<app_name>)
 	@if [ -z "$(name)" ]; then echo "Usage: make create_app name=<app_name>"; exit 1; fi

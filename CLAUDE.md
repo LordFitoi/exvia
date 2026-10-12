@@ -35,9 +35,11 @@ key decisions):
 
 ## Project Overview
 
-A minimal Django template (`config/`) configured for deployment on Railway
-(see [railway.json](railway.json)): migrate, collectstatic, then serve with
-gunicorn.
+A minimal Django template (`config/`) plus a Next.js app (`frontend/`),
+deployed on Railway as infrastructure-as-code (see
+[.railway/railway.ts](.railway/railway.ts) and
+[docs/design/frontend.md](docs/design/frontend.md)): the backend migrates,
+collects static files, then serves with gunicorn.
 
 - Python 3.11 ([runtime.txt](runtime.txt))
 - Dependencies managed with Poetry ([pyproject.toml](pyproject.toml))

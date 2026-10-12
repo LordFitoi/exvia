@@ -1,0 +1,23 @@
+{
+  "name": "railway-iac",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@railway/cli": "^5.66.0",
+    "railway": "3.15.0",
+    "typescript": "^5"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "plan": "cd .. && _=$(command -v railway) railway config plan",
+    "apply": "cd .. && _=$(command -v railway) railway config apply"
+  },
+  "pnpm": {
+    "executionEnv": {
+      "nodeVersion": "22.23.3"
+    }
+  }
+}
