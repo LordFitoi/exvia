@@ -48,13 +48,45 @@ renaming one would delete it and create a new one.
 - Migrations run in the pre-deploy step so a failing migration stops the
   release. `collectstatic` stays in the start command because pre-deploy
   runs in a separate container and its files would not reach the running one.
-- `Server` declares its existing `exvia.up.railway.app` service domain.
-  `frontend` declares no domain; generate one with `railway domain`.
+- `frontend` declares the `exvia.up.railway.app` service domain and is the
+  only public service; `Server` is reachable only through the private network
+  (`server.railway.internal:8000`). See
+  [Single domain](#single-domain).
 - `postgres()` in the SDK defaults to a plain `postgres:18` image, while the
   live database has no image set. `railway.ts` clears `db.source` so applying
   does not redeploy the database with a different image.
 - Deployment itself is triggered by pushes to `main` on the connected GitHub
   repo; the IaC file only declares what is deployed and how.
+
+### Single domain
+
+Backend and frontend share `exvia.up.railway.app`. The domain points at
+`frontend`, and [next.config.ts](../../frontend/next.config.ts) rewrites these
+paths to Django (`BACKEND_URL`, default `http://localhost:8000` locally and
+`http://server.railway.internal:8000` on Railway):
+
+| Public path | Served by |
+|-------------|-----------|
+| `/api/...`, `/admin/...` | Django (proxied) |
+| `/static/...` | Django + whitenoise (admin assets) |
+| everything else | Next.js |
+
+- `trailingSlash: true` with `skipTrailingSlashRedirect: true`: Next strips
+  the trailing slash before rewriting by default, and Django routes require it
+  (a stripped slash turns POSTs into redirects). Next pages still resolve with
+  or without a slash.
+- `BACKEND_URL` is read when `next.config.ts` is evaluated and rewrites are
+  baked into the build, so it must be set as a build-time variable as well.
+- Next forwards `X-Forwarded-Host`/`X-Forwarded-Proto` from the Railway edge;
+  [settings.py](../../config/settings.py) trusts them
+  (`USE_X_FORWARDED_HOST`, `SECURE_PROXY_SSL_HEADER`) so CSRF and absolute
+  URLs use the public host. Safe because `Server` has no public domain.
+- `railway config plan/apply` does not move an existing domain between
+  services: remove `exvia.up.railway.app` from `Server` and add it to
+  `frontend` (Settings → Networking) once, then redeploy both.
+- Browser code should call the API with relative URLs (`/api/auth/token/`),
+  which also removes the need for CORS.
+- Locally, run Django on `:8000` and `make run_frontend` on `:3000`.
 
 ### Tooling
 
@@ -93,8 +125,7 @@ IaC can manage them, which removing those files does.
   works without installing anything system-wide. The pinned version is
   9.15.x because corepack cannot launch pnpm 12.
 - **Separate from `config/`**: the frontend is not served by Django or
-  whitenoise and is not part of the Railway deploy in
-  [railway.json](../../railway.json). Talking to the API will need CORS
-  and CSRF settings on the Django side (`CSRF_TRUSTED_ORIGINS` in
-  [settings.py](../../config/settings.py) only lists the Railway host
-  today, not `http://localhost:3000`).
+  whitenoise; it is its own Railway service that proxies to Django. Because
+  the browser only talks to one origin, no CORS is needed. Local development
+  through `http://localhost:3000` is same-origin too; only direct requests to
+  `:8000` from a page on `:3000` would need `CSRF_TRUSTED_ORIGINS` additions.

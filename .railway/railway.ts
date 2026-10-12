@@ -1,7 +1,8 @@
 import { defineRailway, github, group, postgres, project, service, volume } from "railway/iac";
 
 const GITHUB_REPO = "LordFitoi/exvia";
-const BACKEND_DOMAIN = "exvia.up.railway.app";
+const APP_DOMAIN = "exvia.up.railway.app";
+const BACKEND_PRIVATE_URL = "http://server.railway.internal:8000";
 const DATABASE_REGION = "us-west2";
 
 export default defineRailway(() => {
@@ -24,10 +25,7 @@ export default defineRailway(() => {
     preDeploy: "python manage.py migrate",
     start: "python manage.py collectstatic --noinput && gunicorn config.wsgi",
     replicas: { [DATABASE_REGION]: 1 },
-    networking: {
-      privateNetworkEndpoint: "server",
-      serviceDomains: { [BACKEND_DOMAIN]: {} },
-    },
+    networking: { privateNetworkEndpoint: "server" },
     env: {
       DISABLE_COLLECTSTATIC: "1",
       PORT: "8000",
@@ -43,6 +41,8 @@ export default defineRailway(() => {
     source: github(GITHUB_REPO, { branch: "main", rootDirectory: "frontend" }),
     build: { builder: "RAILPACK", buildCommand: "pnpm build" },
     start: "pnpm start",
+    networking: { serviceDomains: { [APP_DOMAIN]: {} } },
+    env: { BACKEND_URL: BACKEND_PRIVATE_URL },
   });
 
   return project("Exvia", {

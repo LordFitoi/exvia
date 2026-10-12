@@ -29,6 +29,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*", "exvia.up.railway.app"]
 
+# The frontend proxies /api, /admin and /static to this service, so the public
+# host and scheme arrive in the X-Forwarded-* headers.
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 # FORM SUBMISSION
 CSRF_TRUSTED_ORIGINS = ["https://exvia.up.railway.app"]
 
