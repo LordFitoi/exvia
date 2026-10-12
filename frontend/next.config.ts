@@ -10,6 +10,16 @@ const nextConfig: NextConfig = {
   // Django routes end in "/"; Next only forwards it when trailingSlash is on.
   trailingSlash: true,
   skipTrailingSlashRedirect: true,
+  // The browser must always revalidate the service worker so updates reach installed apps.
+  headers: async () => [
+    {
+      source: "/sw.js",
+      headers: [
+        { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+        { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+      ],
+    },
+  ],
   rewrites: async () => ({
     beforeFiles: [
       ...BACKEND_URL_PREFIXES.flatMap((prefix) => [
