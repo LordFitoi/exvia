@@ -3,8 +3,8 @@
 Next.js web client, separate from the Django backend. It lives in
 [frontend/](../../frontend/) and implements the mobile screens described in
 [frontend-screens.md](frontend-screens.md): login, signup, home, clans and
-profile, with a bottom tab bar once logged in. It talks to the backend only
-for authentication. It is an installable, full-screen PWA; see
+profile, with a bottom tab bar once logged in. It talks to the backend for
+authentication and for saving routes (see [map.md](map.md#route-creator)). It is an installable, full-screen PWA; see
 [frontend-pwa.md](frontend-pwa.md).
 
 ## Stack

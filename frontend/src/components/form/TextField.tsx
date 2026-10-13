@@ -8,6 +8,7 @@ interface TextFieldProps {
   autoComplete: HTMLInputAutoCompleteAttribute
   error?: string
   hint?: string
+  maxLength?: number
 }
 
 export default function TextField({
@@ -17,6 +18,7 @@ export default function TextField({
   autoComplete,
   error,
   hint,
+  maxLength,
 }: TextFieldProps) {
   const id = useId()
   const messageId = `${id}-message`
@@ -37,6 +39,7 @@ export default function TextField({
         autoCorrect="off"
         spellCheck={false}
         required
+        maxLength={maxLength}
         aria-invalid={hasError}
         aria-describedby={error || hint ? messageId : undefined}
       />

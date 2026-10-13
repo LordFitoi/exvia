@@ -19,8 +19,8 @@ or `open` (macOS).
 | `foundations.html` | Color palettes and roles, type scale, spacing, radius, elevation, icons |
 | `components.html` | Controls: buttons, checkbox, radio, switch, slider, segmented control, chips |
 | `forms.html` | Fields, select and dropdown, form sections, disclosure, step indicator |
-| `content.html` | Feedback and states, lists, avatars, cards, app bar, tabs, tab bar, bottom sheet, dialog |
-| `patterns.html` | Full mobile screens in phone frames: sign in, home feed, map, profile |
+| `content.html` | Feedback and states, lists, avatars, cards, app bar, tabs, tab bar, bottom sheet, modal sheet form, dialog |
+| `patterns.html` | Full mobile screens in phone frames: sign in, home feed, map, route creator, profile |
 | `exvia-ui.css` | Product design system entry point; only `@import`s the files below |
 | `fonts.css`, `fonts/` | `@font-face` for Public Sans and Barlow, vendored latin subsets with their OFL licenses |
 | `tokens.css` | Design tokens (`:root` custom properties) |
@@ -107,6 +107,10 @@ Exvia changes the following on purpose:
   with the same two families.
 - **Motion.** Only `transform` and `opacity` animate. Durations are tokens
   (150, 200 and 300ms) that collapse to ~0 under `prefers-reduced-motion`.
+- **Modal sheet for short forms.** A form that needs full attention, such as
+  naming a route, uses `<dialog class="sheet sheet-modal">` opened with
+  `showModal()`: a bottom sheet over a scrim, with the native dialog's focus
+  trap and Esc. The centered `dialog` stays for confirmations only.
 - **Map tiles are a stand-in.** `patterns.html` draws the map as inline SVG.
   When a real map library is added, keep the overlay components
   (`map-overlay`, `map-controls`, `marker*`, `sheet`) and replace only the

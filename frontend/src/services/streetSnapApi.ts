@@ -1,11 +1,8 @@
+import { DIRECTIONS_URL, HTTP_UNPROCESSABLE_ENTITY, STREET_PROFILE } from '@/services/mapboxConfig'
 import { isRecord } from '@/services/typeGuards'
 import type { Coordinates } from '@/types/geolocation'
 
-const DIRECTIONS_URL = 'https://api.mapbox.com/directions/v5/mapbox'
-// Only roads the profile can drive on count as streets, so footpaths and parks never match.
-const STREET_PROFILE = 'driving'
 const MAX_SNAP_DISTANCE_METERS = 50
-const HTTP_UNPROCESSABLE_ENTITY = 422
 
 interface SnapOptions {
   readonly accessToken: string

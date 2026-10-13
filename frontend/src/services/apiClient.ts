@@ -1,6 +1,7 @@
 import { isRecord } from '@/services/typeGuards'
 import type { FieldErrors } from '@/types/auth'
 
+export const HTTP_UNAUTHORIZED = 401
 const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.'
 const REQUEST_TIMEOUT_MS = 15000
 const TIMEOUT_ERROR_MESSAGE = 'The server is taking too long to respond. Please try again.'
@@ -16,11 +17,14 @@ export class ApiError extends Error {
   }
 }
 
-interface RequestOptions {
+export interface RequestOptions {
   readonly method?: 'GET' | 'POST'
   readonly body?: unknown
   readonly accessToken?: string
 }
+
+export const isUnauthorizedError = (error: unknown): boolean =>
+  error instanceof ApiError && error.status === HTTP_UNAUTHORIZED
 
 const firstMessage = (value: unknown): string | null => {
   if (typeof value === 'string') return value

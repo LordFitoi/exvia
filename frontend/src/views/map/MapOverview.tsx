@@ -1,11 +1,16 @@
 'use client'
 
+import { useCallback, useState } from 'react'
+
+import Toast from '@/components/feedback/Toast'
 import MapStatusView from '@/views/map/MapStatusView'
 import UserMap from '@/views/map/UserMap'
+import RouteCreatorView from '@/views/routes/RouteCreatorView'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useStreetPosition } from '@/hooks/useStreetPosition'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { GeolocationStatus, StreetPositionStatus } from '@/types/geolocation'
+import type { SavedRoute } from '@/types/route'
 
 interface StatusMessage {
   title: string
@@ -40,6 +45,13 @@ const WAITING_MESSAGES: Record<WaitingKey, StatusMessage> = {
   },
 }
 
+const SECONDS_PER_MINUTE = 60
+
+const describeSavedRoute = ({ name, distance, estimated_time }: SavedRoute): string => {
+  const minutes = Math.max(1, Math.round(estimated_time / SECONDS_PER_MINUTE))
+  return `${name} saved: ${distance.toFixed(1)} km, about ${minutes} min`
+}
+
 const getWaitingKey = (
   locationStatus: GeolocationStatus,
   streetStatus: StreetPositionStatus,
@@ -55,7 +67,32 @@ export default function MapOverview() {
     coordinates: location.coordinates,
   })
 
-  if (street.coordinates) return <UserMap coordinates={street.coordinates} />
+  const [isCreatingRoute, setIsCreatingRoute] = useState(false)
+  const [savedMessage, setSavedMessage] = useState<string | null>(null)
+
+  const dismissSavedMessage = useCallback(() => setSavedMessage(null), [])
+
+  const handleRouteSaved = (route: SavedRoute) => {
+    setSavedMessage(describeSavedRoute(route))
+    setIsCreatingRoute(false)
+  }
+
+  if (street.coordinates && isCreatingRoute) {
+    return (
+      <RouteCreatorView
+        coordinates={street.coordinates}
+        onClose={() => setIsCreatingRoute(false)}
+        onSaved={handleRouteSaved}
+      />
+    )
+  }
+  if (street.coordinates) {
+    return (
+      <UserMap coordinates={street.coordinates} onCreateRoute={() => setIsCreatingRoute(true)}>
+        {savedMessage && <Toast message={savedMessage} onDismiss={dismissSavedMessage} />}
+      </UserMap>
+    )
+  }
   const { title, description } = WAITING_MESSAGES[getWaitingKey(location.status, street.status)]
   return <MapStatusView title={title} description={description} />
 }

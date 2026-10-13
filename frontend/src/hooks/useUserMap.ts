@@ -4,14 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import type { Map as MapboxMap, Marker } from 'mapbox-gl'
 
+import { createBaseMap, createUserMarkerElement, toLngLat } from '@/services/baseMap'
+import type { BaseMapOptions } from '@/services/baseMap'
 import type { Coordinates } from '@/types/geolocation'
 
-const LIGHT_MAP_STYLE = 'mapbox://styles/mapbox/light-v11'
-const DARK_MAP_STYLE = 'mapbox://styles/mapbox/dark-v11'
-const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)'
 const USER_ZOOM = 15
-const USER_MARKER_LABEL = 'You'
-const HTTP_UNAUTHORIZED = 401
 
 interface UserMapOptions {
   accessToken: string | undefined
@@ -24,67 +21,22 @@ interface UserMapHandle {
   recenter: () => void
 }
 
-interface MountOptions {
-  container: HTMLDivElement
-  accessToken: string
-  center: Coordinates
-  signal: AbortSignal
-  onUnauthorized: () => void
-}
-
 interface MountedMap {
   map: MapboxMap
   marker: Marker
 }
 
-const toLngLat = ({ longitude, latitude }: Coordinates): [number, number] => [longitude, latitude]
-
-const getMapStyle = (isDark: boolean): string => (isDark ? DARK_MAP_STYLE : LIGHT_MAP_STYLE)
-
-const isUnauthorizedError = (error: unknown): boolean =>
-  typeof error === 'object' && error !== null && 'status' in error && error.status === HTTP_UNAUTHORIZED
-
-const createUserMarkerElement = (): HTMLDivElement => {
-  const dot = document.createElement('div')
-  dot.className = 'marker-me'
-  const label = document.createElement('span')
-  label.className = 'marker-label'
-  label.textContent = USER_MARKER_LABEL
-  dot.append(label)
-  return dot
-}
-
-// mapbox-gl touches `window` on import, so it is loaded only in the browser, after mount.
-const mountMap = async ({
-  container,
-  accessToken,
-  center,
-  signal,
-  onUnauthorized,
-}: MountOptions): Promise<MountedMap | null> => {
-  const { default: mapboxgl } = await import('mapbox-gl')
-  if (signal.aborted) return null
-
-  const darkScheme = window.matchMedia(DARK_SCHEME_QUERY)
-  const map = new mapboxgl.Map({
-    container,
-    accessToken,
-    style: getMapStyle(darkScheme.matches),
-    center: toLngLat(center),
-    zoom: USER_ZOOM,
-  })
+const mountMap = async (options: Omit<BaseMapOptions, 'zoom'>): Promise<MountedMap | null> => {
+  const base = await createBaseMap({ ...options, zoom: USER_ZOOM })
+  if (!base) return null
   // The marker element is positioned by its own CSS (translate -50%), so anchor at its corner.
-  const marker = new mapboxgl.Marker({ element: createUserMarkerElement(), anchor: 'top-left' })
-    .setLngLat(toLngLat(center))
-    .addTo(map)
-
-  map.on('error', ({ error }) => {
-    if (isUnauthorizedError(error)) onUnauthorized()
+  const marker = new base.mapboxgl.Marker({
+    element: createUserMarkerElement(),
+    anchor: 'top-left',
   })
-  darkScheme.addEventListener('change', (event) => map.setStyle(getMapStyle(event.matches)), {
-    signal,
-  })
-  return { map, marker }
+    .setLngLat(toLngLat(options.center))
+    .addTo(base.map)
+  return { map: base.map, marker }
 }
 
 export const useUserMap = ({ accessToken, coordinates }: UserMapOptions): UserMapHandle => {

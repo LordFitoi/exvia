@@ -144,6 +144,7 @@
                 <button class="icon-button" type="button" aria-label="Zoom in"><span class="icon icon-plus" aria-hidden="true"></span></button>
                 <button class="icon-button" type="button" aria-label="Zoom out"><span class="icon icon-minus" aria-hidden="true"></span></button>
                 <button class="icon-button" type="button" aria-label="My location"><span class="icon icon-locate" aria-hidden="true"></span></button>
+                <button class="icon-button" type="button" aria-label="New route"><span class="icon icon-route" aria-hidden="true"></span></button>
               </div>
             </div>
             <button class="marker marker-start marker-pos-a" type="button" aria-label="Start: Harbour"><span class="icon icon-sm icon-flag" aria-hidden="true"></span></button>
@@ -169,6 +170,49 @@
           </nav>
         </div>
         <figcaption class="phone-caption">Map: full-bleed canvas, floating search and controls, bottom sheet</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="map">
+            <svg class="map-canvas" viewBox="0 0 360 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+              <rect class="map-land" width="360" height="700"></rect>
+              <path class="map-water" d="M0 520 C80 470 140 560 230 520 S330 440 360 470 V700 H0Z"></path>
+              <path class="map-road" d="M0 120 H360 M0 300 H360 M0 420 H360 M90 0 V560 M250 0 V560"></path>
+              <path class="map-route-casing" d="M100 238 L250 154 L280 308"></path>
+              <path class="map-route" d="M100 238 L250 154 L280 308"></path>
+            </svg>
+            <div class="map-overlay">
+              <div class="map-controls">
+                <button class="icon-button" type="button" aria-label="Cancel new route"><span class="icon icon-x" aria-hidden="true"></span></button>
+                <button class="icon-button" type="button" aria-label="My location"><span class="icon icon-locate" aria-hidden="true"></span></button>
+              </div>
+            </div>
+            <button class="marker marker-start marker-pos-a" type="button" aria-label="Remove point 1">1</button>
+            <button class="marker marker-primary marker-pos-b" type="button" aria-label="Remove point 2">2</button>
+            <button class="marker marker-primary marker-pos-c" type="button" aria-label="Remove point 3">3</button>
+            <div class="sheet map-sheet" role="region" aria-label="Route points">
+              <span class="sheet-handle"></span>
+              <div class="sheet-header"><h3 class="text-subtitle">New route</h3><span class="badge badge-primary">3 points</span></div>
+              <div class="route-point-list">
+                <ul class="list">
+                  <li class="list-item"><span class="list-item-icon">1</span><span class="list-item-body"><span class="list-item-title">Point 1</span><span class="list-item-meta">40.41680, -3.70380</span></span><button class="icon-button" type="button" aria-label="Remove point 1"><span class="icon icon-x" aria-hidden="true"></span></button></li>
+                  <li class="list-item"><span class="list-item-icon">2</span><span class="list-item-body"><span class="list-item-title">Point 2</span><span class="list-item-meta">40.42210, -3.69120</span></span><button class="icon-button" type="button" aria-label="Remove point 2"><span class="icon icon-x" aria-hidden="true"></span></button></li>
+                  <li class="list-item"><span class="list-item-icon">3</span><span class="list-item-body"><span class="list-item-title">Point 3</span><span class="list-item-meta">40.43050, -3.68700</span></span><button class="icon-button" type="button" aria-label="Remove point 3"><span class="icon icon-x" aria-hidden="true"></span></button></li>
+                </ul>
+              </div>
+              <button class="button button-primary button-lg button-block" type="button">Save route</button>
+            </div>
+          </div>
+          <nav class="tab-bar" aria-label="Main">
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-home" aria-hidden="true"></span>Home</a>
+            <a class="tab-bar-item" href="#" aria-current="page"><span class="icon icon-lg icon-pin" aria-hidden="true"></span>Map</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-users" aria-hidden="true"></span>Clans</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-user" aria-hidden="true"></span>Profile</a>
+          </nav>
+        </div>
+        <figcaption class="phone-caption">Route creator: tap the map to add street points, numbered in order, then save</figcaption>
       </figure>
 
       <figure>

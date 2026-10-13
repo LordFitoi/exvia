@@ -182,6 +182,28 @@
           </div>
         </div>
         <div class="specimen">
+          <span class="specimen-title">Modal sheet: a short form over the screen (native dialog, showModal)</span>
+          <div class="sheet-preview">
+            <div class="sheet" role="dialog" aria-label="Save route">
+              <span class="sheet-handle"></span>
+              <div class="sheet-header">
+                <h3 class="text-subtitle">Save route</h3>
+                <button class="icon-button" type="button" aria-label="Close save route"><span class="icon icon-x" aria-hidden="true"></span></button>
+              </div>
+              <div class="field">
+                <label class="field-label" for="route-name">Name</label>
+                <input class="input" id="route-name" type="text" required>
+              </div>
+              <div class="field">
+                <label class="field-label" for="route-notes">Description (optional)</label>
+                <textarea class="textarea" id="route-notes" maxlength="255" aria-describedby="route-notes-hint"></textarea>
+                <span class="field-hint" id="route-notes-hint">255 characters max.</span>
+              </div>
+              <button class="button button-primary button-lg button-block" type="button">Save route</button>
+            </div>
+          </div>
+        </div>
+        <div class="specimen">
           <span class="specimen-title">Confirm dialog: destructive actions only</span>
           <div class="dialog-preview">
             <div class="dialog" role="alertdialog" aria-labelledby="dlg-title" aria-describedby="dlg-text">

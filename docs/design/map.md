@@ -3,7 +3,8 @@
 The Map tab in [frontend/](../../frontend/): a full-bleed grayscale
 [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/) map centered on the
 rider, with a dot and a "You" label at their current position, always
-snapped to the nearest street. The shell and
+snapped to the nearest street, and a button that opens the
+[route creator](#route-creator). The shell and
 tab bar are described in [frontend-screens.md](frontend-screens.md); the map
 components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 [patterns.html](../ui-ux/patterns.html)).
@@ -22,6 +23,7 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 | Street snap | `hooks/useStreetPosition.ts` | Snaps each GPS fix to the nearest street; keeps the last street position |
 | Snap request | `services/streetSnapApi.ts` | Mapbox Directions call that returns the snapped point, or `null` |
 | Mapbox | `hooks/useUserMap.ts` | Creates the map and the "You" marker, keeps the marker on the latest position |
+| Base map | `services/baseMap.ts` | Shared by both maps: dynamic `mapbox-gl` import, style following the color scheme, 401 handling, the "You" marker element |
 | Token | `services/mapboxConfig.ts` | Reads `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` for the map and the snap request |
 | Types | `types/geolocation.ts` | `Coordinates`, `GeolocationState`, `StreetPositionState` |
 
@@ -58,6 +60,71 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 - Failures: a rejected import or a 401 from Mapbox (bad token) shows "Map
   unavailable"; a missing token logs to the console and shows the same
   message. Other tile errors are ignored (Mapbox retries them).
+
+## Route creator
+
+The **New route** button (an icon-only button with the `icon-route` glyph, in
+the top right `map-controls` group under the locate button, labeled "New route"
+for screen readers) swaps the map for `RouteCreatorView`. `MapOverview` holds the
+`isCreatingRoute` flag, so the creator reuses the street position already
+resolved and no second location lookup happens.
+
+| Piece | File | Job |
+|-------|------|-----|
+| Screen | `views/routes/RouteCreatorView.tsx` | Full-bleed map, cancel and locate controls, bottom sheet with the point list and the save button |
+| List | `views/routes/RoutePointList.tsx` | Numbered points with coordinates and a remove button each; a hint while empty |
+| Modal | `views/routes/SaveRouteDialog.tsx` | Name (required, 100) and description (optional, 255), then `POST /api/routes/` |
+| Points | `hooks/useRouteDraft.ts` | The ordered points; snaps each tap to a street before adding it |
+| Map | `hooks/useRouteMap.ts` | Map lifecycle, tap and marker-tap handlers, keeps line and markers in sync with the points |
+| Layers | `services/routeMapLayers.ts` | The route line (GeoJSON source plus casing and line layer) and the numbered markers |
+| Street path | `services/streetRouteApi.ts`, `services/routePath.ts` | Directions request for one leg; joins the legs into the full path |
+| API | `services/routesApi.ts`, `services/authorizedRequest.ts` | `createRoute`; calls as the signed-in user, refreshing an expired access token once |
+| Toast | `components/feedback/Toast.tsx` | Confirmation after saving, dismissed after 5 seconds |
+
+Behavior:
+
+- Tapping the map adds a point **in tap order**. The tap is snapped with the
+  same Directions request as the rider's position (`snapToStreet`, 50 m,
+  `driving` profile); the snapped spot, not the tap, becomes the point. With no
+  street within 50 m, or a failed request, an error alert appears in the sheet
+  and no point is added. Taps while a lookup is running are ignored, so the
+  order cannot be scrambled by slow responses; the sheet badge reads
+  "Routing…" and Save is disabled meanwhile.
+- Each point after the first also fetches the **street path from the previous
+  point** (Mapbox Directions, `driving`, `overview=full`, GeoJSON geometry) and
+  keeps it as that point's `path` without the shared first vertex. If Mapbox
+  finds no street route to the spot (no route, or a 422), an alert says so and
+  the point is not added. The route is therefore never a straight line across
+  blocks: every leg follows streets.
+- A point is removed with the X in its list row or by tapping its marker
+  (marker taps do not add a point). Remaining points are renumbered. Removing
+  the last point just drops its leg; removing a middle or first point fetches
+  one new leg joining its neighbours (or none, for the first). If that request
+  fails the point stays and an alert explains it, so a straight shortcut never
+  appears.
+- Markers are the guide's `marker` buttons, numbered, the first one
+  `marker-start`. The line is the joined street path, drawn with the guide's
+  route colors (`--color-primary` over a `--color-surface` casing, resolved
+  from the tokens, 7 and 11 px like `.map-route`). Layers are
+  re-added on every `style.load`, because switching between the light and
+  dark style drops custom layers.
+- **Save route** is disabled until there are 2 points and no leg is being
+  fetched. It sends the whole street path as `points`, not only the tapped
+  points, so the server's distance follows the roads (see
+  [routes.md](routes.md#points)). It opens the modal: a native `<dialog>` opened with `showModal()`,
+  styled as the guide's bottom sheet (`sheet sheet-modal`), so Esc, focus
+  trapping and the backdrop are the browser's. The guide reserves the centered
+  `dialog` for confirmations, hence the sheet.
+- On success the creator closes and the map shows a toast with the saved
+  name, the server's distance and the estimated time. On failure the modal
+  stays open with the server's field errors or a form-level alert, and the
+  drawn points are kept. The cancel button discards the draft without
+  asking: nothing is stored until save.
+- The access token is the 15-minute JWT; `requestJsonAuthorized` renews it
+  once with the refresh token on a `401`. If the refresh is also rejected the
+  tokens are cleared and the modal shows "Your session has expired", and the
+  next reload lands on the login screen. `AuthProvider` is not told, so the
+  screen itself does not redirect.
 
 ## Configuration
 

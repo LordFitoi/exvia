@@ -1,12 +1,7 @@
-import { ApiError } from '@/services/apiClient'
+import { isUnauthorizedError } from '@/services/apiClient'
 import { fetchCurrentUser, refreshTokens, requestTokens } from '@/services/authApi'
 import { clearTokens, loadTokens, saveTokens } from '@/services/tokenStorage'
 import type { LoginCredentials, User } from '@/types/auth'
-
-const UNAUTHORIZED_STATUS = 401
-
-const isUnauthorized = (error: unknown): boolean =>
-  error instanceof ApiError && error.status === UNAUTHORIZED_STATUS
 
 /** Exchanges credentials for tokens, stores them and returns the signed-in user. */
 export const startSession = async (credentials: LoginCredentials): Promise<User> => {
@@ -28,7 +23,7 @@ export const restoreSession = async (): Promise<User | null> => {
   try {
     return await fetchCurrentUser(tokens.access)
   } catch (error) {
-    if (!isUnauthorized(error)) throw error
+    if (!isUnauthorizedError(error)) throw error
   }
 
   try {
@@ -37,7 +32,7 @@ export const restoreSession = async (): Promise<User | null> => {
     saveTokens(renewed)
     return user
   } catch (error) {
-    if (!isUnauthorized(error)) throw error
+    if (!isUnauthorizedError(error)) throw error
     clearTokens()
     return null
   }

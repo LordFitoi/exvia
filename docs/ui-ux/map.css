@@ -106,6 +106,8 @@
   background: var(--color-ink);
   box-shadow: var(--shadow-z8);
   color: var(--color-on-ink);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
 }
 
 .marker-primary { background: var(--color-primary); color: var(--color-on-primary); }
@@ -161,6 +163,14 @@
 .map-sheet {
   position: relative;
   z-index: var(--z-sheet);
+}
+
+/* Ordered points of a route being drawn: the list scrolls inside the sheet, so
+   the sheet never grows past the map (Parkinson) */
+.route-point-list {
+  max-block-size: min(30dvh, 12rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .route-stats {

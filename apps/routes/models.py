@@ -16,13 +16,16 @@ class Route(TimeStampedModel):
     """Path of [lng, lat] points drawn by a user, with derived length and travel time."""
 
     name = models.CharField(max_length=NAME_MAX_LENGTH)
-    description = models.TextField(validators=[MaxLengthValidator(DESCRIPTION_MAX_LENGTH)])
+    description = models.TextField(blank=True, validators=[MaxLengthValidator(DESCRIPTION_MAX_LENGTH)])
     points = models.JSONField(validators=[validate_points])
     distance = models.FloatField(editable=False, help_text='Kilometres, calculated from points.')
     estimated_time = models.DurationField(
         editable=False, help_text='Calculated from distance at the average speed.'
     )
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='routes')
+
+    class Meta:
+        ordering = ('-created_at',)
 
     def save(self, *args: object, update_fields: Iterable[str] | None = None, **kwargs: object) -> None:
         self.distance = calculate_distance_km(self.points)
