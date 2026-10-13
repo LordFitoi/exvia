@@ -165,10 +165,44 @@
   z-index: var(--z-sheet);
 }
 
-/* Ordered points of a route being drawn: the list scrolls inside the sheet, so
-   the sheet never grows past the map (Parkinson) */
+/* Map preview inside a screen: a rounded frame around a map canvas, with a
+   centered message while there is nothing to show */
+.route-preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  block-size: min(35dvh, 18rem);
+  border-radius: var(--radius-lg);
+  background: var(--map-land);
+  overflow: hidden;
+}
+
+/* Fill variant: the preview takes the free height of its column instead of a
+   fixed one, so a screen that pins its action to the bottom gives the map the
+   rest. Keeps a floor so the route stays legible on short screens */
+.route-preview-fill {
+  flex: 1;
+  block-size: auto;
+  min-block-size: 12rem;
+}
+
+/* Ordered points of a route being drawn: the list scrolls inside its container,
+   so it never pushes the screen past the map and the primary action
+   (Parkinson) */
 .route-point-list {
   max-block-size: min(30dvh, 12rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  position: relative;
+}
+
+/* Routes to pick from: a scroll box exactly four rows tall (each row is a 2.5rem
+   icon tile plus 0.75rem of padding above and below, with a 1px separator
+   between rows), so the map above gets the rest of the screen however many
+   routes there are. Fewer than four routes shrink it to fit */
+.route-choice-list {
+  flex: none;
+  max-block-size: calc(4 * (2.5rem + 2 * var(--space-3)) + 3px);
   overflow-y: auto;
   overscroll-behavior: contain;
   position: relative;

@@ -155,13 +155,28 @@
           </div>
         </div>
         <div class="specimen specimen-wide">
-          <span class="specimen-title">Bottom tab bar: 4 destinations, Home first and Profile last</span>
+          <span class="specimen-title">Bottom tab bar: 5 destinations, Home first, Profile last, one raised action</span>
           <nav class="tab-bar" aria-label="Main">
             <a class="tab-bar-item" href="#" aria-current="page"><span class="icon icon-lg icon-home" aria-hidden="true"></span>Home</a>
             <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-pin" aria-hidden="true"></span>Map</a>
+            <a class="tab-bar-item tab-bar-action" href="#"><span class="tab-bar-action-icon"><span class="icon icon-lg icon-flag-checkered" aria-hidden="true"></span></span>Ride</a>
             <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-users" aria-hidden="true"></span>Clans</a>
             <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-user" aria-hidden="true"></span>Profile</a>
           </nav>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Screen header: title left, close right</span>
+          <div class="screen-header">
+            <h3 class="text-heading">Ride</h3>
+            <button class="icon-button" type="button" aria-label="Close"><span class="icon icon-x" aria-hidden="true"></span></button>
+          </div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Selectable list: one row pressed, with a check</span>
+          <ul class="list">
+            <li><button class="list-item" type="button" aria-pressed="true"><span class="list-item-icon"><span class="icon icon-route" aria-hidden="true"></span></span><span class="list-item-body"><span class="list-item-title">Sunday loop</span><span class="list-item-meta">42.1 km, 42 min</span></span><span class="icon icon-check" aria-hidden="true"></span></button></li>
+            <li><button class="list-item" type="button" aria-pressed="false"><span class="list-item-icon"><span class="icon icon-route" aria-hidden="true"></span></span><span class="list-item-body"><span class="list-item-title">Coast road</span><span class="list-item-meta">118.6 km, 1 h 59 min</span></span></button></li>
+          </ul>
         </div>
         <div class="specimen">
           <span class="specimen-title">Bottom sheet: secondary flows, always with a close</span>

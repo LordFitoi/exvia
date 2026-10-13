@@ -3,7 +3,8 @@
 Rider routes: a path drawn by a user, with its length and travel time
 calculated from the path. Model, Django admin and a REST API (create, list,
 retrieve, delete). The screen that creates routes is described in
-[map.md](map.md#route-creator).
+[map.md](map.md#route-creator); the one that lists and rides them in
+[ride.md](ride.md).
 
 ## Layout
 

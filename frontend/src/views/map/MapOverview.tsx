@@ -8,6 +8,7 @@ import UserMap from '@/views/map/UserMap'
 import RouteCreatorView from '@/views/routes/RouteCreatorView'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useStreetPosition } from '@/hooks/useStreetPosition'
+import { formatDistance, formatDuration } from '@/services/formatRoute'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { GeolocationStatus, StreetPositionStatus } from '@/types/geolocation'
 import type { SavedRoute } from '@/types/route'
@@ -45,12 +46,8 @@ const WAITING_MESSAGES: Record<WaitingKey, StatusMessage> = {
   },
 }
 
-const SECONDS_PER_MINUTE = 60
-
-const describeSavedRoute = ({ name, distance, estimated_time }: SavedRoute): string => {
-  const minutes = Math.max(1, Math.round(estimated_time / SECONDS_PER_MINUTE))
-  return `${name} saved: ${distance.toFixed(1)} km, about ${minutes} min`
-}
+const describeSavedRoute = ({ name, distance, estimated_time }: SavedRoute): string =>
+  `${name} saved: ${formatDistance(distance)}, about ${formatDuration(estimated_time)}`
 
 const getWaitingKey = (
   locationStatus: GeolocationStatus,

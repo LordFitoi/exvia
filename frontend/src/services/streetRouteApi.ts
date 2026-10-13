@@ -1,4 +1,5 @@
 import { DIRECTIONS_URL, HTTP_UNPROCESSABLE_ENTITY, STREET_PROFILE } from '@/services/mapboxConfig'
+import { parseLngLat } from '@/services/coordinates'
 import { isRecord } from '@/services/typeGuards'
 import type { Coordinates } from '@/types/geolocation'
 
@@ -7,20 +8,13 @@ interface RouteOptions {
   readonly signal: AbortSignal
 }
 
-const parseCoordinate = (value: unknown): Coordinates | null => {
-  if (!Array.isArray(value)) return null
-  const [longitude, latitude] = value
-  if (typeof longitude !== 'number' || typeof latitude !== 'number') return null
-  return { longitude, latitude }
-}
-
 const parseStreetPath = (payload: unknown): Coordinates[] | null => {
   if (!isRecord(payload) || !Array.isArray(payload.routes)) return null
   const [route] = payload.routes
   if (!isRecord(route) || !isRecord(route.geometry)) return null
   const { coordinates } = route.geometry
   if (!Array.isArray(coordinates)) return null
-  const path = coordinates.map(parseCoordinate)
+  const path = coordinates.map(parseLngLat)
   return path.every((point) => point !== null) ? path : null
 }
 

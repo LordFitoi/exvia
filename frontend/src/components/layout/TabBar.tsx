@@ -7,11 +7,14 @@ interface TabDestination {
   href: string
   label: string
   iconClass: string
+  /** The one raised, filled destination of the bar. */
+  isAction?: boolean
 }
 
 const TABS: readonly TabDestination[] = [
   { href: '/', label: 'Home', iconClass: 'icon-home' },
   { href: '/map', label: 'Map', iconClass: 'icon-pin' },
+  { href: '/ride', label: 'Ride', iconClass: 'icon-flag-checkered', isAction: true },
   { href: '/clans', label: 'Clans', iconClass: 'icon-users' },
   { href: '/profile', label: 'Profile', iconClass: 'icon-user' },
 ]
@@ -29,14 +32,20 @@ export default function TabBar() {
 
   return (
     <nav className="tab-bar" aria-label="Main">
-      {TABS.map(({ href, label, iconClass }) => (
+      {TABS.map(({ href, label, iconClass, isAction }) => (
         <Link
           key={href}
-          className="tab-bar-item"
+          className={isAction ? 'tab-bar-item tab-bar-action' : 'tab-bar-item'}
           href={href}
           aria-current={isCurrentTab(pathname, href) ? 'page' : undefined}
         >
-          <span className={`icon icon-lg ${iconClass}`} aria-hidden="true"></span>
+          {isAction ? (
+            <span className="tab-bar-action-icon">
+              <span className={`icon icon-lg ${iconClass}`} aria-hidden="true"></span>
+            </span>
+          ) : (
+            <span className={`icon icon-lg ${iconClass}`} aria-hidden="true"></span>
+          )}
           {label}
         </Link>
       ))}

@@ -36,10 +36,27 @@
 
 .list > * + * { border-block-start: 1px dashed var(--color-border); }
 
-a.list-item:active { background: var(--color-surface-sunken); }
+a.list-item:active,
+button.list-item:active { background: var(--color-surface-sunken); }
+
+/* A row that selects one option: a button that fills the row. The pressed row
+   gets a primary tint and a check, so the choice is not color alone */
+button.list-item {
+  inline-size: 100%;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: start;
+}
+
+button.list-item[aria-pressed="true"] { background: var(--color-primary-soft); }
+button.list-item[aria-pressed="true"] > .icon-check { color: var(--color-primary-text); }
+button.list-item[aria-pressed="true"] .list-item-title { color: var(--color-primary-text); }
 
 @media (hover: hover) {
-  a.list-item:hover { background: var(--color-surface-sunken); }
+  a.list-item:hover,
+  button.list-item:hover { background: var(--color-surface-sunken); }
+  button.list-item[aria-pressed="true"]:hover { background: var(--color-primary-soft); }
 }
 
 .list-item-body {

@@ -9,7 +9,9 @@
   margin-inline: auto;
 }
 
+/* Every screen fades in and rises when it mounts (keyframes: motion.css) */
 .screen-body {
+  animation: screen-in var(--duration-base) var(--ease-out);
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -22,7 +24,24 @@
   padding-block: calc(var(--space-8) + var(--safe-top)) calc(var(--space-8) + var(--safe-bottom));
 }
 
+/* Route picker: the map takes all the free height, the route list below it shows four routes and
+   scrolls, and the Ride button sits at the bottom edge (the tab bar is hidden there) */
+.route-picker {
+  gap: var(--space-6);
+  padding-block-end: calc(var(--space-4) + var(--safe-bottom));
+}
+
+.route-picker-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-block-size: 0;
+}
+
 /* Map screen: full-bleed, fills the column above the tab bar */
 .app-shell > .map {
   flex: 1;
+  /* Fade only: moving the canvas would blur the tiles */
+  animation: fade-in var(--duration-base) var(--ease-out);
 }

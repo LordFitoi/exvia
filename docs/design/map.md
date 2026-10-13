@@ -23,6 +23,7 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 | Street snap | `hooks/useStreetPosition.ts` | Snaps each GPS fix to the nearest street; keeps the last street position |
 | Snap request | `services/streetSnapApi.ts` | Mapbox Directions call that returns the snapped point, or `null` |
 | Mapbox | `hooks/useUserMap.ts` | Creates the map and the "You" marker, keeps the marker on the latest position |
+| Map instance | `hooks/useMapInstance.ts` | Creates a map once the token is known, keeps it sized to its container, removes it on unmount; used by the creator and the [Ride](ride.md) maps |
 | Base map | `services/baseMap.ts` | Shared by both maps: dynamic `mapbox-gl` import, style following the color scheme, 401 handling, the "You" marker element |
 | Token | `services/mapboxConfig.ts` | Reads `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` for the map and the snap request |
 | Types | `types/geolocation.ts` | `Coordinates`, `GeolocationState`, `StreetPositionState` |
@@ -67,7 +68,9 @@ The **New route** button (an icon-only button with the `icon-route` glyph, in
 the top right `map-controls` group under the locate button, labeled "New route"
 for screen readers) swaps the map for `RouteCreatorView`. `MapOverview` holds the
 `isCreatingRoute` flag, so the creator reuses the street position already
-resolved and no second location lookup happens.
+resolved and no second location lookup happens. While the creator is open the
+bottom tab bar is hidden (`useHideTabBar`), so the map and the sheet use the
+full height and the cancel button is the way out.
 
 | Piece | File | Job |
 |-------|------|-----|
@@ -75,6 +78,7 @@ resolved and no second location lookup happens.
 | List | `views/routes/RoutePointList.tsx` | Numbered points with coordinates and a remove button each; a hint while empty |
 | Modal | `views/routes/SaveRouteDialog.tsx` | Name (required, 100) and description (optional, 255), then `POST /api/routes/` |
 | Points | `hooks/useRouteDraft.ts` | The ordered points; snaps each tap to a street, routes each leg, and adds, removes and moves points |
+| Sheet | `views/routes/RouteSheet.tsx`, `hooks/useSheetGrab.ts` | The bottom sheet and its collapse gesture |
 | Reorder | `hooks/useDragReorder.ts` | Press-and-hold drag gesture (and Alt+Arrow keys) for the point list |
 | Map | `hooks/useRouteMap.ts` | Map lifecycle, tap and marker-tap handlers, keeps line and markers in sync with the points |
 | Layers | `services/routeMapLayers.ts` | The route line (GeoJSON source plus casing and line layer) and the numbered markers |
@@ -103,6 +107,20 @@ Behavior:
   one new leg joining its neighbours (or none, for the first). If that request
   fails the point stays and an alert explains it, so a straight shortcut never
   appears.
+- **Collapsing the sheet**: the handle and the header form the grab area.
+  Dragging it down more than 32 px slides the sheet down by the height of its
+  body (plus the gap above it), leaving only the handle and the header (and an
+  error alert, if one is showing) at the bottom edge, so more map shows;
+  dragging up slides it back. The change starts as soon as the finger has gone
+  far enough, once per press, and animates `transform` for 300 ms. The offset
+  comes from a `ResizeObserver` on the body, so it stays right while points are
+  added or removed during the collapse. The body is `inert` while collapsed, so
+  its hidden buttons cannot be focused. The handle is also a button
+  (`aria-expanded`): a tap or the keyboard does the same. The grab area has
+  `touch-action: none` so the drag does not scroll the page; the list below
+  keeps its own scrolling. Error alerts stay visible while collapsed, because a
+  tap on the map can still fail with a message. The state is local to the sheet
+  and resets with the creator.
 - **Reordering**: press and hold a row for 400 ms (the phone vibrates briefly),
   then move up or down; the row follows the finger and the others slide to
   open the gap, and the list autoscrolls near its top and bottom edges. A

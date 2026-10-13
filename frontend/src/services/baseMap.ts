@@ -16,6 +16,8 @@ export interface BaseMapOptions {
   readonly accessToken: string
   readonly center: Coordinates
   readonly zoom: number
+  readonly pitch?: number
+  readonly bearing?: number
   readonly signal: AbortSignal
   readonly onUnauthorized: () => void
 }
@@ -52,6 +54,8 @@ export const createBaseMap = async ({
   accessToken,
   center,
   zoom,
+  pitch = 0,
+  bearing = 0,
   signal,
   onUnauthorized,
 }: BaseMapOptions): Promise<BaseMap | null> => {
@@ -65,6 +69,8 @@ export const createBaseMap = async ({
     style: getMapStyle(darkScheme.matches),
     center: toLngLat(center),
     zoom,
+    pitch,
+    bearing,
   })
   map.on('error', ({ error }) => {
     if (isUnauthorizedMapError(error)) onUnauthorized()

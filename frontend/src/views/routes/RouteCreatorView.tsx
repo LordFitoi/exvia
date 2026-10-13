@@ -5,12 +5,14 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { useState } from 'react'
 
 import FormAlert from '@/components/form/FormAlert'
+import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useRouteDraft } from '@/hooks/useRouteDraft'
 import { useRouteMap } from '@/hooks/useRouteMap'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import { flattenRoutePath } from '@/services/routePath'
 import MapStatusView from '@/views/map/MapStatusView'
 import RoutePointList from '@/views/routes/RoutePointList'
+import RouteSheet from '@/views/routes/RouteSheet'
 import SaveRouteDialog from '@/views/routes/SaveRouteDialog'
 import type { Coordinates } from '@/types/geolocation'
 import type { SavedRoute } from '@/types/route'
@@ -35,6 +37,9 @@ export default function RouteCreatorView({ coordinates, onClose, onSaved }: Rout
     onMapClick: draft.addPoint,
     onPointRemove: draft.removePoint,
   })
+
+  // The load-failure screen has no way out of its own, so it keeps the tab bar.
+  useHideTabBar(!hasLoadFailed)
 
   if (hasLoadFailed) {
     return (
@@ -62,15 +67,7 @@ export default function RouteCreatorView({ coordinates, onClose, onSaved }: Rout
           </button>
         </div>
       </div>
-      <div className="sheet map-sheet" role="region" aria-label="Route points">
-        <span className="sheet-handle"></span>
-        <div className="sheet-header">
-          <h2 className="text-subtitle">New route</h2>
-          <span className="badge badge-primary" aria-live="polite">
-            {statusLabel}
-          </span>
-        </div>
-        <FormAlert message={draft.error} />
+      <RouteSheet statusLabel={statusLabel} notice={<FormAlert message={draft.error} />}>
         <RoutePointList
           points={draft.points}
           onRemove={draft.removePoint}
@@ -84,7 +81,7 @@ export default function RouteCreatorView({ coordinates, onClose, onSaved }: Rout
         >
           Save route
         </button>
-      </div>
+      </RouteSheet>
       <SaveRouteDialog
         isOpen={isSaveOpen}
         path={flattenRoutePath(draft.points)}

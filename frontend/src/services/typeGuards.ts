@@ -1,5 +1,5 @@
 import type { TokenPair, User } from '@/types/auth'
-import type { SavedRoute } from '@/types/route'
+import type { RouteSummary, SavedRoute } from '@/types/route'
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -19,3 +19,6 @@ export const isSavedRoute = (value: unknown): value is SavedRoute =>
   typeof value.name === 'string' &&
   typeof value.distance === 'number' &&
   typeof value.estimated_time === 'number'
+
+export const isRouteSummary = (value: unknown): value is RouteSummary =>
+  isSavedRoute(value) && 'description' in value && typeof value.description === 'string'

@@ -1,0 +1,39 @@
+/* Motion: short transitions make a tap feel acknowledged and a screen change
+   feel continuous (Doherty Threshold). Only transform and opacity animate, and
+   every duration is a token that collapses to ~0 under prefers-reduced-motion.
+   Keyframes shared by the product live here; component-specific ones sit next
+   to their component (sheet-in, toast-in, pulse, spin). */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+/* A screen fades in and rises a few pixels when it mounts */
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(var(--space-3)); }
+}
+
+/* The icon of the tab you just opened settles into place */
+@keyframes tab-pop {
+  from { transform: scale(0.8); }
+}
+
+.tab-bar-item {
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.tab-bar-item:active { opacity: 0.6; }
+
+.tab-bar-item[aria-current="page"] .icon {
+  animation: tab-pop var(--duration-slow) var(--ease-out);
+}
+
+/* Things that appear because of what the person just did fade in */
+.alert,
+.route-point {
+  animation: fade-in var(--duration-base) var(--ease-out);
+}
+
+.sheet-modal::backdrop {
+  animation: fade-in var(--duration-base) var(--ease-out);
+}

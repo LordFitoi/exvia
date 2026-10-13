@@ -28,6 +28,7 @@ or `open` (macOS).
 | `icons.css` | Icon set as CSS masks |
 | `buttons.css`, `inputs.css`, `controls.css` | Buttons; text fields, select, dropdown; checkbox, radio, switch, slider |
 | `surfaces.css`, `feedback.css` | Cards, lists, avatars, labels, chips; alerts, toast, progress, skeleton, state views |
+| `motion.css` | Shared keyframes (`fade-in`, `screen-in`, `tab-pop`) and the transitions that give taps and new content feedback |
 | `navigation.css`, `overlays.css`, `sections.css` | Bars, tabs, segmented control; sheet and dialog; form sections, disclosure, stepper, list footer |
 | `map.css`, `profile.css`, `clan.css` | Domain components (map overlays and markers, profile, ride and notice cards) |
 | `styleguide.css`, `specimens.css`, `devices.css` | Chrome of the guide pages only (header, specimen boxes, swatches, shadow boxes, 393pt phone frames). Not for the product |
@@ -107,10 +108,36 @@ Exvia changes the following on purpose:
   with the same two families.
 - **Motion.** Only `transform` and `opacity` animate. Durations are tokens
   (150, 200 and 300ms) that collapse to ~0 under `prefers-reduced-motion`.
+  `motion.css` holds the shared pieces: screens fade in and rise 12px on
+  mount (`screen-in`), full-bleed screens such as the map only fade, tab bar
+  items dim while pressed and the active tab's icon settles with `tab-pop`,
+  and alerts, new list rows and the modal backdrop fade in. Entrances
+  only: nothing animates out, because an exit needs the element to stay
+  mounted.
 - **Modal sheet for short forms.** A form that needs full attention, such as
   naming a route, uses `<dialog class="sheet sheet-modal">` opened with
   `showModal()`: a bottom sheet over a scrim, with the native dialog's focus
   trap and Esc. The centered `dialog` stays for confirmations only.
+- **Center action in the tab bar.** `tab-bar-action` raises one destination
+  (Ride) as a round, filled primary button 1.5rem above the bar, with its label
+  level with the others. Only one per bar: Von Restorff only works if it is
+  the single filled shape. It stays a link in the same `<nav>`.
+- **Screen header.** `screen-header` puts a screen's title on the left and its
+  close action on the right, for full-height screens that hide the tab bar
+  (the Ride picker; the map screens put the close in `map-controls`); it keeps a way out visible.
+- **Selectable list row.** `button.list-item` with `aria-pressed="true"` gets a
+  primary tint, a primary title and a check icon, so the choice is not color
+  alone. `route-preview` is a rounded map frame for a screen (not full-bleed);
+  `route-preview-fill` makes it take the free height of its column instead of
+  a fixed one, for screens that pin their action to the bottom edge. A long
+  list scrolls inside its container (`route-choice-list`, exactly four rows
+  tall) instead of pushing the page.
+- **Collapsible sheet.** `sheet-grab` (handle and header) slides the sheet
+  down by the height of `sheet-body` when dragged down and back when dragged
+  up, so the content behind a sheet can be seen. The offset is an inline
+  `transform`, which keeps the animation to `transform` only. The handle is a `button` with
+  `aria-expanded`, which covers taps and keyboards; its 44px hit area comes
+  from the shared pseudo-element rule in `base.css`.
 - **Press-and-hold reorder.** `route-point` rows can be dragged after a
   400 ms hold (`useDragReorder` in the frontend): the hold keeps normal
   scrolling working, the dragged row floats with `--shadow-z16` and its

@@ -15,6 +15,16 @@ export interface SavedRoute {
   readonly estimated_time: number
 }
 
+/** A route as the list returns it, without its path. */
+export interface RouteSummary extends SavedRoute {
+  readonly description: string
+}
+
+/** A route with its whole street path, in travel order. */
+export interface RouteDetail extends RouteSummary {
+  readonly points: readonly Coordinates[]
+}
+
 /**
  * A point added to a route being drawn; the id keeps list and marker identity stable.
  * `path` is the street path that leads to the point from the previous one, without the previous

@@ -30,6 +30,16 @@
 .app-bar > :first-child:not(.app-bar-title) { grid-column: 1; justify-self: start; }
 .app-bar > :last-child:not(.app-bar-title) { grid-column: 3; justify-self: end; }
 
+/* Screen header: the title on the left and one action on the right, inside
+   the screen body, for full-height screens that hide the tab bar. The close
+   action is always visible, so there is a way out (Flow) */
+.screen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
 /* Root screens: the bar only carries actions and the page title sits below */
 .app-bar-plain {
   background: transparent;
@@ -66,6 +76,27 @@
 .tab-bar-item[aria-current="page"] {
   color: var(--color-primary-text);
   font-weight: var(--weight-semibold);
+}
+
+/* Center action: the one primary destination (Ride) as a round button raised
+   above the bar. Same link and label as the other items, so it stays one
+   tab bar for screen readers. Von Restorff: the only filled shape in the bar */
+.tab-bar-action-icon {
+  display: grid;
+  place-items: center;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  /* Rises 1.5rem above the bar; the bottom margin keeps the label level with the others */
+  margin-block: calc(var(--space-6) * -1) calc(var(--space-1) * -1);
+  border: 0.25rem solid var(--color-surface);
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-primary);
+}
+
+.tab-bar-action[aria-current="page"] .tab-bar-action-icon {
+  background: var(--color-primary-dark);
 }
 
 @media (hover: hover) {
