@@ -4,9 +4,8 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 
 import MapStatusView from '@/views/map/MapStatusView'
 import { useUserMap } from '@/hooks/useUserMap'
+import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { Coordinates } from '@/types/geolocation'
-
-const MAPBOX_ACCESS_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
 
 interface UserMapProps {
   coordinates: Coordinates

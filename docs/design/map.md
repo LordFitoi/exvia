@@ -2,7 +2,8 @@
 
 The Map tab in [frontend/](../../frontend/): a full-bleed grayscale
 [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/) map centered on the
-rider, with a dot and a "You" label at their current position. The shell and
+rider, with a dot and a "You" label at their current position, always
+snapped to the nearest street. The shell and
 tab bar are described in [frontend-screens.md](frontend-screens.md); the map
 components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 [patterns.html](../ui-ux/patterns.html)).
@@ -18,8 +19,11 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 | Map | `views/map/UserMap.tsx` | The canvas, the "center on me" button, the load-failure message |
 | Message | `views/map/MapStatusView.tsx` | Title plus `StateView` under the "Map" heading |
 | Position | `hooks/useGeolocation.ts` | `watchPosition` state: `pending`, `ready`, `denied`, `unavailable` |
+| Street snap | `hooks/useStreetPosition.ts` | Snaps each GPS fix to the nearest street; keeps the last street position |
+| Snap request | `services/streetSnapApi.ts` | Mapbox Directions call that returns the snapped point, or `null` |
 | Mapbox | `hooks/useUserMap.ts` | Creates the map and the "You" marker, keeps the marker on the latest position |
-| Types | `types/geolocation.ts` | `Coordinates`, `GeolocationState` |
+| Token | `services/mapboxConfig.ts` | Reads `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` for the map and the snap request |
+| Types | `types/geolocation.ts` | `Coordinates`, `GeolocationState`, `StreetPositionState` |
 
 ## Behavior
 
@@ -30,6 +34,13 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 - The position is watched continuously (high accuracy). Each update moves the
   marker; the camera does not follow, so the rider can pan freely. The locate
   button (top right) flies back to the current position.
+- Only street positions are shown. Every fix is sent to the Mapbox Directions
+  API as a zero-length `driving` route with a 50 m radius; the snapped
+  waypoint is what the map and marker use, never the raw GPS point. A new fix
+  aborts the previous request. With no street within 50 m (422 `NoSegment`)
+  or a failed request, the marker stays on the last street position; if there
+  has been none yet, the screen shows "Get on a street" or "Street not found"
+  instead of the map.
 - A timeout or lost signal after a first fix keeps the last known position;
   only a permission denial clears it.
 - The marker is the guide's `marker-me` dot (pulsing halo) with a
@@ -63,6 +74,11 @@ time, so changing it needs a new build. Restrict the token to the app's URL in
 the Mapbox dashboard, since it is visible to the browser.
 
 ## Key decisions
+
+- **Directions API for snapping**: it accepts a public token and a single
+  point (as a repeated waypoint), unlike Map Matching, which needs a trace.
+  The `driving` profile is the definition of "street"; change
+  `STREET_PROFILE` to allow cycleways or footpaths.
 
 - **CSS grayscale filter over a gray style**: Mapbox's stock styles are
   near-gray but not exactly, and a custom style would need a Mapbox Studio
