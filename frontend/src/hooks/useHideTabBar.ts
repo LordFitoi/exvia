@@ -4,14 +4,17 @@ import { useContext, useEffect } from 'react'
 
 import { TabBarContext } from '@/context/TabBarContext'
 
-/** Hides the bottom tab bar while the calling screen is mounted and `isHidden` is true. */
+/**
+ * Hides the bottom tab bar while the calling screen is mounted and `isHidden` is true. Holds from
+ * several screens add up: the bar comes back only when none of them hides it.
+ */
 export const useHideTabBar = (isHidden: boolean): void => {
   const context = useContext(TabBarContext)
   if (!context) throw new Error('useHideTabBar must be used within AppShell')
-  const { setIsHidden } = context
+  const { hide } = context
 
   useEffect(() => {
-    setIsHidden(isHidden)
-    return () => setIsHidden(false)
-  }, [isHidden, setIsHidden])
+    if (!isHidden) return
+    return hide()
+  }, [isHidden, hide])
 }

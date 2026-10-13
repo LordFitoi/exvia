@@ -18,7 +18,7 @@ export class ApiError extends Error {
 }
 
 export interface RequestOptions {
-  readonly method?: 'GET' | 'POST'
+  readonly method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   readonly body?: unknown
   readonly accessToken?: string
 }

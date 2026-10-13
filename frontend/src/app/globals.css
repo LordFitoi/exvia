@@ -24,14 +24,14 @@
   padding-block: calc(var(--space-8) + var(--safe-top)) calc(var(--space-8) + var(--safe-bottom));
 }
 
-/* Route picker: the map takes all the free height, the route list below it shows four routes and
-   scrolls, and the Ride button sits at the bottom edge (the tab bar is hidden there) */
-.route-picker {
+/* Route screens (the Ride picker and the route list): a header, a map and a route list in one
+   full-height column, with the actions pinned at the bottom edge (the tab bar is hidden there) */
+.route-screen {
   gap: var(--space-6);
   padding-block-end: calc(var(--space-4) + var(--safe-bottom));
 }
 
-.route-picker-body {
+.route-screen-body {
   display: flex;
   flex: 1;
   flex-direction: column;

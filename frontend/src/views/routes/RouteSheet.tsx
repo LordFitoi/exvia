@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 import { useSheetGrab } from '@/hooks/useSheetGrab'
 
 interface RouteSheetProps {
+  title: string
   statusLabel: string
   /** Always visible, even when the sheet is collapsed. */
   notice: ReactNode
@@ -18,7 +19,7 @@ interface RouteSheetProps {
 const measureCollapseOffset = (sheet: HTMLElement, body: HTMLElement): number =>
   body.offsetHeight + (parseFloat(getComputedStyle(sheet).rowGap) || 0)
 
-export default function RouteSheet({ statusLabel, notice, children }: RouteSheetProps) {
+export default function RouteSheet({ title, statusLabel, notice, children }: RouteSheetProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { grabProps, handleToggleClick } = useSheetGrab({
     isCollapsed,
@@ -57,7 +58,7 @@ export default function RouteSheet({ statusLabel, notice, children }: RouteSheet
           onClick={handleToggleClick}
         ></button>
         <div className="sheet-header">
-          <h2 className="text-subtitle">New route</h2>
+          <h2 className="text-subtitle">{title}</h2>
           <span className="badge badge-primary" aria-live="polite">
             {statusLabel}
           </span>

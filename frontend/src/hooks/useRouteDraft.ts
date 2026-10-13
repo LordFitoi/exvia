@@ -15,6 +15,8 @@ const FAILED_MESSAGE = 'Could not follow the streets. Check your connection and 
 
 interface RouteDraftOptions {
   accessToken: string | undefined
+  /** Points the draft starts with, for editing a saved route. */
+  initialPoints: readonly DraftPoint[]
 }
 
 interface DraftChangeOptions {
@@ -67,12 +69,12 @@ const rebuildLeg = async (
  * leg between consecutive points follows the streets. Only one change runs at a time, so points
  * keep the order they were tapped in; taps meanwhile are ignored.
  */
-export const useRouteDraft = ({ accessToken }: RouteDraftOptions): RouteDraft => {
-  const [points, setPoints] = useState<readonly DraftPoint[]>([])
+export const useRouteDraft = ({ accessToken, initialPoints }: RouteDraftOptions): RouteDraft => {
+  const [points, setPoints] = useState<readonly DraftPoint[]>(initialPoints)
   const [isBusy, setIsBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isBusyRef = useRef(false)
-  const nextIdRef = useRef(0)
+  const nextIdRef = useRef(initialPoints.length)
   const controllerRef = useRef(new AbortController())
 
   useEffect(() => {

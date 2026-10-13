@@ -1,0 +1,103 @@
+'use client'
+
+import { useState } from 'react'
+
+import RouteChoiceList from '@/components/route/RouteChoiceList'
+import RoutePreview from '@/components/route/RoutePreview'
+import { useHideTabBar } from '@/hooks/useHideTabBar'
+import { useMyRoutes } from '@/hooks/useMyRoutes'
+import { useRouteDeletion } from '@/hooks/useRouteDeletion'
+import { useRouteDetail } from '@/hooks/useRouteDetail'
+import ConfirmDeleteDialog from '@/views/routes/ConfirmDeleteDialog'
+import RouteEditView from '@/views/routes/RouteEditView'
+
+interface RouteListViewProps {
+  onClose: () => void
+  onCreateRoute: () => void
+}
+
+/** The user's routes: preview one on a small map, then edit or delete it. */
+export default function RouteListView({ onClose, onCreateRoute }: RouteListViewProps) {
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const myRoutes = useMyRoutes()
+  const detail = useRouteDetail(selectedId)
+  const deletion = useRouteDeletion({
+    routeId: selectedId,
+    onDeleted: () => {
+      setSelectedId(null)
+      myRoutes.reload()
+    },
+  })
+  // A full-height screen with its own close button, so the tab bar steps aside. While the edit
+  // view is showing it decides that itself.
+  useHideTabBar(!isEditing)
+
+  const handleSaved = () => {
+    setIsEditing(false)
+    myRoutes.reload()
+    detail.retry()
+  }
+
+  if (isEditing && detail.route) {
+    return (
+      <RouteEditView route={detail.route} onClose={() => setIsEditing(false)} onSaved={handleSaved} />
+    )
+  }
+
+  const selectedName = myRoutes.routes.find(({ id }) => id === selectedId)?.name ?? ''
+  return (
+    <main className="screen-body route-screen">
+      <div className="screen-header">
+        <h1 className="text-heading">Routes</h1>
+        <button className="icon-button" type="button" aria-label="Close" onClick={onClose}>
+          <span className="icon icon-x" aria-hidden="true"></span>
+        </button>
+      </div>
+      <div className="route-screen-body">
+        <RoutePreview size="compact" status={detail.status} route={detail.shownRoute} onRetry={detail.retry} />
+        <RouteChoiceList
+          size="fill"
+          status={myRoutes.status}
+          routes={myRoutes.routes}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onRetry={myRoutes.reload}
+          emptyAction={
+            <button className="button button-primary" type="button" onClick={onCreateRoute}>
+              Create a route
+            </button>
+          }
+        />
+      </div>
+      <div className="button-row">
+        <button
+          className="button button-soft button-error button-lg"
+          type="button"
+          disabled={selectedId === null}
+          onClick={deletion.requestDeletion}
+        >
+          <span className="icon icon-trash" aria-hidden="true"></span>
+          Delete
+        </button>
+        <button
+          className="button button-primary button-lg"
+          type="button"
+          disabled={!detail.route}
+          onClick={() => setIsEditing(true)}
+        >
+          <span className="icon icon-edit" aria-hidden="true"></span>
+          Edit
+        </button>
+      </div>
+      <ConfirmDeleteDialog
+        isOpen={deletion.isConfirming}
+        routeName={selectedName}
+        isPending={deletion.isPending}
+        error={deletion.error}
+        onCancel={deletion.cancel}
+        onConfirm={deletion.confirm}
+      />
+    </main>
+  )
+}

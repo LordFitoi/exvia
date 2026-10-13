@@ -6,18 +6,22 @@ from django.db import models
 
 from apps.core.models import TimeStampedModel
 from apps.routes.geometry import calculate_distance_km, calculate_estimated_time
-from apps.routes.validators import validate_points
+from apps.routes.validators import validate_points, validate_waypoints
 
 NAME_MAX_LENGTH = 100
 DESCRIPTION_MAX_LENGTH = 255
 
 
 class Route(TimeStampedModel):
-    """Path of [lng, lat] points drawn by a user, with derived length and travel time."""
+    """Street path of [lng, lat] points drawn by a user, with derived length and travel time."""
 
     name = models.CharField(max_length=NAME_MAX_LENGTH)
     description = models.TextField(blank=True, validators=[MaxLengthValidator(DESCRIPTION_MAX_LENGTH)])
     points = models.JSONField(validators=[validate_points])
+    waypoints = models.JSONField(
+        default=list, blank=True, validators=[validate_waypoints],
+        help_text='The points the rider chose, in order; `points` is the street path through them.',
+    )
     distance = models.FloatField(editable=False, help_text='Kilometres, calculated from points.')
     estimated_time = models.DurationField(
         editable=False, help_text='Calculated from distance at the average speed.'

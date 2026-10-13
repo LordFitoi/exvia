@@ -5,9 +5,10 @@ interface TextAreaFieldProps {
   label: string
   maxLength: number
   error?: string
+  defaultValue?: string
 }
 
-export default function TextAreaField({ name, label, maxLength, error }: TextAreaFieldProps) {
+export default function TextAreaField({ name, label, maxLength, error, defaultValue }: TextAreaFieldProps) {
   const id = useId()
   const messageId = `${id}-message`
 
@@ -21,6 +22,7 @@ export default function TextAreaField({ name, label, maxLength, error }: TextAre
         id={id}
         name={name}
         maxLength={maxLength}
+        defaultValue={defaultValue}
         aria-invalid={Boolean(error)}
         aria-describedby={messageId}
       />

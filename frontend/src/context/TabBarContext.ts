@@ -3,7 +3,8 @@
 import { createContext } from 'react'
 
 export interface TabBarContextValue {
-  readonly setIsHidden: (isHidden: boolean) => void
+  /** Takes a hold that keeps the tab bar hidden; the returned function releases it. */
+  readonly hide: () => () => void
 }
 
 export const TabBarContext = createContext<TabBarContextValue | null>(null)

@@ -122,6 +122,14 @@ Exvia changes the following on purpose:
   (Ride) as a round, filled primary button 1.5rem above the bar, with its label
   level with the others. Only one per bar: Von Restorff only works if it is
   the single filled shape. It stays a link in the same `<nav>`.
+- **Action menu.** `menu` and `menu-panel` give an icon button a small popover
+  of actions (`menuitem`s), aligned to the button's right edge so it opens
+  inward. It follows the WAI-ARIA menu button pattern: `aria-haspopup`,
+  `aria-expanded`, Escape and arrow keys. The panel is opaque because a
+  blurred panel inside the blurred map controls cannot blur what is behind it.
+  `button-row` places related actions side by side: destructive soft and first,
+  primary last and wide. The delete confirmation is the guide's `dialog` with
+  the solid error button, the one place it is allowed.
 - **Screen header.** `screen-header` puts a screen's title on the left and its
   close action on the right, for full-height screens that hide the tab bar
   (the Ride picker; the map screens put the close in `map-controls`); it keeps a way out visible.

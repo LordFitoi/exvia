@@ -6,6 +6,7 @@ import Toast from '@/components/feedback/Toast'
 import MapStatusView from '@/views/map/MapStatusView'
 import UserMap from '@/views/map/UserMap'
 import RouteCreatorView from '@/views/routes/RouteCreatorView'
+import RouteListView from '@/views/routes/RouteListView'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useStreetPosition } from '@/hooks/useStreetPosition'
 import { formatDistance, formatDuration } from '@/services/formatRoute'
@@ -17,6 +18,8 @@ interface StatusMessage {
   title: string
   description: string
 }
+
+type MapMode = 'browse' | 'create' | 'list'
 
 type WaitingKey = Exclude<GeolocationStatus, 'ready'> | Exclude<StreetPositionStatus, 'ready'>
 
@@ -64,28 +67,35 @@ export default function MapOverview() {
     coordinates: location.coordinates,
   })
 
-  const [isCreatingRoute, setIsCreatingRoute] = useState(false)
+  const [mode, setMode] = useState<MapMode>('browse')
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
 
   const dismissSavedMessage = useCallback(() => setSavedMessage(null), [])
 
   const handleRouteSaved = (route: SavedRoute) => {
     setSavedMessage(describeSavedRoute(route))
-    setIsCreatingRoute(false)
+    setMode('browse')
   }
 
-  if (street.coordinates && isCreatingRoute) {
+  if (mode === 'list') {
+    return <RouteListView onClose={() => setMode('browse')} onCreateRoute={() => setMode('create')} />
+  }
+  if (street.coordinates && mode === 'create') {
     return (
       <RouteCreatorView
         coordinates={street.coordinates}
-        onClose={() => setIsCreatingRoute(false)}
+        onClose={() => setMode('browse')}
         onSaved={handleRouteSaved}
       />
     )
   }
   if (street.coordinates) {
     return (
-      <UserMap coordinates={street.coordinates} onCreateRoute={() => setIsCreatingRoute(true)}>
+      <UserMap
+        coordinates={street.coordinates}
+        onCreateRoute={() => setMode('create')}
+        onPreviewRoutes={() => setMode('list')}
+      >
         {savedMessage && <Toast message={savedMessage} onDismiss={dismissSavedMessage} />}
       </UserMap>
     )

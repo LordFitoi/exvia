@@ -84,7 +84,8 @@
 }
 
 .map-controls .icon-button { border-radius: 0; color: var(--color-text); }
-.map-controls .icon-button + .icon-button { border-block-start: 1px dashed var(--color-border); }
+.map-controls .icon-button + .icon-button,
+.map-controls > .menu { border-block-start: 1px dashed var(--color-border); }
 
 .map-controls-bottom {
   position: absolute;
@@ -206,6 +207,14 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   position: relative;
+}
+
+/* Fill variant: the list takes the free height of its column and scrolls, for
+   screens whose map is small and whose list is the main content */
+.route-choice-list-fill {
+  flex: 1;
+  max-block-size: none;
+  min-block-size: 0;
 }
 
 /* Reorderable row: press and hold, then move. The text cannot be selected and

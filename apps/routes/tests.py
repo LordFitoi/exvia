@@ -9,7 +9,7 @@ from rest_framework.test import APIClient
 
 from apps.routes.geometry import calculate_distance_km, calculate_estimated_time
 from apps.routes.models import DESCRIPTION_MAX_LENGTH, Route
-from apps.routes.validators import MAX_POINTS, validate_points
+from apps.routes.validators import MAX_POINTS, MAX_WAYPOINTS, validate_points, validate_waypoints
 
 ONE_DEGREE_LATITUDE_KM = 111.195
 EQUATOR_STRAIGHT_LINE = [[0, 0], [0, 1]]
@@ -45,6 +45,11 @@ class PointsValidatorTests(SimpleTestCase):
     def test_rejects_too_many_points(self) -> None:
         with self.assertRaises(ValidationError):
             validate_points([[0, 0]] * (MAX_POINTS + 1))
+
+    def test_waypoints_may_be_empty_but_not_too_many(self) -> None:
+        validate_waypoints([])
+        with self.assertRaises(ValidationError):
+            validate_waypoints([[0, 0]] * (MAX_WAYPOINTS + 1))
 
     def test_rejects_malformed_points(self) -> None:
         for point in ([0], [0, 0, 0], ['a', 'b'], [True, False], 'ab'):
@@ -187,7 +192,57 @@ class RouteApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Route.objects.filter(pk=route.pk).exists())
 
-    def test_update_is_not_allowed(self) -> None:
+    def test_update_replaces_fields_and_recalculates(self) -> None:
         route = self._create_route(self.author)
-        response = self.client.put(self._detail_url(route), {'name': 'New'}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        body = {
+            'name': 'Renamed', 'description': 'Now longer', 'points': [[0, 0], [0, 2]],
+            'waypoints': [[0, 0], [0, 2]],
+        }
+        response = self.client.put(self._detail_url(route), body, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        route.refresh_from_db()
+        self.assertEqual((route.name, route.description), ('Renamed', 'Now longer'))
+        self.assertEqual(route.waypoints, [[0, 0], [0, 2]])
+        self.assertAlmostEqual(route.distance, 2 * ONE_DEGREE_LATITUDE_KM, delta=0.01)
+
+    def test_partial_update_keeps_other_fields(self) -> None:
+        route = self._create_route(self.author)
+        response = self.client.patch(self._detail_url(route), {'name': 'Only name'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        route.refresh_from_db()
+        self.assertEqual(route.name, 'Only name')
+        self.assertEqual(route.points, EQUATOR_STRAIGHT_LINE)
+
+    def test_update_cannot_change_author(self) -> None:
+        route = self._create_route(self.author)
+        self.client.patch(self._detail_url(route), {'author': self.other.pk}, format='json')
+        route.refresh_from_db()
+        self.assertEqual(route.author, self.author)
+
+    def test_update_rejects_invalid_points(self) -> None:
+        route = self._create_route(self.author)
+        response = self.client.patch(self._detail_url(route), {'points': [[0, 0]]}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('points', response.data)
+
+    def test_update_other_users_route_is_not_found(self) -> None:
+        route = self._create_route(self.other)
+        response = self.client.patch(self._detail_url(route), {'name': 'Hijack'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        route.refresh_from_db()
+        self.assertEqual(route.name, 'Loop')
+
+    def test_waypoints_are_optional_and_returned_by_detail_only(self) -> None:
+        body = {'name': 'Loop', 'points': EQUATOR_STRAIGHT_LINE, 'waypoints': EQUATOR_STRAIGHT_LINE}
+        created = self.client.post(self.list_url, body, format='json')
+        self.assertEqual(created.data['waypoints'], EQUATOR_STRAIGHT_LINE)
+        listed = self.client.get(self.list_url)
+        self.assertNotIn('waypoints', listed.data[0])
+        without = self.client.post(self.list_url, {'name': 'Bare', 'points': EQUATOR_STRAIGHT_LINE}, format='json')
+        self.assertEqual(without.data['waypoints'], [])
+
+    def test_rejects_invalid_waypoints(self) -> None:
+        body = {'name': 'Loop', 'points': EQUATOR_STRAIGHT_LINE, 'waypoints': [[0, 95]]}
+        response = self.client.post(self.list_url, body, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('waypoints', response.data)

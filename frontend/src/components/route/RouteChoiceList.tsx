@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import type { ReactNode } from 'react'
 
 import StateView from '@/components/feedback/StateView'
 import { formatDistance, formatDuration } from '@/services/formatRoute'
@@ -7,11 +7,15 @@ import type { RouteSummary } from '@/types/route'
 const SKELETON_ROW_IDS = [1, 2, 3] as const
 
 interface RouteChoiceListProps {
+  /** `rows` shows four routes and scrolls; `fill` takes the free height of its column. */
+  size: 'rows' | 'fill'
   status: 'loading' | 'ready' | 'failed'
   routes: readonly RouteSummary[]
   selectedId: number | null
   onSelect: (id: number) => void
   onRetry: () => void
+  /** What the empty state offers, such as a link to draw the first route. */
+  emptyAction: ReactNode
 }
 
 function RouteChoiceSkeleton() {
@@ -31,11 +35,13 @@ function RouteChoiceSkeleton() {
 }
 
 export default function RouteChoiceList({
+  size,
   status,
   routes,
   selectedId,
   onSelect,
   onRetry,
+  emptyAction,
 }: RouteChoiceListProps) {
   if (status === 'loading') return <RouteChoiceSkeleton />
 
@@ -60,11 +66,7 @@ export default function RouteChoiceList({
       <StateView
         title="No routes yet"
         description="Draw your first route with the route button on the map."
-        action={
-          <Link className="button button-primary" href="/map">
-            Open the map
-          </Link>
-        }
+        action={emptyAction}
       >
         <span className="icon icon-lg icon-route"></span>
       </StateView>
@@ -72,7 +74,7 @@ export default function RouteChoiceList({
   }
 
   return (
-    <div className="route-choice-list">
+    <div className={size === 'fill' ? 'route-choice-list route-choice-list-fill' : 'route-choice-list'}>
       <ul className="list">
         {routes.map(({ id, name, distance, estimated_time }) => (
           <li key={id}>

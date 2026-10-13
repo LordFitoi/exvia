@@ -11,7 +11,7 @@ class RouteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Route
         fields = (
-            'id', 'name', 'description', 'points', 'distance', 'estimated_time',
+            'id', 'name', 'description', 'points', 'waypoints', 'distance', 'estimated_time',
             'author', 'created_at', 'updated_at',
         )
         read_only_fields = ('id', 'distance', 'author', 'created_at', 'updated_at')
@@ -21,7 +21,7 @@ class RouteSerializer(serializers.ModelSerializer):
 
 
 class RouteSummarySerializer(RouteSerializer):
-    """Route without its `points`, which run to thousands of pairs; used by the list."""
+    """Route without its `points` and `waypoints`, which can run to thousands of pairs; used by the list."""
 
     class Meta(RouteSerializer.Meta):
-        fields = tuple(name for name in RouteSerializer.Meta.fields if name != 'points')
+        fields = tuple(name for name in RouteSerializer.Meta.fields if name not in ('points', 'waypoints'))

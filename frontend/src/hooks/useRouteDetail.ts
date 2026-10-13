@@ -11,7 +11,8 @@ interface RouteDetailHandle {
   status: RouteDetailStatus
   /** The route with the requested id, once loaded. */
   route: RouteDetail | null
-  /** The last route that loaded, even while another one is loading, so a preview does not blink. */
+  /** The last route that loaded, even while another one is loading, so a preview does not blink;
+   * null when nothing is selected. */
   shownRoute: RouteDetail | null
   retry: () => void
 }
@@ -52,5 +53,10 @@ export const useRouteDetail = (routeId: number | null): RouteDetailHandle => {
     return failedId === routeId ? 'failed' : 'loading'
   }
 
-  return { status: getStatus(), route: isReady ? loaded : null, shownRoute: loaded, retry }
+  return {
+    status: getStatus(),
+    route: isReady ? loaded : null,
+    shownRoute: routeId === null ? null : loaded,
+    retry,
+  }
 }

@@ -27,10 +27,18 @@ layout that wraps its pages in `AuthGuard`.
   Map, Ride, Clans, Profile; Home first and Profile last for Serial Position,
   5 items for Hick and Miller). Ride sits in the middle as a raised round
   button, the one filled shape of the bar ([ride.md](ride.md)). `/login` and `/signup` redirect to `/`.
-- `AppShell` owns the tab bar's visibility. A screen that needs the full
-  height calls `useHideTabBar(true)` and the bar is removed while it is
-  mounted; the route creator ([map.md](map.md#route-creator)) does, and
-  restores it if its map fails to load, since that message has no exit.
+- `AppShell` owns the tab bar's visibility as a **count of holds**. A screen
+  that needs the full height calls `useHideTabBar(true)`, which takes a hold
+  while it is mounted and releases it on unmount; the bar returns only when
+  every hold is released. A count, not a flag, because screens open from one
+  another (the route list opens the editor): with a flag, the editor closing
+  showed the bar again under the list. Each screen holds only while it is the
+  one showing: the route list lets go while its editor is open, and a screen
+  with a map-failure message lets go of the bar because that message has no
+  exit ([map.md](map.md#route-creator)).
+- The map screen has more modes than one route: browsing, the route creator and
+  the route list, which also covers editing and deleting ([map.md](map.md),
+  [route-management.md](route-management.md)).
 - The current tab is marked with `aria-current="page"`, which the guide's CSS
   styles. Paths are compared without the trailing slash because
   `trailingSlash: true` is set in [next.config.ts](../../frontend/next.config.ts).

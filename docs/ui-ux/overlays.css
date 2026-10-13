@@ -88,6 +88,52 @@ button.sheet-handle {
 
 .sheet-modal::backdrop { background: var(--color-scrim); }
 
+/* Action menu: an icon button opens a small popover of actions, aligned to the
+   button's right edge so it opens inward from the screen edge. The trigger
+   carries aria-haspopup="menu" and aria-expanded; the items are menuitems.
+   The panel is opaque, because a blurred panel inside a blurred control group
+   (the map controls) cannot blur what is behind it */
+.menu { position: relative; display: grid; }
+
+.menu-panel {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + var(--space-2));
+  z-index: var(--z-sheet);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 14rem;
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-dropdown);
+  animation: fade-in var(--duration-fast) var(--ease-out);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: var(--tap-target);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-text);
+  font-size: var(--text-body2);
+  text-align: start;
+  white-space: nowrap;
+}
+
+.menu-item .icon { color: var(--color-text-muted); }
+.menu-item:active { background: var(--color-surface-sunken); }
+
+@media (hover: hover) {
+  .menu-item:hover { background: var(--color-surface-sunken); }
+}
+
 /* Dialog: title, one sentence, then right-aligned actions. Cancel comes first
    and the destructive action last, away from the thumb's resting spot */
 .dialog {

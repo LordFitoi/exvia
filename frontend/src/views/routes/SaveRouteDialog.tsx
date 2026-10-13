@@ -1,15 +1,12 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-
 import FormAlert from '@/components/form/FormAlert'
 import SubmitButton from '@/components/form/SubmitButton'
 import TextAreaField from '@/components/form/TextAreaField'
 import TextField from '@/components/form/TextField'
 import { useFormSubmission } from '@/hooks/useFormSubmission'
-import { createRoute } from '@/services/routesApi'
-import type { Coordinates } from '@/types/geolocation'
-import type { SavedRoute } from '@/types/route'
+import { useModalDialog } from '@/hooks/useModalDialog'
+import type { NewRoute, RouteGeometry, SavedRoute } from '@/types/route'
 
 const FIELD_NAMES = ['name', 'description'] as const
 const NAME_MAX_LENGTH = 100
@@ -17,26 +14,37 @@ const DESCRIPTION_MAX_LENGTH = 255
 
 interface SaveRouteDialogProps {
   isOpen: boolean
-  path: readonly Coordinates[]
+  /** `edit` saves changes to an existing route and starts with its name and description. */
+  mode: 'create' | 'edit'
+  geometry: RouteGeometry
+  initialValues?: { name: string; description: string }
+  saveRoute: (route: NewRoute) => Promise<SavedRoute>
   onClose: () => void
   onSaved: (route: SavedRoute) => void
 }
 
-export default function SaveRouteDialog({ isOpen, path, onClose, onSaved }: SaveRouteDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null)
+const COPY = {
+  create: { title: 'Save route', submitLabel: 'Save route', closeLabel: 'Close save route' },
+  edit: { title: 'Save changes', submitLabel: 'Save changes', closeLabel: 'Close save changes' },
+} as const
+
+export default function SaveRouteDialog({
+  isOpen,
+  mode,
+  geometry,
+  initialValues,
+  saveRoute,
+  onClose,
+  onSaved,
+}: SaveRouteDialogProps) {
+  const dialogRef = useModalDialog(isOpen)
+  const { title, submitLabel, closeLabel } = COPY[mode]
   const { isPending, fieldErrors, formError, handleSubmit } = useFormSubmission(
     async ({ name, description }) => {
-      onSaved(await createRoute({ name: name.trim(), description: description.trim(), points: path }))
+      onSaved(await saveRoute({ ...geometry, name: name.trim(), description: description.trim() }))
     },
     FIELD_NAMES,
   )
-
-  useEffect(() => {
-    const dialog = dialogRef.current
-    if (!dialog) return
-    if (isOpen && !dialog.open) dialog.showModal()
-    if (!isOpen && dialog.open) dialog.close()
-  }, [isOpen])
 
   return (
     <dialog
@@ -48,9 +56,9 @@ export default function SaveRouteDialog({ isOpen, path, onClose, onSaved }: Save
       <span className="sheet-handle"></span>
       <div className="sheet-header">
         <h2 className="text-subtitle" id="save-route-title">
-          Save route
+          {title}
         </h2>
-        <button className="icon-button" type="button" aria-label="Close save route" onClick={onClose}>
+        <button className="icon-button" type="button" aria-label={closeLabel} onClick={onClose}>
           <span className="icon icon-x" aria-hidden="true"></span>
         </button>
       </div>
@@ -63,15 +71,17 @@ export default function SaveRouteDialog({ isOpen, path, onClose, onSaved }: Save
             autoComplete="off"
             maxLength={NAME_MAX_LENGTH}
             error={fieldErrors.name}
+            defaultValue={initialValues?.name}
           />
           <TextAreaField
             name="description"
             label="Description (optional)"
             maxLength={DESCRIPTION_MAX_LENGTH}
             error={fieldErrors.description}
+            defaultValue={initialValues?.description}
           />
         </div>
-        <SubmitButton label="Save route" isPending={isPending} />
+        <SubmitButton label={submitLabel} isPending={isPending} />
       </form>
     </dialog>
   )

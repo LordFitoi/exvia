@@ -1,4 +1,4 @@
-import type { GeoJSONSource, Map as MapboxMap, Marker } from 'mapbox-gl'
+import type { GeoJSONSource, Map as MapboxMap, Marker, PaddingOptions } from 'mapbox-gl'
 
 import { toLngLat } from '@/services/baseMap'
 import { resolveTokenColor } from '@/services/tokenColor'
@@ -114,7 +114,7 @@ export const addEndpointMarkers = (
 }
 
 interface FitOptions {
-  readonly padding: number
+  readonly padding: number | PaddingOptions
   readonly isAnimated: boolean
 }
 

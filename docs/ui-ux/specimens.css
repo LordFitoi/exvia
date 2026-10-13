@@ -155,3 +155,6 @@
 }
 
 .icon-cell .icon { color: var(--color-text); }
+
+/* Room under an open action menu so the panel does not overlap the next specimen */
+.menu-spacer { block-size: 6rem; }

@@ -1,5 +1,5 @@
 from django.db.models import QuerySet
-from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.serializers import BaseSerializer
 
 from apps.routes.models import Route
@@ -25,5 +25,5 @@ class RouteListCreateView(OwnRoutesMixin, ListCreateAPIView):
         serializer.save(author=self.request.user)
 
 
-class RouteDetailView(OwnRoutesMixin, RetrieveDestroyAPIView):
-    """Returns or deletes one of the caller's routes; other users' routes are 404."""
+class RouteDetailView(OwnRoutesMixin, RetrieveUpdateDestroyAPIView):
+    """Returns, updates or deletes one of the caller's routes; other users' routes are 404."""

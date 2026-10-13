@@ -11,22 +11,41 @@ const UNEXPECTED_RESPONSE_MESSAGE = 'The server sent an unexpected response. Ple
 
 const unexpectedResponse = (): ApiError => new ApiError(502, UNEXPECTED_RESPONSE_MESSAGE)
 
-const parsePoints = (value: unknown): Coordinates[] | null => {
-  if (!Array.isArray(value) || value.length < MIN_ROUTE_POINTS) return null
-  const points = value.map(parseLngLat)
-  return points.every((point) => point !== null) ? points : null
+const parseCoordinateList = (value: unknown, minimum: number): Coordinates[] | null => {
+  if (!Array.isArray(value) || value.length < minimum) return null
+  const coordinates = value.map(parseLngLat)
+  return coordinates.every((coordinate) => coordinate !== null) ? coordinates : null
+}
+
+const toLngLatPairs = (coordinates: readonly Coordinates[]): number[][] =>
+  coordinates.map(({ longitude, latitude }) => [longitude, latitude])
+
+const toRouteBody = ({ name, description, points, waypoints }: NewRoute) => ({
+  name,
+  description,
+  points: toLngLatPairs(points),
+  waypoints: toLngLatPairs(waypoints),
+})
+
+const expectSavedRoute = (payload: unknown): SavedRoute => {
+  if (!isSavedRoute(payload)) throw unexpectedResponse()
+  return payload
 }
 
 /** Saves a route. The server expects each point as a [longitude, latitude] pair. */
-export const createRoute = async ({ name, description, points }: NewRoute): Promise<SavedRoute> => {
-  const body = {
-    name,
-    description,
-    points: points.map(({ longitude, latitude }) => [longitude, latitude]),
-  }
-  const saved = await requestJsonAuthorized(ROUTES_PATH, { method: 'POST', body })
-  if (!isSavedRoute(saved)) throw unexpectedResponse()
-  return saved
+export const createRoute = async (route: NewRoute): Promise<SavedRoute> =>
+  expectSavedRoute(
+    await requestJsonAuthorized(ROUTES_PATH, { method: 'POST', body: toRouteBody(route) }),
+  )
+
+/** Replaces the name, description and geometry of one of the caller's routes. */
+export const updateRoute = async (id: number, route: NewRoute): Promise<SavedRoute> =>
+  expectSavedRoute(
+    await requestJsonAuthorized(`${ROUTES_PATH}${id}/`, { method: 'PUT', body: toRouteBody(route) }),
+  )
+
+export const deleteRoute = async (id: number): Promise<void> => {
+  await requestJsonAuthorized(`${ROUTES_PATH}${id}/`, { method: 'DELETE' })
 }
 
 /** The caller's routes, newest first, without their paths. */
@@ -39,7 +58,8 @@ export const fetchRoutes = async (): Promise<RouteSummary[]> => {
 /** One route with its whole street path. */
 export const fetchRoute = async (id: number): Promise<RouteDetail> => {
   const route = await requestJsonAuthorized(`${ROUTES_PATH}${id}/`)
-  const points = isRecord(route) ? parsePoints(route.points) : null
-  if (!isRouteSummary(route) || !points) throw unexpectedResponse()
-  return { ...route, points }
+  const points = isRecord(route) ? parseCoordinateList(route.points, MIN_ROUTE_POINTS) : null
+  const waypoints = isRecord(route) ? parseCoordinateList(route.waypoints, 0) : null
+  if (!isRouteSummary(route) || !points || !waypoints) throw unexpectedResponse()
+  return { ...route, points, waypoints }
 }

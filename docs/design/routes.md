@@ -46,6 +46,18 @@ roughly 300 km of path) pairs of numbers (booleans rejected) with longitude in
 [-180, 180] and latitude in [-90, 90]. The upper bound keeps one request from
 storing an unbounded JSON document.
 
+## Waypoints
+
+`waypoints` is the other list: the points the rider **chose**, in order, as
+`[lng, lat]` pairs. `points` is the street path through them, thousands of
+vertices that cannot be turned back into the chosen points, so the editor needs
+`waypoints` to reopen a route as editable points and re-route the legs between
+them. `validate_waypoints` allows 0 to `MAX_WAYPOINTS` (500) pairs; the list is
+optional (`blank=True`, default `[]`), because routes saved before the field
+existed, and API clients that only send a path, have none. The server never
+uses it for the distance, which comes from `points`. Nothing checks that the
+two lists agree: the client that sends one sends both.
+
 ## Calculated fields
 
 `Route.save()` always recomputes both fields from `points`:
@@ -69,12 +81,15 @@ caller's own routes.
 |-----------------|--------|
 | `POST /api/routes/` | `201` with the created route; `author` is the caller |
 | `GET /api/routes/` | `200` with a plain JSON array of the caller's routes, newest first (no pagination), **without `points`** |
-| `GET /api/routes/<id>/` | `200` with one route |
+| `GET /api/routes/<id>/` | `200` with one route, with its `points` and `waypoints` |
+| `PUT /api/routes/<id>/` | `200` with the updated route; `name` and `points` required |
+| `PATCH /api/routes/<id>/` | `200` with the updated route; any of the writable fields |
 | `DELETE /api/routes/<id>/` | `204` |
 
-There is no update: `PUT` and `PATCH` return `405`. Unauthenticated calls
-return `401`; invalid input returns `400` with per-field messages (`name`,
-`description`, `points`).
+An update recalculates `distance` and `estimated_time` from the stored
+`points`, since it goes through `Route.save()`. `author` cannot be changed.
+Unauthenticated calls return `401`; invalid input returns `400` with per-field
+messages (`name`, `description`, `points`, `waypoints`).
 
 A route is serialized as:
 
@@ -84,6 +99,7 @@ A route is serialized as:
   "name": "Sunday loop",
   "description": "",
   "points": [[-3.7038, 40.4168], [-3.6912, 40.4221]],
+  "waypoints": [[-3.7038, 40.4168], [-3.6912, 40.4221]],
   "distance": 1.223,
   "estimated_time": 73,
   "author": 1,
@@ -92,8 +108,9 @@ A route is serialized as:
 }
 ```
 
-The list returns the same shape without `points`. Writable fields are `name` (required), `description` (optional) and
-`points` (required). `distance` is in kilometres and `estimated_time` is
+The list returns the same shape without `points` and `waypoints`. Writable
+fields are `name` (required), `description` (optional), `points` (required) and
+`waypoints` (optional). `distance` is in kilometres and `estimated_time` is
 **whole seconds** (an integer, not the `HH:MM:SS` string DRF would give a
 `DurationField`), so clients do not have to parse a duration. `id`,
 `distance`, `estimated_time`, `author` and the timestamps are read-only;
@@ -118,10 +135,14 @@ sending them is ignored.
   the path: the creator sends a dense street path, so it is close to the road
   distance, while a client sending a few far-apart points gets a straight-line
   distance.
-- **The list omits `points`**: a street path is thousands of pairs, so
-  `RouteSummarySerializer` drops it from the list and the detail endpoint
-  returns it. The creator does not store the tapped waypoints separately, so
-  a route cannot be reopened as editable waypoints (there is no edit yet).
+- **The list omits `points` and `waypoints`**: a street path is thousands of
+  pairs, so `RouteSummarySerializer` drops both from the list and the detail
+  endpoint returns them.
+- **Edit is a full replacement from the client**: the editor re-routes the
+  legs and sends the new `points` and `waypoints` together with the name and
+  description (`PUT`). `PATCH` exists because the generic view provides it;
+  a `PATCH` that changes `points` without `waypoints` leaves the two out of
+  step.
 - **Constant speed**: the 60 km/h average is a module constant, not a
   per-route or per-user value.
 - **`points` validation runs on `full_clean()`**, the admin and DRF

@@ -64,19 +64,21 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 
 ## Route creator
 
-The **New route** button (an icon-only button with the `icon-route` glyph, in
-the top right `map-controls` group under the locate button, labeled "New route"
-for screen readers) swaps the map for `RouteCreatorView`. `MapOverview` holds the
-`isCreatingRoute` flag, so the creator reuses the street position already
-resolved and no second location lookup happens. While the creator is open the
+The **route button** (an icon-only button with the `icon-route` glyph, in the
+top right `map-controls` group under the locate button, labeled "Routes") opens
+a menu (`views/map/RouteMenu.tsx`) with **Create a new route** and **Preview
+routes**. The first swaps the map for `RouteCreatorView`, the second for
+`RouteListView` ([route-management.md](route-management.md)). `MapOverview`
+holds the mode (`browse`, `create` or `list`), so the creator reuses the street
+position already resolved and no second location lookup happens. While the creator is open the
 bottom tab bar is hidden (`useHideTabBar`), so the map and the sheet use the
 full height and the cancel button is the way out.
 
 | Piece | File | Job |
 |-------|------|-----|
-| Screen | `views/routes/RouteCreatorView.tsx` | Full-bleed map, cancel and locate controls, bottom sheet with the point list and the save button |
+| Screen | `views/routes/RouteCreatorView.tsx`, `views/routes/RouteEditor.tsx` | The creator is a thin wrapper; `RouteEditor` is the shared screen (also used to [edit a route](route-management.md#edit)): full-bleed map, cancel and locate controls, bottom sheet with the point list and the save button |
 | List | `views/routes/RoutePointList.tsx` | Numbered points with coordinates and a remove button each; a hint while empty |
-| Modal | `views/routes/SaveRouteDialog.tsx` | Name (required, 100) and description (optional, 255), then `POST /api/routes/` |
+| Modal | `views/routes/SaveRouteDialog.tsx` | Name (required, 100) and description (optional, 255), then saves through the `saveRoute` it is given: `POST /api/routes/` here, `PUT` when editing |
 | Points | `hooks/useRouteDraft.ts` | The ordered points; snaps each tap to a street, routes each leg, and adds, removes and moves points |
 | Sheet | `views/routes/RouteSheet.tsx`, `hooks/useSheetGrab.ts` | The bottom sheet and its collapse gesture |
 | Reorder | `hooks/useDragReorder.ts` | Press-and-hold drag gesture (and Alt+Arrow keys) for the point list |
@@ -141,8 +143,9 @@ Behavior:
   re-added on every `style.load`, because switching between the light and
   dark style drops custom layers.
 - **Save route** is disabled until there are 2 points and no leg is being
-  fetched. It sends the whole street path as `points`, not only the tapped
-  points, so the server's distance follows the roads (see
+  fetched. It sends the whole street path as `points`, plus the tapped points
+  as `waypoints` (so the route can be edited later), so the server's distance
+  follows the roads (see
   [routes.md](routes.md#points)). It opens the modal: a native `<dialog>` opened with `showModal()`,
   styled as the guide's bottom sheet (`sheet sheet-modal`), so Esc, focus
   trapping and the backdrop are the browser's. The guide reserves the centered

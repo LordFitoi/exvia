@@ -9,6 +9,7 @@ interface TextFieldProps {
   error?: string
   hint?: string
   maxLength?: number
+  defaultValue?: string
 }
 
 export default function TextField({
@@ -19,6 +20,7 @@ export default function TextField({
   error,
   hint,
   maxLength,
+  defaultValue,
 }: TextFieldProps) {
   const id = useId()
   const messageId = `${id}-message`
@@ -40,6 +42,7 @@ export default function TextField({
         spellCheck={false}
         required
         maxLength={maxLength}
+        defaultValue={defaultValue}
         aria-invalid={hasError}
         aria-describedby={error || hint ? messageId : undefined}
       />

@@ -23,8 +23,8 @@ one.
 | Page | `app/(app)/ride/page.tsx` | Renders `RideOverview` |
 | Screen | `views/ride/RideOverview.tsx` | Holds the selected route id and whether the ride is on; shows the picker or ride mode |
 | Picker | `views/ride/RoutePickerView.tsx` | "Ride" heading, preview, route list, Ride button |
-| Preview | `views/ride/RoutePreview.tsx` | Placeholder, loading and failure states, or the preview map |
-| List | `views/ride/RouteChoiceList.tsx` | Skeleton, error, empty and ready states of the routes |
+| Preview | `components/route/RoutePreview.tsx` | Placeholder, loading and failure states, or the preview map |
+| List | `components/route/RouteChoiceList.tsx` | Skeleton, error, empty and ready states of the routes |
 | Ride mode | `views/ride/RideModeView.tsx` | Full-bleed 3D map with the quit and recenter buttons |
 | Routes | `hooks/useMyRoutes.ts` | `GET /api/routes/`, with `reload` |
 | Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<id>/` for the selected route, with `retry` |
@@ -34,6 +34,11 @@ one.
 | Format | `services/formatRoute.ts` | "42.1 km", "42 min", "1 h 05 min" |
 
 ## Picker
+
+`RoutePreview` and `RouteChoiceList` live in `components/route/` because the
+[route list](route-management.md) uses them too, with a small map
+(`size="compact"`) and a list that fills the column (`size="fill"`); here they
+are `fill` and `rows`.
 
 - The tab bar is hidden here (`useHideTabBar`), so the picker is a full-height
   screen with its own way out: an **X** at the top right (`screen-header`,

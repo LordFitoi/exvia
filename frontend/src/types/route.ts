@@ -3,8 +3,14 @@ import type { Coordinates } from '@/types/geolocation'
 export interface NewRoute {
   readonly name: string
   readonly description: string
+  /** The whole street path, in travel order. */
   readonly points: readonly Coordinates[]
+  /** The points the rider chose, in order; the path goes through them. */
+  readonly waypoints: readonly Coordinates[]
 }
+
+/** The geometry of a route being saved, before it has a name. */
+export type RouteGeometry = Pick<NewRoute, 'points' | 'waypoints'>
 
 export interface SavedRoute {
   readonly id: number
@@ -23,6 +29,8 @@ export interface RouteSummary extends SavedRoute {
 /** A route with its whole street path, in travel order. */
 export interface RouteDetail extends RouteSummary {
   readonly points: readonly Coordinates[]
+  /** Empty for routes saved before waypoints were stored. */
+  readonly waypoints: readonly Coordinates[]
 }
 
 /**

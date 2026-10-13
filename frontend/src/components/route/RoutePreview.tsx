@@ -9,6 +9,8 @@ import type { Coordinates } from '@/types/geolocation'
 import type { RouteDetail } from '@/types/route'
 
 interface RoutePreviewProps {
+  /** `fill` takes the free height of its column; `compact` keeps a small fixed height. */
+  size: 'fill' | 'compact'
   status: 'idle' | 'loading' | 'ready' | 'failed'
   /** The last route that loaded; kept on the map while the next one loads. */
   route: RouteDetail | null
@@ -34,9 +36,10 @@ function PreviewMap({ path }: { path: readonly Coordinates[] }) {
   return <div ref={containerRef} className="map-canvas"></div>
 }
 
-export default function RoutePreview({ status, route, onRetry }: RoutePreviewProps) {
+export default function RoutePreview({ size, status, route, onRetry }: RoutePreviewProps) {
+  const className = `route-preview${size === 'fill' ? ' route-preview-fill' : ''} map-grayscale`
   return (
-    <div className="route-preview route-preview-fill map-grayscale" aria-busy={status === 'loading'}>
+    <div className={className} aria-busy={status === 'loading'}>
       {status === 'failed' ? (
         <StateView
           title="Could not load this route"

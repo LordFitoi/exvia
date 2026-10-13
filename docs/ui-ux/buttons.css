@@ -154,6 +154,16 @@
   .icon-button:hover { background: var(--color-surface-selected); }
 }
 
+/* Button row: related actions side by side. The primary action takes the
+   remaining width and sits last, under the thumb; the destructive one is
+   soft and first, away from it (Fitts) */
+.button-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.button-row .button-primary { flex: 1; }
+
 /* Floating action button: one per screen, bottom right above the tab bar */
 .fab {
   display: inline-flex;
