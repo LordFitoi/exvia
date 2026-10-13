@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'apps.core',
     'apps.users',
     'apps.clans',
+    'apps.routes',
 ]
 
 MIDDLEWARE = [
