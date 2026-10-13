@@ -1,4 +1,4 @@
-import ProfileScreen from '@/components/profile/ProfileScreen'
+import ProfileScreen from '@/views/profile/ProfileScreen'
 
 // Rendered behind AuthGuard, which shows a skeleton until the browser session resolves.
 export const instant = false

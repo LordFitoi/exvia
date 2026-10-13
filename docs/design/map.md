@@ -14,9 +14,9 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 | Piece | File | Job |
 |-------|------|-----|
 | Page | `app/(app)/map/page.tsx` | Renders `MapOverview` |
-| Screen | `components/map/MapOverview.tsx` | Reads the position and picks the map or a waiting/blocked message |
-| Map | `components/map/UserMap.tsx` | The canvas, the "center on me" button, the load-failure message |
-| Message | `components/map/MapStatusView.tsx` | Title plus `StateView` under the "Map" heading |
+| Screen | `views/map/MapOverview.tsx` | Reads the position and picks the map or a waiting/blocked message |
+| Map | `views/map/UserMap.tsx` | The canvas, the "center on me" button, the load-failure message |
+| Message | `views/map/MapStatusView.tsx` | Title plus `StateView` under the "Map" heading |
 | Position | `hooks/useGeolocation.ts` | `watchPosition` state: `pending`, `ready`, `denied`, `unavailable` |
 | Mapbox | `hooks/useUserMap.ts` | Creates the map and the "You" marker, keeps the marker on the latest position |
 | Types | `types/geolocation.ts` | `Coordinates`, `GeolocationState` |

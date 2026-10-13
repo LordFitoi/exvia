@@ -2,7 +2,7 @@
 
 import 'mapbox-gl/dist/mapbox-gl.css'
 
-import MapStatusView from '@/components/map/MapStatusView'
+import MapStatusView from '@/views/map/MapStatusView'
 import { useUserMap } from '@/hooks/useUserMap'
 import type { Coordinates } from '@/types/geolocation'
 

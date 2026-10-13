@@ -15,6 +15,8 @@ for authentication. It is an installable, full-screen PWA; see
   [frontend-screens.md](frontend-screens.md#styling)
 - ESLint with `eslint-config-next`
 - Import alias `@/*` maps to `frontend/src/*`
+- `src/views/<feature>/` holds each screen and the pieces only it uses;
+  `src/components/` is for shared components only (`form`, `feedback`, `layout`)
 - Package manager: pnpm, pinned through `packageManager` in
   [package.json](../../frontend/package.json)
 

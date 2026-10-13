@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 
-import AuthScreenHeader from '@/components/auth/AuthScreenHeader'
-import FormAlert from '@/components/auth/FormAlert'
-import SubmitButton from '@/components/auth/SubmitButton'
-import TextField from '@/components/auth/TextField'
+import AuthScreenHeader from '@/views/auth/AuthScreenHeader'
+import FormAlert from '@/components/form/FormAlert'
+import SubmitButton from '@/components/form/SubmitButton'
+import TextField from '@/components/form/TextField'
 import { useAuth } from '@/hooks/useAuth'
 import { useFormSubmission } from '@/hooks/useFormSubmission'
 

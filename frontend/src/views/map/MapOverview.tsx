@@ -1,7 +1,7 @@
 'use client'
 
-import MapStatusView from '@/components/map/MapStatusView'
-import UserMap from '@/components/map/UserMap'
+import MapStatusView from '@/views/map/MapStatusView'
+import UserMap from '@/views/map/UserMap'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import type { GeolocationStatus } from '@/types/geolocation'
 
