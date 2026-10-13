@@ -18,16 +18,20 @@ navigation are described in [frontend-screens.md](frontend-screens.md).
 
 ## Display mode
 
-`display: "standalone"` with `display_override: ["fullscreen", "standalone"]`,
-so browsers that support it open the app full screen and the rest fall back to
-standalone. `orientation` is `portrait`; `start_url` and `scope` are `/`.
+`display: "standalone"`, with no `fullscreen` override, so the system bars stay
+visible. `orientation` is `portrait`; `start_url` and `scope` are `/`.
+`background_color` and `theme_color` both use the dark app background (`#141a21`,
+`--color-grey-900`, same as the dark `theme-color` in `layout.tsx`), so the
+splash screen and status bar blend into the page and the system icons stay
+legible.
 
-- **Android (Chrome)**: installs with the fullscreen override, so system bars
-  are hidden until the user swipes. Because fullscreen ignores `theme_color`,
-  the status bar color only applies if you remove `fullscreen` from the
-  override.
-- **iOS (Safari)**: no manifest `display` support for fullscreen; the app opens
-  standalone via `appleWebApp.capable`. `statusBarStyle` is `default` on
+- **Android (Chrome)**: installs standalone with the status bar tinted by
+  `theme-color`. The manifest holds one color (dark); the per-scheme
+  `theme-color` meta tags in `layout.tsx` override it, so light-mode devices
+  still get a white bar over the white app. Fullscreen was
+  removed because it hides the system bars and ignores `theme_color`.
+- **iOS (Safari)**: the app opens standalone via `appleWebApp.capable`.
+  `statusBarStyle` is `default` on
   purpose: `black-translucent` draws the clock in white over the page, which is
   unreadable on the light theme. The page already pads for the safe areas
   (`--safe-top`, `--safe-bottom`), so switching later needs no layout change.
@@ -81,7 +85,7 @@ errors and `Page.getInstallabilityErrors` is empty (outside incognito); the
 worker activates and controls the page; precache holds `/offline/`; with the
 server stopped, a visited screen loads from cache and an unvisited URL lands
 on the offline page. Not tested on real devices: the iOS home-screen flow and
-Android fullscreen need a phone and an HTTPS origin (the Railway domain
+Android status bar tint need a phone and an HTTPS origin (the Railway domain
 qualifies; `localhost` also counts as secure).
 
 ## Not included
