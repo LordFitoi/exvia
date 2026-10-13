@@ -10,14 +10,14 @@ const ROUTE_SOURCE_ID = 'route-draft'
 const CASING_LAYER_ID = 'route-draft-casing'
 const LINE_LAYER_ID = 'route-draft-line'
 // Same widths as the guide's .map-route-casing and .map-route strokes.
-const CASING_WIDTH = 11
-const LINE_WIDTH = 7
+export const CASING_WIDTH = 11
+export const LINE_WIDTH = 7
 const FIT_MAX_ZOOM = 17
 const START_MARKER_CLASS = 'marker marker-start'
 const POINT_MARKER_CLASS = 'marker marker-primary'
 
 // The GeoJSON shape Mapbox accepts; declared here because @types/geojson is not a direct dependency.
-interface RouteLine {
+export interface RouteLine {
   readonly type: 'Feature'
   readonly properties: Record<string, unknown>
   readonly geometry: {
@@ -26,7 +26,7 @@ interface RouteLine {
   }
 }
 
-const toRouteLine = (path: readonly Coordinates[]): RouteLine => ({
+export const toRouteLine = (path: readonly Coordinates[]): RouteLine => ({
   type: 'Feature',
   properties: {},
   geometry: { type: 'LineString', coordinates: path.map(toLngLat) },

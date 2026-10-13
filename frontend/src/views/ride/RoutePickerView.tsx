@@ -37,9 +37,9 @@ export default function RoutePickerView({
         </button>
       </div>
       <div className="route-screen-body">
-        <RoutePreview size="fill" status={detail.status} route={detail.shownRoute} onRetry={detail.retry} />
+        <RoutePreview size="compact" status={detail.status} route={detail.shownRoute} onRetry={detail.retry} />
         <RouteChoiceList
-          size="rows"
+          size="fill"
           status={myRoutes.status}
           routes={myRoutes.routes}
           selectedId={selectedId}

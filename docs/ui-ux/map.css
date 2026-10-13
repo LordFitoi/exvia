@@ -38,6 +38,13 @@
 .map-route-casing { stroke: var(--color-surface); stroke-width: 11; }
 .map-route { stroke: var(--color-primary); stroke-width: 7; }
 
+/* Track already ridden: neutral gray, so only what is ahead has color */
+.map-route-passed { stroke: var(--color-grey-500); }
+
+/* Track still to ride, after the leg the rider is on: secondary purple, so the
+   current leg (primary) reads as "now" and this one as "later" */
+.map-route-remaining { stroke: var(--color-secondary); }
+
 /* Walking leg: dotted */
 .map-route-walk {
   fill: none;
