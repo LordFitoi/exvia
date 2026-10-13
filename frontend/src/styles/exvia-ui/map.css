@@ -171,6 +171,26 @@
   max-block-size: min(30dvh, 12rem);
   overflow-y: auto;
   overscroll-behavior: contain;
+  position: relative;
+}
+
+/* Reorderable row: press and hold, then move. The text cannot be selected and
+   the long-press menu is off, or the hold would select text instead. The
+   dragged row floats above its neighbours, which slide by one row (transform
+   only) to open the gap */
+.route-point {
+  background: var(--color-surface);
+  transition: transform var(--duration-fast) var(--ease-out);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.route-point[data-dragging="true"] {
+  position: relative;
+  z-index: 1;
+  box-shadow: var(--shadow-z16);
+  transition: none;
 }
 
 .route-stats {

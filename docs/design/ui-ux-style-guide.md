@@ -111,6 +111,11 @@ Exvia changes the following on purpose:
   naming a route, uses `<dialog class="sheet sheet-modal">` opened with
   `showModal()`: a bottom sheet over a scrim, with the native dialog's focus
   trap and Esc. The centered `dialog` stays for confirmations only.
+- **Press-and-hold reorder.** `route-point` rows can be dragged after a
+  400 ms hold (`useDragReorder` in the frontend): the hold keeps normal
+  scrolling working, the dragged row floats with `--shadow-z16` and its
+  neighbours slide by one row, animating only `transform`. Alt+ArrowUp and
+  Alt+ArrowDown move a focused row, since a drag is pointer-only.
 - **Map tiles are a stand-in.** `patterns.html` draws the map as inline SVG.
   When a real map library is added, keep the overlay components
   (`map-overlay`, `map-controls`, `marker*`, `sheet`) and replace only the

@@ -71,7 +71,11 @@ export default function RouteCreatorView({ coordinates, onClose, onSaved }: Rout
           </span>
         </div>
         <FormAlert message={draft.error} />
-        <RoutePointList points={draft.points} onRemove={draft.removePoint} />
+        <RoutePointList
+          points={draft.points}
+          onRemove={draft.removePoint}
+          onMove={draft.movePoint}
+        />
         <button
           className="button button-primary button-lg button-block"
           type="button"

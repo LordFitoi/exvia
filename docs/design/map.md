@@ -74,7 +74,8 @@ resolved and no second location lookup happens.
 | Screen | `views/routes/RouteCreatorView.tsx` | Full-bleed map, cancel and locate controls, bottom sheet with the point list and the save button |
 | List | `views/routes/RoutePointList.tsx` | Numbered points with coordinates and a remove button each; a hint while empty |
 | Modal | `views/routes/SaveRouteDialog.tsx` | Name (required, 100) and description (optional, 255), then `POST /api/routes/` |
-| Points | `hooks/useRouteDraft.ts` | The ordered points; snaps each tap to a street before adding it |
+| Points | `hooks/useRouteDraft.ts` | The ordered points; snaps each tap to a street, routes each leg, and adds, removes and moves points |
+| Reorder | `hooks/useDragReorder.ts` | Press-and-hold drag gesture (and Alt+Arrow keys) for the point list |
 | Map | `hooks/useRouteMap.ts` | Map lifecycle, tap and marker-tap handlers, keeps line and markers in sync with the points |
 | Layers | `services/routeMapLayers.ts` | The route line (GeoJSON source plus casing and line layer) and the numbered markers |
 | Street path | `services/streetRouteApi.ts`, `services/routePath.ts` | Directions request for one leg; joins the legs into the full path |
@@ -102,6 +103,19 @@ Behavior:
   one new leg joining its neighbours (or none, for the first). If that request
   fails the point stays and an alert explains it, so a straight shortcut never
   appears.
+- **Reordering**: press and hold a row for 400 ms (the phone vibrates briefly),
+  then move up or down; the row follows the finger and the others slide to
+  open the gap, and the list autoscrolls near its top and bottom edges. A
+  shorter press, or a finger that moves before the hold ends, is left to the
+  browser so the list still scrolls. The remove button is not part of the
+  gesture. Dropping on a new position calls `movePoint`, which re-fetches only
+  the legs whose previous point changed (a point that keeps its predecessor
+  keeps its leg), in parallel, and renumbers markers and rows. If any new leg
+  has no street route, the old order is kept and an alert explains it. The
+  drop is not optimistic: the row returns to its slot while the legs load
+  ("Routing…"), then the list updates, so the map line is never out of step
+  with the order. Keyboard users focus a row and press Alt+ArrowUp or
+  Alt+ArrowDown.
 - Markers are the guide's `marker` buttons, numbered, the first one
   `marker-start`. The line is the joined street path, drawn with the guide's
   route colors (`--color-primary` over a `--color-surface` casing, resolved

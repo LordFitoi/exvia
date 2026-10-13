@@ -10,6 +10,7 @@ import type { DraftPoint } from '@/types/route'
 const NO_STREET_MESSAGE = 'No street here. Tap closer to a street to add a point.'
 const NO_ROUTE_MESSAGE = 'There is no street route to that spot. Try a point on a connected street.'
 const NO_RECONNECT_MESSAGE = 'The streets between the remaining points could not be joined, so the point was kept.'
+const NO_REORDER_MESSAGE = 'The streets between the points in that order could not be joined, so the order was kept.'
 const FAILED_MESSAGE = 'Could not follow the streets. Check your connection and try again.'
 
 interface RouteDraftOptions {
@@ -27,6 +28,7 @@ interface RouteDraft {
   error: string | null
   addPoint: (coordinates: Coordinates) => Promise<void>
   removePoint: (id: number) => Promise<void>
+  movePoint: (id: number, toIndex: number) => Promise<void>
 }
 
 /** A leg from `previous` to `coordinates`, or null when there are no streets between them. */
@@ -39,6 +41,25 @@ const buildLeg = async (
   const path = await fetchStreetPath(previous.coordinates, coordinates, options)
   // The path starts at the previous point, which the previous leg already ends with.
   return path && path.slice(1)
+}
+
+const moveItem = <TItem,>(items: readonly TItem[], from: number, to: number): TItem[] => {
+  const moved = [...items]
+  const [item] = moved.splice(from, 1)
+  moved.splice(to, 0, item)
+  return moved
+}
+
+// A leg only depends on the point before it, so a point that keeps its predecessor keeps its leg.
+const rebuildLeg = async (
+  point: DraftPoint,
+  previous: DraftPoint | undefined,
+  originalPoints: readonly DraftPoint[],
+  options: DraftChangeOptions,
+): Promise<readonly Coordinates[] | null> => {
+  const originalPrevious = originalPoints[originalPoints.findIndex(({ id }) => id === point.id) - 1]
+  if (originalPrevious?.id === previous?.id) return point.path
+  return buildLeg(previous, point.coordinates, options)
 }
 
 /**
@@ -101,5 +122,20 @@ export const useRouteDraft = ({ accessToken }: RouteDraftOptions): RouteDraft =>
       setPoints(remaining.map((point) => (point.id === next.id ? { ...point, path } : point)))
     })
 
-  return { points, isBusy, error, addPoint, removePoint }
+  // Moving a point re-routes the legs whose previous point changed; if any cannot be joined,
+  // the order is kept.
+  const movePoint = (id: number, toIndex: number) =>
+    runExclusive(async (options) => {
+      const from = points.findIndex((point) => point.id === id)
+      if (from < 0 || from === toIndex) return
+      const reordered = moveItem(points, from, toIndex)
+      const legs = await Promise.all(
+        reordered.map((point, index) => rebuildLeg(point, reordered[index - 1], points, options)),
+      )
+      const paths = legs.filter((leg) => leg !== null)
+      if (paths.length !== legs.length) return setError(NO_REORDER_MESSAGE)
+      setPoints(reordered.map((point, index) => ({ ...point, path: paths[index] })))
+    })
+
+  return { points, isBusy, error, addPoint, removePoint, movePoint }
 }
