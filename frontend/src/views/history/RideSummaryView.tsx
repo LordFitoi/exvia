@@ -45,7 +45,7 @@ function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
     <>
       <div className="stack-sm">
         <h2 className="text-subtitle">{summary.route_name}</h2>
-        <p className="text-small text-muted">
+        <p className="cluster text-small text-muted">
           {formatRideDate(summary.start_at)}
           {!summary.is_finished && <span className="badge badge-warning">Not finished</span>}
         </p>
