@@ -44,6 +44,8 @@ export default defineRailway(() => {
     networking: { serviceDomains: { [APP_DOMAIN]: {} } },
     env: {
       BACKEND_URL: BACKEND_PRIVATE_URL,
+      // Link previews need absolute URLs, so the app has to know its own public address.
+      SITE_URL: `https://${APP_DOMAIN}`,
       // Mapbox public token, set once in the Railway dashboard; preserve() keeps it on apply.
       NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: preserve(),
     },

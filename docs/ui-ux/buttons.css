@@ -172,6 +172,18 @@
 
 .button-row .button-primary { flex: 1; }
 
+/* Even button row: two secondary actions sharing one line half and half, above the primary
+   action on its own full-width line (a .button-group of this and a .button-block). Three buttons on
+   one line are too tight on a phone */
+.button-row-even .button { flex: 1; }
+
+/* Button group: rows of buttons stacked with the same 12px gap the buttons have between them */
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 /* Floating action button: one per screen, bottom right above the tab bar */
 .fab {
   display: inline-flex;

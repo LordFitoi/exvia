@@ -9,7 +9,8 @@ in [authentication.md](authentication.md).
 ## Routes
 
 Two route groups under `src/app/`. Groups add no URL segment; each has a
-layout that wraps its pages in `AuthGuard`.
+layout that wraps its pages in `AuthGuard`. The shared route page is outside
+both: it is public and has no layout of its own.
 
 | Group | Path | Screen | Guard |
 |-------|------|--------|-------|
@@ -20,6 +21,7 @@ layout that wraps its pages in `AuthGuard`.
 | `(app)` | `/ride` | Ride, see [ride.md](ride.md) | authenticated only |
 | `(app)` | `/clans` | Clans, see [clans.md](clans.md#frontend) | authenticated only |
 | `(app)` | `/profile` | Profile, with log out | authenticated only |
+| none | `/routes/<uuid>` | Shared route, see [route-sharing.md](route-sharing.md) | public |
 
 - Logged out: only login and signup are reachable. Any other path redirects
   to `/login`, and there is no tab bar.

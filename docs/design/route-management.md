@@ -24,19 +24,39 @@ needed for the first two; the list and the history do not use it.
 `views/routes/RouteListView.tsx`. It looks like the [Ride picker](ride.md) with
 three differences: the map preview is **small** (a fixed-height `route-preview`,
 not the free height of the screen), the list **fills** the rest of the column
-and scrolls, and the actions at the bottom are **Delete** and **Edit** instead
+and scrolls, and the actions at the bottom are **Delete**, **Share** and **Edit** instead
 of Ride.
 
 - Top to bottom: the "Routes" header with an X (back to the map), the preview,
-  the list, and the button row. The tab bar is hidden (`useHideTabBar`).
+  the list, and the actions in two lines: **Delete** and **Share** half and half
+  (`button-row-even`, both soft), then **Edit** full width below them, the
+  primary action last and under the thumb. Three on one line were too tight on a
+  phone (`button-group` keeps the same 12px gap between the lines). The tab bar is hidden (`useHideTabBar`).
 - Selecting a row fetches that route's path and frames it on the preview, as in
   the picker. **Edit** is enabled once the selected route has loaded; **Delete**
-  as soon as one is selected. Neither is enabled with no selection. There is no
-  Ride button.
+  and **Share** as soon as one is selected. None is enabled with no selection.
+  There is no Ride button.
 - With no routes, the empty state offers **Create a route**, which switches to
   the creator.
 - `RoutePreview` and `RouteChoiceList` are shared with the picker
   (`components/route/`).
+
+## Share
+
+**Share** copies the route's public link,
+`<origin>/routes/<uuid>/` ([route-sharing.md](route-sharing.md)), to the
+clipboard (`navigator.clipboard`, through `useShareRoute`) and confirms it with
+a **toast**: "Link copied to the clipboard", at the top of the screen, which
+dismisses itself after 5 seconds. The toast is the shared `Toast` inside a
+`.toast-region`, the guide's floating container for screens that have no overlay
+of their own (the map has `.map-overlay`); it passes taps through, so it never
+blocks the list. If the clipboard refuses (the browser needs https or
+localhost, and may ask for permission), the error alert above the buttons says
+so. The outcome belongs to the route it was set for, so selecting another row
+clears it. Share needs only the selection, not the loaded path: the link only
+needs the id. It copies rather than opening the device's share sheet, so the
+behaviour is the same on every device. The `share` icon and the `.toast-region`
+were added to the guide for it.
 
 ## Delete
 
@@ -46,7 +66,7 @@ name, Cancel first and the solid error Delete last). It is the one place the
 guide allows a solid error button.
 
 `useRouteDeletion` (a wrapper over `useConfirmedDeletion`, which the ride history shares) runs the two steps. Cancel (or Escape) closes it and keeps
-the route. Confirming calls `DELETE /api/routes/<id>/`; while it runs both
+the route. Confirming calls `DELETE /api/routes/<uuid>/`; while it runs both
 buttons are disabled and Delete shows the loading state. On success the dialog
 closes, the selection is cleared (so the preview goes back to "Select a route")
 and the list reloads. On failure the dialog stays open with the error under the
@@ -97,4 +117,5 @@ existing route: the shared `RouteEditor` screen with different inputs.
 - **Delete asks every time**: there is no undo, and the route id is not
   recoverable.
 - **No toast after edit or delete**: the list changing (new name, row gone,
-  preview cleared) is the confirmation.
+  preview cleared) is the confirmation. Share is the exception: copying changes
+  nothing on screen, so it needs a toast.

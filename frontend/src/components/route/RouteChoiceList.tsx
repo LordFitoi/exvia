@@ -11,8 +11,8 @@ interface RouteChoiceListProps {
   size: 'rows' | 'fill'
   status: 'loading' | 'ready' | 'failed'
   routes: readonly RouteSummary[]
-  selectedId: number | null
-  onSelect: (id: number) => void
+  selectedId: string | null
+  onSelect: (id: string) => void
   onRetry: () => void
   /** What the empty state offers, such as a link to draw the first route. */
   emptyAction: ReactNode

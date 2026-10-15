@@ -16,7 +16,7 @@ export const isTokenPair = (value: unknown): value is TokenPair =>
 
 export const isSavedRoute = (value: unknown): value is SavedRoute =>
   isRecord(value) &&
-  typeof value.id === 'number' &&
+  typeof value.id === 'string' &&
   typeof value.name === 'string' &&
   typeof value.distance === 'number' &&
   typeof value.estimated_time === 'number'
@@ -33,7 +33,7 @@ const isRider = (value: unknown): value is Rider =>
 export const isRideSummaryListItem = (value: unknown): value is RideSummaryListItem =>
   isRecord(value) &&
   typeof value.id === 'number' &&
-  typeof value.route === 'number' &&
+  typeof value.route === 'string' &&
   typeof value.route_name === 'string' &&
   typeof value.distance === 'number' &&
   typeof value.start_at === 'string' &&

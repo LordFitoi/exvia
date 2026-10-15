@@ -13,7 +13,8 @@ export interface NewRoute {
 export type RouteGeometry = Pick<NewRoute, 'points' | 'waypoints'>
 
 export interface SavedRoute {
-  readonly id: number
+  /** A UUID, also the public link of the route. */
+  readonly id: string
   readonly name: string
   /** Kilometres, calculated by the server from the points. */
   readonly distance: number

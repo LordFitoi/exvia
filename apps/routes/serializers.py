@@ -32,6 +32,19 @@ class RouteSummarySerializer(RouteSerializer):
         fields = tuple(name for name in RouteSerializer.Meta.fields if name not in ('points', 'waypoints'))
 
 
+class SharedRouteSerializer(RouteSerializer):
+    """What anyone holding a route's link can read: the route without its waypoints, and its
+    author's username instead of the user id."""
+
+    author = serializers.CharField(source='author.username', read_only=True)
+
+    class Meta(RouteSerializer.Meta):
+        fields = (
+            'id', 'name', 'description', 'points', 'distance', 'estimated_time', 'author', 'created_at',
+        )
+        read_only_fields = fields
+
+
 class RiderSerializer(serializers.ModelSerializer):
     """A participant of a ride: just enough to show who they are."""
 

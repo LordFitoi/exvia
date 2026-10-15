@@ -1,3 +1,4 @@
+import uuid
 from collections.abc import Iterable
 
 from django.contrib.auth.models import User
@@ -16,6 +17,7 @@ SPEED_FIELD = {'null': True, 'blank': True, 'validators': [MinValueValidator(0)]
 class Route(TimeStampedModel):
     """Street path of [lng, lat] points drawn by a user, with derived length and travel time."""
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=NAME_MAX_LENGTH)
     description = models.TextField(blank=True, validators=[MaxLengthValidator(DESCRIPTION_MAX_LENGTH)])
     points = models.JSONField(validators=[validate_points])

@@ -13,7 +13,7 @@ const unexpectedResponse = (): ApiError => new ApiError(502, UNEXPECTED_RESPONSE
 
 /** Saves a finished ride of one of the caller's routes; the server makes the caller its rider. */
 export const createRideSummary = async (
-  routeId: number,
+  routeId: string,
   { startedAt, endedAt, isFinished, maxSpeed, minSpeed, avgSpeed }: NewRideSummary,
 ): Promise<void> => {
   const saved = await requestJsonAuthorized(`${ROUTES_PATH}${routeId}/summaries/`, {

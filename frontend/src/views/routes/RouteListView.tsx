@@ -3,12 +3,15 @@
 import { useState } from 'react'
 
 import ConfirmDeleteDialog from '@/components/feedback/ConfirmDeleteDialog'
+import Toast from '@/components/feedback/Toast'
+import FormAlert from '@/components/form/FormAlert'
 import RouteChoiceList from '@/components/route/RouteChoiceList'
 import RoutePreview from '@/components/route/RoutePreview'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useMyRoutes } from '@/hooks/useMyRoutes'
 import { useRouteDeletion } from '@/hooks/useRouteDeletion'
 import { useRouteDetail } from '@/hooks/useRouteDetail'
+import { LINK_COPIED_MESSAGE, SHARE_FAILED_MESSAGE, useShareRoute } from '@/hooks/useShareRoute'
 import RouteEditView from '@/views/routes/RouteEditView'
 
 interface RouteListViewProps {
@@ -18,7 +21,7 @@ interface RouteListViewProps {
 
 /** The user's routes: preview one on a small map, then edit or delete it. */
 export default function RouteListView({ onClose, onCreateRoute }: RouteListViewProps) {
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const myRoutes = useMyRoutes()
   const detail = useRouteDetail(selectedId)
@@ -29,6 +32,7 @@ export default function RouteListView({ onClose, onCreateRoute }: RouteListViewP
       myRoutes.reload()
     },
   })
+  const sharing = useShareRoute({ routeId: selectedId })
   // A full-height screen with its own close button, so the tab bar steps aside. While the edit
   // view is showing it decides that itself.
   useHideTabBar(!isEditing)
@@ -70,18 +74,30 @@ export default function RouteListView({ onClose, onCreateRoute }: RouteListViewP
           }
         />
       </div>
-      <div className="button-row">
+      <FormAlert message={sharing.hasFailed ? SHARE_FAILED_MESSAGE : null} />
+      <div className="button-group">
+        <div className="button-row button-row-even">
+          <button
+            className="button button-soft button-error button-lg"
+            type="button"
+            disabled={selectedId === null}
+            onClick={deletion.requestDeletion}
+          >
+            <span className="icon icon-trash" aria-hidden="true"></span>
+            Delete
+          </button>
+          <button
+            className="button button-soft button-lg"
+            type="button"
+            disabled={selectedId === null}
+            onClick={sharing.copyLink}
+          >
+            <span className="icon icon-share" aria-hidden="true"></span>
+            Share
+          </button>
+        </div>
         <button
-          className="button button-soft button-error button-lg"
-          type="button"
-          disabled={selectedId === null}
-          onClick={deletion.requestDeletion}
-        >
-          <span className="icon icon-trash" aria-hidden="true"></span>
-          Delete
-        </button>
-        <button
-          className="button button-primary button-lg"
+          className="button button-primary button-lg button-block"
           type="button"
           disabled={!detail.route}
           onClick={() => setIsEditing(true)}
@@ -90,6 +106,11 @@ export default function RouteListView({ onClose, onCreateRoute }: RouteListViewP
           Edit
         </button>
       </div>
+      {sharing.isCopied && (
+        <div className="toast-region">
+          <Toast message={LINK_COPIED_MESSAGE} onDismiss={sharing.dismissCopied} />
+        </div>
+      )}
       <ConfirmDeleteDialog
         isOpen={deletion.isConfirming}
         title="Delete this route?"

@@ -39,12 +39,12 @@ export const createRoute = async (route: NewRoute): Promise<SavedRoute> =>
   )
 
 /** Replaces the name, description and geometry of one of the caller's routes. */
-export const updateRoute = async (id: number, route: NewRoute): Promise<SavedRoute> =>
+export const updateRoute = async (id: string, route: NewRoute): Promise<SavedRoute> =>
   expectSavedRoute(
     await requestJsonAuthorized(`${ROUTES_PATH}${id}/`, { method: 'PUT', body: toRouteBody(route) }),
   )
 
-export const deleteRoute = async (id: number): Promise<void> => {
+export const deleteRoute = async (id: string): Promise<void> => {
   await requestJsonAuthorized(`${ROUTES_PATH}${id}/`, { method: 'DELETE' })
 }
 
@@ -56,7 +56,7 @@ export const fetchRoutes = async (): Promise<RouteSummary[]> => {
 }
 
 /** One route with its whole street path. */
-export const fetchRoute = async (id: number): Promise<RouteDetail> => {
+export const fetchRoute = async (id: string): Promise<RouteDetail> => {
   const route = await requestJsonAuthorized(`${ROUTES_PATH}${id}/`)
   const points = isRecord(route) ? parseCoordinateList(route.points, MIN_ROUTE_POINTS) : null
   const waypoints = isRecord(route) ? parseCoordinateList(route.waypoints, 0) : null

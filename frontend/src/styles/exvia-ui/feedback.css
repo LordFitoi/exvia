@@ -51,6 +51,18 @@
 
 .toast .icon { color: var(--color-success-text); }
 
+/* Toast region: floats a toast at the top of any screen, over the content and clear of the
+   notch, for screens with no overlay container of their own (the map has .map-overlay). It
+   passes taps through, so it never blocks what is under it */
+.toast-region {
+  position: fixed;
+  inset: calc(var(--safe-top) + var(--space-3)) var(--space-3) auto;
+  z-index: var(--z-toast);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
 @keyframes toast-in {
   from { opacity: 0; transform: translateY(1rem); }
 }

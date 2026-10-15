@@ -4,11 +4,11 @@ import { useState } from 'react'
 
 import { ApiError } from '@/services/apiClient'
 
-interface ConfirmedDeletionOptions {
+interface ConfirmedDeletionOptions<TId extends number | string> {
   /** The record to delete, or null when none is selected. */
-  targetId: number | null
+  targetId: TId | null
   /** Deletes the record on the server. */
-  remove: (id: number) => Promise<void>
+  remove: (id: TId) => Promise<void>
   /** Shown when the failure has no message of its own. */
   failureMessage: string
   onDeleted: () => void
@@ -24,12 +24,12 @@ export interface ConfirmedDeletion {
 }
 
 /** Delete in two steps: ask first, then delete. A failure keeps the question open with a message. */
-export const useConfirmedDeletion = ({
+export const useConfirmedDeletion = <TId extends number | string>({
   targetId,
   remove,
   failureMessage,
   onDeleted,
-}: ConfirmedDeletionOptions): ConfirmedDeletion => {
+}: ConfirmedDeletionOptions<TId>): ConfirmedDeletion => {
   const [isConfirming, setIsConfirming] = useState(false)
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)

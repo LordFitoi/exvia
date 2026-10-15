@@ -28,7 +28,7 @@ one.
 | Ride mode | `views/ride/RideModeView.tsx` | Full-bleed 3D map with the quit and recenter buttons |
 | Quit | `views/ride/ConfirmQuitRideDialog.tsx`, `hooks/useQuitRide.ts` | "Quit this ride?" dialog opened by the X, and saving the unfinished ride before leaving |
 | Routes | `hooks/useMyRoutes.ts` | `GET /api/routes/`, with `reload` |
-| Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<id>/` for the selected route, with `retry` |
+| Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<uuid>/` for the selected route, with `retry` |
 | Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start and finish markers, framed in view |
 | Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines and the start and finish markers |
 | Rider | `hooks/useRiderFollow.ts`, `services/riderMotion.ts` | The "You" marker and the camera that follows it, gliding between fixes, with `recenter` |
@@ -165,7 +165,7 @@ uses the same two sizes, so both screens have the same map.
   The guide shows it in [patterns.html](../ui-ux/patterns.html) ("Ride summary"),
   with `map-scrim` standing in for the dialog backdrop.
   **Saving the ride**: when the summary appears, `useSaveRideSummary` posts the
-  ride once to `POST /api/routes/<id>/summaries/` ([routes.md](routes.md#route-summaries))
+  ride once to `POST /api/routes/<uuid>/summaries/` ([routes.md](routes.md#route-summaries))
   with the time ride mode opened as `start_at`, the arrival time as `end_at`
   (the same two instants the Time box measures) and the speeds below. The sheet
   shows "Saving your ride…", then "Ride saved."; if the request fails it shows

@@ -1,11 +1,7 @@
 'use client'
 
-import 'mapbox-gl/dist/mapbox-gl.css'
-
 import StateView from '@/components/feedback/StateView'
-import { useRoutePreviewMap } from '@/hooks/useRoutePreviewMap'
-import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
-import type { Coordinates } from '@/types/geolocation'
+import PreviewMap from '@/components/route/PreviewMap'
 import type { RouteDetail } from '@/types/route'
 
 interface RoutePreviewProps {
@@ -15,25 +11,6 @@ interface RoutePreviewProps {
   /** The last route that loaded; kept on the map while the next one loads. */
   route: RouteDetail | null
   onRetry: () => void
-}
-
-function PreviewMap({ path }: { path: readonly Coordinates[] }) {
-  const { containerRef, hasLoadFailed } = useRoutePreviewMap({
-    accessToken: MAPBOX_ACCESS_TOKEN,
-    path,
-  })
-
-  if (hasLoadFailed) {
-    return (
-      <StateView
-        title="Map unavailable"
-        description="The map could not be loaded. Check your connection and try again later."
-      >
-        <span className="icon icon-lg icon-alert"></span>
-      </StateView>
-    )
-  }
-  return <div ref={containerRef} className="map-canvas"></div>
 }
 
 export default function RoutePreview({ size, status, route, onRetry }: RoutePreviewProps) {

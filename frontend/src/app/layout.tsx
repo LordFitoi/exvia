@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 
 import AuthProvider from "@/context/AuthProvider";
+import { SITE_URL } from "@/services/siteConfig";
 import ServiceWorkerRegistration from "@/components/layout/ServiceWorkerRegistration";
 import "@/styles/exvia-ui/exvia-ui.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: "Exvia", template: "%s | Exvia" },
   description: "Clans, rides and rider profiles.",
   applicationName: "Exvia",

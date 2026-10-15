@@ -49,3 +49,7 @@ export const formatSpeed = (kilometresPerHour: number | null): string =>
 /** The day of a ride as the reader's locale writes it, such as "15 Oct 2026". */
 export const formatRideDate = (isoDateTime: string): string =>
   new Date(isoDateTime).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+
+/** The day and month a route was made as the reader's locale writes them, such as "15 Oct". */
+export const formatShortDate = (isoDateTime: string): string =>
+  new Date(isoDateTime).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })

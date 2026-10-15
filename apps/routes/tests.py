@@ -1,3 +1,4 @@
+import uuid
 from datetime import timedelta
 
 from django.contrib.auth.models import User
@@ -161,7 +162,7 @@ class RouteApiTests(TestCase):
         second = self._create_route(self.author, 'Second')
         self._create_route(self.other, 'Not mine')
         response = self.client.get(self.list_url)
-        self.assertEqual([route['id'] for route in response.data], [second.pk, first.pk])
+        self.assertEqual([route['id'] for route in response.data], [str(second.pk), str(first.pk)])
 
     def test_list_omits_points(self) -> None:
         self._create_route(self.author)
@@ -246,3 +247,51 @@ class RouteApiTests(TestCase):
         response = self.client.post(self.list_url, body, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('waypoints', response.data)
+
+
+class SharedRouteApiTests(TestCase):
+    def setUp(self) -> None:
+        self.author = User.objects.create_user('rider', email='rider@example.com', password='pw')
+        self.route = Route.objects.create(
+            name='Sunday loop', description='Easy ride', points=EQUATOR_STRAIGHT_LINE, author=self.author,
+        )
+        self.client = APIClient()
+        self.url = reverse('routes:route_shared', args=[self.route.pk])
+
+    def test_route_id_is_a_uuid(self) -> None:
+        self.assertIsInstance(self.route.pk, uuid.UUID)
+        self.assertNotEqual(self.route.pk, Route.objects.create(
+            name='Other', points=EQUATOR_STRAIGHT_LINE, author=self.author,
+        ).pk)
+
+    def test_anyone_can_read_a_route_without_signing_in(self) -> None:
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], str(self.route.pk))
+        self.assertEqual(response.data['name'], 'Sunday loop')
+        self.assertEqual(response.data['points'], EQUATOR_STRAIGHT_LINE)
+        self.assertEqual(response.data['author'], 'rider')
+
+    def test_exposes_neither_the_user_id_nor_waypoints(self) -> None:
+        response = self.client.get(self.url)
+        self.assertNotIn('waypoints', response.data)
+        self.assertNotIn('rider@example.com', str(response.data))
+        self.assertNotEqual(response.data['author'], self.author.pk)
+
+    def test_an_invalid_token_does_not_block_the_read(self) -> None:
+        response = self.client.get(self.url, HTTP_AUTHORIZATION='Bearer expired.token.value')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_unknown_route_is_not_found(self) -> None:
+        response = self.client.get(reverse('routes:route_shared', args=[uuid.uuid4()]))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_is_read_only(self) -> None:
+        for method in (self.client.post, self.client.put, self.client.patch, self.client.delete):
+            with self.subTest(method=method.__name__):
+                response = method(self.url, {'name': 'Hijack'}, format='json')
+                self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_the_private_detail_still_needs_the_owner(self) -> None:
+        response = self.client.get(reverse('routes:route_detail', args=[self.route.pk]))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

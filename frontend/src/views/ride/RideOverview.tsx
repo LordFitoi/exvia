@@ -13,7 +13,7 @@ const MAP_PATH = '/map'
 
 export default function RideOverview() {
   const router = useRouter()
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isRiding, setIsRiding] = useState(false)
   const myRoutes = useMyRoutes()
   const detail = useRouteDetail(selectedId)

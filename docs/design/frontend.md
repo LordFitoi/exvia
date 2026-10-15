@@ -92,6 +92,11 @@ paths to Django (`BACKEND_URL`, default `http://localhost:8000` locally and
 - `railway config plan/apply` does not move an existing domain between
   services: remove `exvia.up.railway.app` from `Server` and add it to
   `frontend` (Settings → Networking) once, then redeploy both.
+- `SITE_URL` (the public address, `https://exvia.up.railway.app` on Railway,
+  default `http://localhost:3000`) is the base of the absolute URLs in page
+  metadata, which link previews need ([route-sharing.md](route-sharing.md)).
+- A Server Component cannot use the browser's relative URLs, so it calls
+  `BACKEND_URL` directly (`services/sharedRouteApi.ts`).
 - Browser code should call the API with relative URLs (`/api/auth/token/`),
   which also removes the need for CORS.
 - Locally, run Django on `:8000` and `make run_frontend` on `:3000`.

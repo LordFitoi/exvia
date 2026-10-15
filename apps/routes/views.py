@@ -4,9 +4,11 @@ from rest_framework.generics import (
     CreateAPIView,
     ListAPIView,
     ListCreateAPIView,
+    RetrieveAPIView,
     RetrieveDestroyAPIView,
     RetrieveUpdateDestroyAPIView,
 )
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.serializers import BaseSerializer
 
@@ -15,6 +17,7 @@ from apps.routes.serializers import (
     RideSummaryListSerializer,
     RideSummarySerializer,
     RouteSerializer,
+    SharedRouteSerializer,
     RouteSummarySerializer,
 )
 
@@ -40,6 +43,16 @@ class RouteListCreateView(OwnRoutesMixin, ListCreateAPIView):
 
 class RouteDetailView(OwnRoutesMixin, RetrieveUpdateDestroyAPIView):
     """Returns, updates or deletes one of the caller's routes; other users' routes are 404."""
+
+
+class SharedRouteView(RetrieveAPIView):
+    """Returns any route to anyone who knows its UUID, signed in or not. The UUID is the secret of the
+    link; the credentials are ignored, so a stale token cannot turn a public read into a 401."""
+
+    authentication_classes = ()
+    permission_classes = (AllowAny,)
+    serializer_class = SharedRouteSerializer
+    queryset = Route.objects.select_related('author')
 
 
 class RideSummaryCreateView(CreateAPIView):

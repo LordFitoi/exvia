@@ -18,9 +18,9 @@ interface RouteDetailHandle {
 }
 
 /** Loads one route with its path. The status is derived from which id has loaded or failed. */
-export const useRouteDetail = (routeId: number | null): RouteDetailHandle => {
+export const useRouteDetail = (routeId: string | null): RouteDetailHandle => {
   const [loaded, setLoaded] = useState<RouteDetail | null>(null)
-  const [failedId, setFailedId] = useState<number | null>(null)
+  const [failedId, setFailedId] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {

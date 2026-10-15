@@ -11,8 +11,8 @@ import type { useRouteDetail } from '@/hooks/useRouteDetail'
 interface RoutePickerViewProps {
   myRoutes: ReturnType<typeof useMyRoutes>
   detail: ReturnType<typeof useRouteDetail>
-  selectedId: number | null
-  onSelect: (id: number) => void
+  selectedId: string | null
+  onSelect: (id: string) => void
   onRide: () => void
   onClose: () => void
 }

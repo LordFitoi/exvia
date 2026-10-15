@@ -16,8 +16,8 @@ The app lives in [apps/routes/](../../apps/routes/) and is registered in
 | [models.py](../../apps/routes/models.py) | `Route` and `RouteSummary` models |
 | [geometry.py](../../apps/routes/geometry.py) | Distance and travel time calculation |
 | [validators.py](../../apps/routes/validators.py) | `points` validator |
-| [serializers.py](../../apps/routes/serializers.py) | `RouteSerializer`, `RideSummarySerializer`, `RideSummaryListSerializer` |
-| [views.py](../../apps/routes/views.py) | The route views and the three ride summary views (create, list, detail) |
+| [serializers.py](../../apps/routes/serializers.py) | `RouteSerializer`, `SharedRouteSerializer`, `RideSummarySerializer`, `RideSummaryListSerializer` |
+| [views.py](../../apps/routes/views.py) | The route views, the public shared route view and the three ride summary views (create, list, detail) |
 | [urls.py](../../apps/routes/urls.py) | Routes, mounted at `api/routes/` in `config/urls.py` |
 | [admin.py](../../apps/routes/admin.py) | `RouteAdmin`, `RouteSummaryAdmin` |
 
@@ -28,6 +28,7 @@ first (`Meta.ordering = ('-created_at',)`).
 
 | Field | Type | Notes |
 |-------|------|-------|
+| `id` | `UUIDField` | Primary key, `uuid4`, `editable=False`; also the secret of the public link ([route-sharing.md](route-sharing.md)) |
 | `name` | `CharField(100)` | |
 | `description` | `TextField` | Optional (`blank=True`), max 255 characters, enforced by a validator |
 | `points` | `JSONField` | List of 2 to 20,000 `[lng, lat]` pairs: the whole street path |
@@ -45,7 +46,7 @@ It inherits `TimeStampedModel` and is ordered by `-start_at`.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `route` | FK to `Route` | `related_name='summaries'`, `CASCADE` |
+| `route` | FK to `Route` | `related_name='summaries'`, `CASCADE`; a UUID, like the route's `id` |
 | `start_at` | `DateTimeField` | |
 | `end_at` | `DateTimeField` | Must be after `start_at` |
 | `duration` | `DurationField` | `end_at - start_at`, calculated, `editable=False` |
@@ -76,7 +77,7 @@ It inherits `TimeStampedModel` and is ordered by `-start_at`.
 
 ### Saving a ride
 
-`POST /api/routes/<id>/summaries/` (JWT) saves a finished ride of one of the
+`POST /api/routes/<uuid>/summaries/` (JWT) saves a finished ride of one of the
 caller's routes. The body is `{"start_at": "...", "end_at": "..."}`
 (ISO 8601 datetimes, both required), plus optional `is_finished` (default `true`), `max_speed`, `min_speed`
 and `avg_speed` in km/h; the answer is `201` with the full ride, the shape in
@@ -107,7 +108,7 @@ A ride (the detail, and the answer to the `POST`):
 ```json
 {
   "id": 3,
-  "route": 7,
+  "route": "2dfd2b39-b5ba-4389-b76d-25adf7a15414",
   "route_name": "Sunday loop",
   "distance": 12.3,
   "estimated_time": 2700,
@@ -174,7 +175,7 @@ derived fields are added to `update_fields` so they are not left stale.
 
 ## API
 
-All endpoints are under `/api/routes/`, need a JWT (`Authorization: Bearer
+All endpoints are under `/api/routes/`, need a JWT (except the [shared route](#shared-route)) (`Authorization: Bearer
 <access>`, see [authentication.md](authentication.md)) and only ever see the
 caller's own routes.
 
@@ -182,10 +183,10 @@ caller's own routes.
 |-----------------|--------|
 | `POST /api/routes/` | `201` with the created route; `author` is the caller |
 | `GET /api/routes/` | `200` with a plain JSON array of the caller's routes, newest first (no pagination), **without `points`** |
-| `GET /api/routes/<id>/` | `200` with one route, with its `points` and `waypoints` |
-| `PUT /api/routes/<id>/` | `200` with the updated route; `name` and `points` required |
-| `PATCH /api/routes/<id>/` | `200` with the updated route; any of the writable fields |
-| `DELETE /api/routes/<id>/` | `204` |
+| `GET /api/routes/<uuid>/` | `200` with one route, with its `points` and `waypoints` |
+| `PUT /api/routes/<uuid>/` | `200` with the updated route; `name` and `points` required |
+| `PATCH /api/routes/<uuid>/` | `200` with the updated route; any of the writable fields |
+| `DELETE /api/routes/<uuid>/` | `204` |
 
 An update recalculates `distance` and `estimated_time` from the stored
 `points`, since it goes through `Route.save()`. `author` cannot be changed.
@@ -196,7 +197,7 @@ A route is serialized as:
 
 ```json
 {
-  "id": 7,
+  "id": "2dfd2b39-b5ba-4389-b76d-25adf7a15414",
   "name": "Sunday loop",
   "description": "",
   "points": [[-3.7038, 40.4168], [-3.6912, 40.4221]],
@@ -215,14 +216,28 @@ fields are `name` (required), `description` (optional), `points` (required) and
 **whole seconds** (an integer, not the `HH:MM:SS` string DRF would give a
 `DurationField`), so clients do not have to parse a duration. `id`,
 `distance`, `estimated_time`, `author` and the timestamps are read-only;
-sending them is ignored.
+sending them is ignored. `id` is a UUID string.
+
+### Shared route
+
+`GET /api/routes/<uuid>/shared/` needs **no JWT** and returns any route to whoever
+knows its UUID, with the author's username instead of their id and without
+`waypoints`. It is read-only and `404` for an unknown UUID. See
+[route-sharing.md](route-sharing.md).
 
 ## Key decisions
 
+- **The primary key is a UUID**: a route id is in a link that is handed to
+  strangers, so it must not be a counter that can be walked (`/routes/1`,
+  `/routes/2`, ...). It is a UUID4, drawn when the row is created. Migration
+  `0007_route_uuid_primary_key` converted the existing integer ids in place and
+  kept each ride attached to its route. It cannot be reversed: the integer ids
+  are gone once it has run. `RouteSummary` keeps its integer id.
 - **Other users' routes are `404`, not `403`**: retrieve and delete filter
   the queryset by author, so a route id does not reveal whether it exists.
   Opening routes to other riders (for example through a clan) means changing
-  `OwnRoutesMixin.get_queryset`.
+  `OwnRoutesMixin.get_queryset`. The only open door is the separate shared
+  route endpoint, which needs the UUID.
 - **Unpaginated list**: DRF has no default pagination configured here, so
   the list returns every route of the user. Add pagination when a user can
   realistically have hundreds.

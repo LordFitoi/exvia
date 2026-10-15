@@ -10,7 +10,7 @@ import { createRideSummary } from '@/services/rideSummariesApi'
 const SAVE_FAILED_MESSAGE = 'Your ride could not be saved. Check your connection, or quit without saving.'
 
 interface QuitRideOptions {
-  routeId: number
+  routeId: string
   /** When ride mode opened, in milliseconds since the epoch. */
   startedAt: number
   /** The speed readings of the ride so far. */

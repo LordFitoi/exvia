@@ -9,7 +9,7 @@ import type { SpeedStats } from '@/services/rideSpeed'
 export type SaveRideStatus = 'idle' | 'saving' | 'saved' | 'failed'
 
 interface SaveRideSummaryOptions {
-  routeId: number
+  routeId: string
   /** When ride mode opened, in milliseconds since the epoch. */
   startedAt: number
   /** When the rider arrived, in milliseconds since the epoch; null while still riding. */

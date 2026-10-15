@@ -12,7 +12,7 @@ export interface NewRideSummary {
 /** A ride as the history list returns it; the times are ISO 8601 strings. */
 export interface RideSummaryListItem {
   readonly id: number
-  readonly route: number
+  readonly route: string
   readonly route_name: string
   /** Kilometres, the route's own length. */
   readonly distance: number

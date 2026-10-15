@@ -8,7 +8,7 @@ const DELETE_FAILED_MESSAGE = 'The route could not be deleted. Check your connec
 
 interface RouteDeletionOptions {
   /** The route to delete, or null when none is selected. */
-  routeId: number | null
+  routeId: string | null
   onDeleted: () => void
 }
 
