@@ -18,7 +18,7 @@ layout that wraps its pages in `AuthGuard`.
 | `(app)` | `/` | Home | authenticated only |
 | `(app)` | `/map` | Map, see [map.md](map.md) | authenticated only |
 | `(app)` | `/ride` | Ride, see [ride.md](ride.md) | authenticated only |
-| `(app)` | `/clans` | Clans | authenticated only |
+| `(app)` | `/clans` | Clans, see [clans.md](clans.md#frontend) | authenticated only |
 | `(app)` | `/profile` | Profile, with log out | authenticated only |
 
 - Logged out: only login and signup are reachable. Any other path redirects
@@ -89,10 +89,10 @@ screen).
 
 ## Placeholder content
 
-Home and Clans have no backend endpoints yet, so they show the guide's empty
-`state-view`s ("No rides planned", "No clans yet"). Profile shows what
-`me/` returns: username and email. Replace the empty states when the
-serializers and endpoints for rides, notices and clans exist.
+The "Next ride" block on Home still shows the guide's empty `state-view`
+("No rides planned"): clan rides have no endpoints yet. Clans and the Home
+feed of notices are real, see [clans.md](clans.md#frontend). Profile shows
+what `me/` returns: username and email.
 
 ## Styling
 

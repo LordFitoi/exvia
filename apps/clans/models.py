@@ -23,14 +23,15 @@ class ClanGroup(TimeStampedModel):
 
     name = models.CharField(max_length=GROUP_NAME_MAX_LENGTH)
     description = models.TextField()
-    group_image = models.ImageField(upload_to=GROUP_IMAGE_UPLOAD_DIR)
+    group_image = models.ImageField(upload_to=GROUP_IMAGE_UPLOAD_DIR, blank=True)
     owner = models.ForeignKey(User, on_delete=models.PROTECT, related_name='owned_clans')
     users = models.ManyToManyField(User, related_name='clans', blank=True)
     social_links = models.JSONField(default=list, blank=True, validators=[validate_social_links])
 
-    # Reverse relations, created by the ForeignKeys declared on ClanNotice and ClanRide.
+    # Reverse relations, created by the ForeignKeys declared on ClanNotice, ClanRide and ClanInvitation.
     notices: 'models.Manager[ClanNotice]'
     rides: 'models.Manager[ClanRide]'
+    invitations: 'models.Manager[ClanInvitation]'
 
     def __str__(self) -> str:
         return self.name
@@ -70,3 +71,19 @@ class ClanNotice(TimeStampedModel):
 
     def __str__(self) -> str:
         return self.title
+
+
+class ClanInvitation(TimeStampedModel):
+    """Pending invitation of a user to join a clan; accepting or declining deletes it."""
+
+    clan = models.ForeignKey(ClanGroup, on_delete=models.CASCADE, related_name='invitations')
+    invited_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_clan_invitations')
+    invitee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='clan_invitations')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['clan', 'invitee'], name='unique_clan_invitation'),
+        ]
+
+    def __str__(self) -> str:
+        return f'{self.invitee} invited to {self.clan}'

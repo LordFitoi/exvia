@@ -1,10 +1,16 @@
 'use client'
 
+import NoticeList from '@/components/clan/NoticeList'
 import StateView from '@/components/feedback/StateView'
 import { useAuth } from '@/hooks/useAuth'
+import { useRemoteList } from '@/hooks/useRemoteList'
+import { fetchFeedNotices } from '@/services/clansApi'
+
+const FEED_FAILURE_LABEL = 'Could not load the clan notices'
 
 export default function HomeScreen() {
   const { user } = useAuth()
+  const feed = useRemoteList(fetchFeedNotices, FEED_FAILURE_LABEL)
 
   return (
     <main className="screen-body">
@@ -27,12 +33,14 @@ export default function HomeScreen() {
         <h2 className="text-overline" id="feed-title">
           From your clans
         </h2>
-        <StateView
-          title="Nothing new yet"
-          description="Notices from your clans will appear in this feed."
-        >
-          <span className="icon icon-lg icon-bell"></span>
-        </StateView>
+        <NoticeList
+          status={feed.status}
+          notices={feed.items}
+          isClanShown
+          emptyTitle="Nothing new yet"
+          emptyDescription="Notices from your clans will appear in this feed."
+          onRetry={feed.reload}
+        />
       </section>
     </main>
   )

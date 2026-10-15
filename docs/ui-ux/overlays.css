@@ -71,12 +71,16 @@ button.sheet-handle {
 
 /* Modal sheet: a native <dialog> pinned to the bottom edge, for a secondary
    flow that needs full attention, like naming a route before saving it. Use
-   it as <dialog class="sheet sheet-modal"> and open it with showModal() */
+   it as <dialog class="sheet sheet-modal"> and open it with showModal().
+   Its bottom edge is the bottom of the app's 100dvh box, the same edge the tab
+   bar and the ride strip sit on, not `bottom: 0` of the window: on Android that
+   edge reaches behind the system navigation bar and hides the end of the sheet */
 .sheet-modal:not([open]) { display: none; }
 
 .sheet-modal {
   position: fixed;
-  inset: auto 0 0;
+  inset: 100dvh 0 auto;
+  translate: 0 -100%;
   inline-size: min(100%, var(--app-max-width));
   max-inline-size: none;
   max-block-size: 90dvh;

@@ -117,7 +117,10 @@ Exvia changes the following on purpose:
 - **Modal sheet for short forms.** A form that needs full attention, such as
   naming a route, uses `<dialog class="sheet sheet-modal">` opened with
   `showModal()`: a bottom sheet over a scrim, with the native dialog's focus
-  trap and Esc. The centered `dialog` stays for confirmations only; it sets
+  trap and Esc. The sheet's bottom edge is the bottom of the app's `100dvh`
+  box (`inset: 100dvh 0 auto` and `translate: 0 -100%`), the edge the tab bar
+  and the ride strip sit on, not `bottom: 0` of the window, which on Android
+  reaches behind the system navigation bar. The centered `dialog` stays for confirmations only; it sets
   `margin: auto` itself because the Tailwind preflight zeroes the native
   centering margin, and keeps a `--space-4` gap from the screen edges.
 - **Center action in the tab bar.** `tab-bar-action` raises one destination

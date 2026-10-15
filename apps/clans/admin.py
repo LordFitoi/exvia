@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.clans.models import ClanGroup, ClanNotice, ClanRide
+from apps.clans.models import ClanGroup, ClanInvitation, ClanNotice, ClanRide
 
 
 class ClanRideInline(admin.TabularInline):
@@ -37,3 +37,12 @@ class ClanNoticeAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description', 'author__username', 'clan__name')
     readonly_fields = ('created_at', 'updated_at')
     autocomplete_fields = ('clan', 'author', 'ride')
+
+
+@admin.register(ClanInvitation)
+class ClanInvitationAdmin(admin.ModelAdmin):
+    list_display = ('invitee', 'clan', 'invited_by', 'created_at')
+    list_filter = ('clan',)
+    search_fields = ('invitee__username', 'invited_by__username', 'clan__name')
+    readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ('clan', 'invited_by', 'invitee')

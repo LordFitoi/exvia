@@ -1,7 +1,8 @@
 # Clans
 
-Community groups of riders with announcements and ride events. Models and
-Django admin only for now: no serializers or endpoints exist yet.
+Community groups of riders with announcements and ride events. Riders create
+clans, invite other users and post notices through the API and the Clans tab;
+rides (`ClanRide`) are still model and admin only.
 
 ## Layout
 
@@ -9,8 +10,10 @@ The app lives in [apps/clans/](../../apps/clans/) and is registered in
 `INSTALLED_APPS` as `apps.clans` ([settings.py](../../config/settings.py)).
 Models are in [models.py](../../apps/clans/models.py), the social link
 validator in [validators.py](../../apps/clans/validators.py), the admin in
-[admin.py](../../apps/clans/admin.py). No URLs are
-wired into `config/urls.py` until there are views to route.
+[admin.py](../../apps/clans/admin.py). The API is in
+[serializers.py](../../apps/clans/serializers.py),
+[views.py](../../apps/clans/views.py) and [urls.py](../../apps/clans/urls.py),
+mounted at `/api/clans/` in `config/urls.py`.
 
 ## Data model
 
@@ -18,8 +21,9 @@ All models inherit `apps.core.models.TimeStampedModel`.
 
 | Model | Fields | Relations |
 |-------|--------|-----------|
-| `ClanGroup` | `name`, `description`, `group_image` (required), `social_links` (JSON list, optional) | `owner` FK to `auth.User` (`owned_clans`, `PROTECT`); `users` M2M to `auth.User` (`clans`) |
+| `ClanGroup` | `name`, `description`, `group_image` (optional), `social_links` (JSON list, optional) | `owner` FK to `auth.User` (`owned_clans`, `PROTECT`); `users` M2M to `auth.User` (`clans`) |
 | `ClanRide` | `title`, `description`, `schedule_at` (UTC datetime), `event_type` (`EventType`: `weekly`, `unique`), `meet_at` | `clan` FK to `ClanGroup` (`rides`, `CASCADE`) |
+| `ClanInvitation` | none besides the timestamps | `clan` FK to `ClanGroup` (`invitations`, `CASCADE`); `invited_by` FK to `auth.User` (`sent_clan_invitations`, `CASCADE`); `invitee` FK to `auth.User` (`clan_invitations`, `CASCADE`); unique on (`clan`, `invitee`) |
 | `ClanNotice` | `title`, `description`, `attachment` (image, optional) | `clan` FK to `ClanGroup` (`notices`, `CASCADE`); `author` FK to `auth.User` (`clan_notices`, `CASCADE`); `ride` FK to `ClanRide` (optional, `notices`, `SET_NULL`) |
 
 `ClanGroup.notices` and `ClanGroup.rides` are the reverse managers of the
@@ -28,6 +32,41 @@ All models inherit `apps.core.models.TimeStampedModel`.
 attributes on `ClanGroup` (annotations only, no extra fields).
 `ClanRide.clan` is not in the original field list but is required to make
 `ClanGroup.rides` exist.
+
+## API
+
+All endpoints need a JWT. A clan the caller is not a member of is always
+404, never 403, so clan ids do not leak.
+
+| Method and path | Who | Does |
+|-----------------|-----|------|
+| `GET /api/clans/` | any user | clans the caller belongs to, newest first |
+| `POST /api/clans/` | any user | creates a clan (`name`, `description`); the caller becomes `owner` **and** a member |
+| `GET /api/clans/<id>/` | member | the clan with its `members` |
+| `GET /api/clans/<id>/notices/` | member | the clan's notices, newest first |
+| `POST /api/clans/<id>/notices/` | member | posts a notice (`title`, `description`) authored by the caller |
+| `POST /api/clans/<id>/invitations/` | member | invites the user named by `username`; 400 if unknown, already a member or already invited |
+| `GET /api/clans/notices/` | any user | the home feed: latest 50 notices of every clan the caller belongs to, newest first |
+| `GET /api/clans/invitations/` | any user | invitations addressed to the caller |
+| `POST /api/clans/invitations/<id>/accept/` | invitee | joins the clan, deletes the invitation, returns the clan |
+| `DELETE /api/clans/invitations/<id>/` | invitee | declines (deletes) the invitation |
+
+Lists are not paginated, like the routes API; the feed is capped by
+`FEED_LIMIT`. Images (`group_image`, `ClanNotice.attachment`) are not exposed
+by the API yet: the client has no upload flow and media is only served in
+`DEBUG`. Notices are not editable or deletable through the API yet, and there
+is no leave or remove-member endpoint.
+
+## Frontend
+
+The Clans tab ([ClansScreen.tsx](../../frontend/src/views/clans/ClansScreen.tsx))
+shows pending invitations (Decline / Join), the caller's clans and a "New
+clan" sheet. Opening a clan shows `ClanView`: description plus a Notices tab
+(read, "New notice" sheet) and a Members tab (list, "Invite a rider" sheet,
+which takes a username). Home lists the feed under "From your clans" with the
+same `NoticeList` and `NoticeCard`. The three sheets share `FormSheet`, which
+is mounted to open and unmounted to close so each opening starts empty. List
+loading shares `useRemoteList`.
 
 ## Social links
 
@@ -58,8 +97,15 @@ there.
 
 - **`owner` is a plain FK, not a one-to-one**: a user can own several
   clans. `PROTECT` prevents deleting a user who still owns one.
-- **Owner is not forced into `users`**: membership is managed separately
-  and the owner is not auto-added.
+- **Owner is not forced into `users` by the model**: membership is managed
+  separately and the admin does not auto-add the owner. The create endpoint
+  does add the creator, since only members can post and invite.
+- **Invitations, not direct adds**: a member only proposes; the invitee
+  decides. Otherwise anyone could put an unwilling user in a clan and into
+  that clan's notices on their home feed. There is no status column: a
+  pending invitation is a row, and accepting or declining deletes it.
+- **`group_image` is optional**: the API and the app have no image upload
+  yet, and a required image would block creating a clan from the app.
 - **`ClanNotice.clean()`** rejects a `ride` that belongs to another clan.
   Like the validator, it runs on `full_clean()`, not on `save()`.
 - **Deleting a ride keeps its notices** (`SET_NULL`); deleting a clan
