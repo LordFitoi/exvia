@@ -35,7 +35,7 @@ one.
 | Ride lines | `hooks/useRideLines.ts` | Where the rider is on the track, and the lines to draw from it |
 | Wake lock | `hooks/useWakeLock.ts` | Keeps the screen on while riding (Screen Wake Lock API) |
 | Way to start | `hooks/useApproachPath.ts` | Street path from the rider to the route start (Directions API) |
-| Progress | `services/routeProgress.ts`, `services/rideLines.ts` | Distance along the track, the stops, and the split of the track |
+| Progress | `services/routeProgress.ts`, `services/rideLines.ts` | Distance along the track, and the split of the track |
 | Ride layers | `services/rideMapLayers.ts` | The Mapbox line layers of a ride |
 | API | `services/routesApi.ts` | `fetchRoutes`, `fetchRoute` (and `createRoute`) |
 | Format | `services/formatRoute.ts` | "42.1 km", "42 min", "1 h 05 min" |
@@ -81,7 +81,7 @@ uses the same two sizes, so both screens have the same map.
 - The map is pitched at 60 degrees, zoom 16.5, with the buildings of the
   Mapbox streets data extruded (`fill-extrusion`, `services/buildingsLayer.ts`)
   and the route drawn as in the other maps, with start and finish markers.
-  The grayscale class and the light and dark styles are the same as the
+  The grayscale and the light and dark styles are the same as the
   Map tab.
 - The camera faces along the route: the bearing points from the start towards
   the point 10 positions ahead (`services/bearing.ts`), so the first view is
@@ -109,7 +109,7 @@ uses the same two sizes, so both screens have the same map.
   turns and slides under it. A fix that lands mid-animation continues from the
   point reached, with no jump. While the recenter ease runs, frames move only
   the marker.
-- **Four lines** (`useRideLines`), each over the guide's `--color-surface`
+- **Three lines** (`useRideLines`), each over the guide's `--color-surface`
   casing except the dotted one:
   - **Ridden track**, gray (`--color-grey-500`, `.map-route-passed` in the
     guide): from the start to where the rider is on the track. Empty before the
@@ -119,13 +119,9 @@ uses the same two sizes, so both screens have the same map.
     is the street path from the rider to the first point, from the Directions
     API, asked again only after the rider has moved 50 m. It disappears when the
     rider reaches the track, and is empty if no street route exists.
-  - **Current leg**, `--color-primary`: from where the rider is on the track to
-    the next waypoint (the places the rider chose when drawing the route). A
-    waypoint closer than 15 m ahead counts as reached. Before the rider is on
-    the track the leg is the first one, from the start. Routes saved without
-    waypoints have one leg, to the finish.
-  - **Remaining track**, `--color-secondary` (`.map-route-remaining` in the
-    guide): from the next waypoint to the finish. Empty on the last leg.
+  - **Remaining track**, `--color-primary-light`: from
+    where the rider is on the track to the finish. Before the rider is on the
+    track it is the whole route.
 - **Progress** is the distance along the track of the closest spot to the rider
   (`routeProgress.ts`). It only moves forward: the search starts 30 m behind the
   last spot (GPS jitter) and reaches 400 m ahead, so a loop that returns near

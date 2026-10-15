@@ -117,7 +117,9 @@ Exvia changes the following on purpose:
 - **Modal sheet for short forms.** A form that needs full attention, such as
   naming a route, uses `<dialog class="sheet sheet-modal">` opened with
   `showModal()`: a bottom sheet over a scrim, with the native dialog's focus
-  trap and Esc. The centered `dialog` stays for confirmations only.
+  trap and Esc. The centered `dialog` stays for confirmations only; it sets
+  `margin: auto` itself because the Tailwind preflight zeroes the native
+  centering margin, and keeps a `--space-4` gap from the screen edges.
 - **Center action in the tab bar.** `tab-bar-action` raises one destination
   (Ride) as a round, filled primary button 1.5rem above the bar, with its label
   level with the others. Only one per bar: Von Restorff only works if it is

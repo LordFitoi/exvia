@@ -28,7 +28,6 @@ export default function RideModeView({ route, onQuit }: RideModeViewProps) {
   const lines = useRideLines({
     accessToken: MAPBOX_ACCESS_TOKEN,
     path: route.points,
-    waypoints: route.waypoints,
     rider,
   })
   const { containerRef, hasLoadFailed, recenter } = useRideMap({
@@ -52,7 +51,7 @@ export default function RideModeView({ route, onQuit }: RideModeViewProps) {
   }
 
   return (
-    <main className="map map-grayscale">
+    <main className="map">
       <h1 className="visually-hidden">Riding {route.name}</h1>
       <div ref={containerRef} className="map-canvas"></div>
       <div className="map-overlay">

@@ -135,9 +135,12 @@ button.sheet-handle {
 }
 
 /* Dialog: title, one sentence, then right-aligned actions. Cancel comes first
-   and the destructive action last, away from the thumb's resting spot */
+   and the destructive action last, away from the thumb's resting spot. The
+   auto margin centers the modal in the screen with a --space-4 gap on each
+   side (CSS resets that zero margins would pin it to the top-left corner) */
 .dialog {
   inline-size: min(calc(100% - var(--space-8)), 25rem);
+  margin: auto;
   padding: var(--space-6);
   border: 0;
   border-radius: var(--radius-lg);

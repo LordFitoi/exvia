@@ -89,7 +89,7 @@ export default function RouteEditor({
   const canSave = draft.points.length >= MIN_ROUTE_POINTS && !draft.isBusy
 
   return (
-    <main className="map map-grayscale">
+    <main className="map">
       <h1 className="visually-hidden">{title}</h1>
       <div ref={containerRef} className="map-canvas"></div>
       <div className="map-overlay">

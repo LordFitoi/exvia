@@ -34,7 +34,7 @@ export default function UserMap({ coordinates, onCreateRoute, onPreviewRoutes, c
   }
 
   return (
-    <main className="map map-grayscale">
+    <main className="map">
       <h1 className="visually-hidden">Map</h1>
       <div ref={containerRef} className="map-canvas"></div>
       <div className="map-overlay">

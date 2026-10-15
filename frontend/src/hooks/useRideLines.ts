@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 
 import { useApproachPath } from '@/hooks/useApproachPath'
-import { findStops, splitTrack } from '@/services/rideLines'
+import { splitTrack } from '@/services/rideLines'
 import type { RideLines } from '@/services/rideLines'
 import { measurePath, trackProgress } from '@/services/routeProgress'
 import type { MeasuredPath, PathLocation } from '@/services/routeProgress'
@@ -19,19 +19,17 @@ interface Progress {
 interface RideLinesOptions {
   accessToken: string | undefined
   path: readonly Coordinates[]
-  waypoints: readonly Coordinates[]
   /** The rider's position, or null while it is unknown. */
   rider: Coordinates | null
 }
 
 /**
  * What to draw on the route for this rider. Until the rider reaches the track, the way to the
- * start plus the first leg and the rest; once on it, the leg to the next waypoint and the rest.
+ * start plus the whole track; once on it, the part ridden and the part left.
  * Progress only moves forward, and leaving the track keeps the last spot reached on it.
  */
-export const useRideLines = ({ accessToken, path, waypoints, rider }: RideLinesOptions): RideLines => {
+export const useRideLines = ({ accessToken, path, rider }: RideLinesOptions): RideLines => {
   const measured = useMemo(() => measurePath(path), [path])
-  const stops = useMemo(() => findStops(measured, waypoints), [measured, waypoints])
   // Progress is kept per rider position; it is worked out while rendering, when a new one arrives.
   const [progress, setProgress] = useState<Progress>({ measured, rider: null, reached: null })
   if (progress.rider !== rider || progress.measured !== measured) {
@@ -50,6 +48,6 @@ export const useRideLines = ({ accessToken, path, waypoints, rider }: RideLinesO
 
   return useMemo(() => {
     const here = reached ?? { distance: 0, offset: 0, point: path[0] }
-    return { ...splitTrack(measured, stops, here), approach }
-  }, [measured, stops, reached, approach, path])
+    return { ...splitTrack(measured, here), approach }
+  }, [measured, reached, approach, path])
 }

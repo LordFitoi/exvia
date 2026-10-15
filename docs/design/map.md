@@ -50,9 +50,10 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
   `marker-label` reading "You" below it. It is a plain DOM element handed to
   `mapboxgl.Marker`, anchored top-left because `marker-me` centers itself with
   `translate: -50% -50%`.
-- Grayscale: the guide's `.map-grayscale` class puts `filter: grayscale(1)` on
-  the Mapbox tile canvas only, so the green dot, the label and the controls
-  keep their colors. The style is `light-v11` or `dark-v11` following
+- Grayscale: `services/grayscaleStyle.ts` grays the colors of the loaded
+  style's own layers (on every `style.load`, before the app adds its layers),
+  so the route lines, the green dot, the label and the controls keep their
+  colors. The style is `light-v11` or `dark-v11` following
   `prefers-color-scheme`, switched live with `setStyle`; the marker survives
   because it is not part of the style.
 - `mapbox-gl` is loaded with a dynamic `import()` after mount: it touches
@@ -182,10 +183,11 @@ the Mapbox dashboard, since it is visible to the browser.
   The `driving` profile is the definition of "street"; change
   `STREET_PROFILE` to allow cycleways or footpaths.
 
-- **CSS grayscale filter over a gray style**: Mapbox's stock styles are
+- **Graying the style's colors over a CSS filter**: Mapbox's stock styles are
   near-gray but not exactly, and a custom style would need a Mapbox Studio
-  account. The filter guarantees gray with the stock styles, at the cost of
-  filtering the canvas on the GPU path (negligible here).
+  account. A `filter: grayscale(1)` on the canvas would also gray the route
+  lines, since they are drawn in the same canvas, so the style's paint colors
+  are converted to gray of the same luminance instead.
 - **No `react-map-gl`**: one map, one marker; the imperative API is a few
   lines and avoids another dependency.
 - **Service worker untouched**: tiles and the style come from Mapbox origins,

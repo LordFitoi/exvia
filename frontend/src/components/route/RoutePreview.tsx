@@ -37,7 +37,7 @@ function PreviewMap({ path }: { path: readonly Coordinates[] }) {
 }
 
 export default function RoutePreview({ size, status, route, onRetry }: RoutePreviewProps) {
-  const className = `route-preview${size === 'fill' ? ' route-preview-fill' : ''} map-grayscale`
+  const className = `route-preview${size === 'fill' ? ' route-preview-fill' : ''}`
   return (
     <div className={className} aria-busy={status === 'loading'}>
       {status === 'failed' ? (

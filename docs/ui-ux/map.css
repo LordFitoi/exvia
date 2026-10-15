@@ -41,10 +41,6 @@
 /* Track already ridden: neutral gray, so only what is ahead has color */
 .map-route-passed { stroke: var(--color-grey-500); }
 
-/* Track still to ride, after the leg the rider is on: secondary purple, so the
-   current leg (primary) reads as "now" and this one as "later" */
-.map-route-remaining { stroke: var(--color-secondary); }
-
 /* Walking leg: dotted */
 .map-route-walk {
   fill: none;
@@ -53,10 +49,6 @@
   stroke-linecap: round;
   stroke-dasharray: 1 9;
 }
-
-/* Grayscale base map: filters only the Mapbox tile canvas, so markers, routes
-   and controls keep their colors. Put it on .map next to a Mapbox GL canvas. */
-.map-grayscale .mapboxgl-canvas { filter: grayscale(1); }
 
 /* Mapbox GL sets position: relative on its container; keep the canvas full-bleed */
 .map-canvas.mapboxgl-map { position: absolute; }

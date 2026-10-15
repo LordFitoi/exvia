@@ -47,10 +47,6 @@
   stroke-dasharray: 1 9;
 }
 
-/* Grayscale base map: filters only the Mapbox tile canvas, so markers, routes
-   and controls keep their colors. Put it on .map next to a Mapbox GL canvas. */
-.map-grayscale .mapboxgl-canvas { filter: grayscale(1); }
-
 /* Mapbox GL sets position: relative on its container; keep the canvas full-bleed */
 .map-canvas.mapboxgl-map { position: absolute; }
 
