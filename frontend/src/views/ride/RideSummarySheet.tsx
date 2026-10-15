@@ -2,6 +2,8 @@
 
 import { useModalDialog } from '@/hooks/useModalDialog'
 import { formatAverageSpeed, formatClock, formatDistance, formatDuration } from '@/services/formatRoute'
+import type { SaveRideStatus } from '@/hooks/useSaveRideSummary'
+import RideSaveStatus from '@/views/ride/RideSaveStatus'
 import type { RouteDetail } from '@/types/route'
 
 interface RideSummarySheetProps {
@@ -9,6 +11,10 @@ interface RideSummarySheetProps {
   route: RouteDetail
   /** How long the ride took, in seconds. */
   rideSeconds: number
+  /** Whether the ride has been saved on the server. */
+  saveStatus: SaveRideStatus
+  /** Tries to save the ride again after a failure. */
+  onRetrySave: () => void
   /** Closes the summary and stays on the map. */
   onClose: () => void
   /** Ends the ride and leaves ride mode. */
@@ -20,6 +26,8 @@ export default function RideSummarySheet({
   isOpen,
   route,
   rideSeconds,
+  saveStatus,
+  onRetrySave,
   onClose,
   onDone,
 }: RideSummarySheetProps) {
@@ -57,6 +65,7 @@ export default function RideSummarySheet({
         </div>
       </div>
       <p className="text-small text-muted">Estimated time was {formatDuration(route.estimated_time)}.</p>
+      <RideSaveStatus status={saveStatus} onRetry={onRetrySave} />
       <button className="button button-primary button-lg button-block" type="button" onClick={onDone}>
         Done
       </button>

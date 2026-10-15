@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 
+import ConfirmDeleteDialog from '@/components/feedback/ConfirmDeleteDialog'
 import RouteChoiceList from '@/components/route/RouteChoiceList'
 import RoutePreview from '@/components/route/RoutePreview'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useMyRoutes } from '@/hooks/useMyRoutes'
 import { useRouteDeletion } from '@/hooks/useRouteDeletion'
 import { useRouteDetail } from '@/hooks/useRouteDetail'
-import ConfirmDeleteDialog from '@/views/routes/ConfirmDeleteDialog'
 import RouteEditView from '@/views/routes/RouteEditView'
 
 interface RouteListViewProps {
@@ -92,7 +92,8 @@ export default function RouteListView({ onClose, onCreateRoute }: RouteListViewP
       </div>
       <ConfirmDeleteDialog
         isOpen={deletion.isConfirming}
-        routeName={selectedName}
+        title="Delete this route?"
+        description={`“${selectedName}” will be deleted for good. This cannot be undone.`}
         isPending={deletion.isPending}
         error={deletion.error}
         onCancel={deletion.cancel}

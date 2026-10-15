@@ -13,13 +13,13 @@ The app lives in [apps/routes/](../../apps/routes/) and is registered in
 
 | File | Responsibility |
 |------|----------------|
-| [models.py](../../apps/routes/models.py) | `Route` model |
+| [models.py](../../apps/routes/models.py) | `Route` and `RouteSummary` models |
 | [geometry.py](../../apps/routes/geometry.py) | Distance and travel time calculation |
 | [validators.py](../../apps/routes/validators.py) | `points` validator |
-| [serializers.py](../../apps/routes/serializers.py) | `RouteSerializer` |
-| [views.py](../../apps/routes/views.py) | The two API views |
+| [serializers.py](../../apps/routes/serializers.py) | `RouteSerializer`, `RideSummarySerializer`, `RideSummaryListSerializer` |
+| [views.py](../../apps/routes/views.py) | The route views and the three ride summary views (create, list, detail) |
 | [urls.py](../../apps/routes/urls.py) | Routes, mounted at `api/routes/` in `config/urls.py` |
-| [admin.py](../../apps/routes/admin.py) | `RouteAdmin` |
+| [admin.py](../../apps/routes/admin.py) | `RouteAdmin`, `RouteSummaryAdmin` |
 
 ## Data model
 
@@ -34,6 +34,107 @@ first (`Meta.ordering = ('-created_at',)`).
 | `distance` | `FloatField` | Kilometres, calculated, `editable=False` |
 | `estimated_time` | `DurationField` | Calculated, `editable=False` |
 | `author` | FK to `auth.User` | `related_name='routes'`, `CASCADE` |
+
+## Route summaries
+
+`RouteSummary` records one ride of a route. The Ride tab saves one when a ride
+finishes (see [Saving a ride](#saving-a-ride)) and the [ride
+history](ride-history.md) reads them back (see [Reading rides](#reading-rides)).
+
+It inherits `TimeStampedModel` and is ordered by `-start_at`.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `route` | FK to `Route` | `related_name='summaries'`, `CASCADE` |
+| `start_at` | `DateTimeField` | |
+| `end_at` | `DateTimeField` | Must be after `start_at` |
+| `duration` | `DurationField` | `end_at - start_at`, calculated, `editable=False` |
+| `is_finished` | `BooleanField` | Default `True`; `False` when the rider quit before the finish |
+| `max_speed` | `FloatField` | km/h, fastest GPS reading while moving; null when unknown; `>= 0` |
+| `min_speed` | `FloatField` | km/h, slowest GPS reading while moving; null when unknown; `>= 0` |
+| `avg_speed` | `FloatField` | km/h, mean of the GPS readings while moving; null when unknown; `>= 0` |
+| `participants` | M2M to `auth.User` | `related_name='route_summaries'`, optional (`blank=True`) |
+| `author` | FK to `auth.User` | `related_name='authored_route_summaries'`, `CASCADE` |
+
+- **`duration` is stored, like `Route.distance`**: `save()` always
+  recomputes it, and `save(update_fields=[...])` that includes `start_at` or
+  `end_at` adds `duration` so it is not left stale. `QuerySet.update()` and
+  `bulk_create` bypass it.
+- **The speeds are stored, not derived**: the server only knows a start, an
+  end and a route length, so the client measures them from the phone's GPS and
+  sends them. They are nullable because the device may give no speed, and
+  because rides saved before the fields existed have none. The server trusts
+  them (it only rejects negatives): it cannot check a GPS reading.
+- **`end_at` after `start_at` is a database `CheckConstraint`**
+  (`route_summary_end_after_start`), so a negative or zero duration cannot be
+  stored by any path, including the ones that skip `save()` validation.
+- **`CASCADE` on the route**: deleting a route deletes its summaries.
+  Deleting the `author` deletes their summaries (same as `Route.author`); participants
+  are a plain M2M, so deleting a participant only removes the link.
+- **Not to be confused with `RouteSummarySerializer`**, which is the list
+  shape of a `Route` (no `points`), not this model.
+
+### Saving a ride
+
+`POST /api/routes/<id>/summaries/` (JWT) saves a finished ride of one of the
+caller's routes. The body is `{"start_at": "...", "end_at": "..."}`
+(ISO 8601 datetimes, both required), plus optional `is_finished` (default `true`), `max_speed`, `min_speed`
+and `avg_speed` in km/h; the answer is `201` with the full ride, the shape in
+[Reading rides](#reading-rides).
+
+Only those six fields are writable: the route comes from the URL, and the
+caller is the `author` and the only participant (the rider rode it), whatever
+the body says. `end_at` not after `start_at` is `400` with an `end_at` message
+(the database constraint is the backstop), and a negative speed is `400` with
+that field's message. Another user's route, or one that does not exist, is
+`404`, as for the other route endpoints; unauthenticated calls are `401`.
+`RideSummarySerializer` serializes the `RouteSummary` model; the name keeps it
+apart from `RouteSummarySerializer`, the route list shape.
+
+### Reading rides
+
+Both endpoints need a JWT and only see the rides the caller took part in
+(`participants`, which always includes the author); any other ride is `404`.
+
+| Method and path | Result |
+|-----------------|--------|
+| `GET /api/routes/summaries/` | `200` with a plain JSON array of the caller's rides, by `created_at`, newest first (no pagination) |
+| `GET /api/routes/summaries/<id>/` | `200` with one ride, with its participants |
+| `DELETE /api/routes/summaries/<id>/` | `204`; only the ride's **author** can, anyone else gets `404` |
+
+A ride (the detail, and the answer to the `POST`):
+
+```json
+{
+  "id": 3,
+  "route": 7,
+  "route_name": "Sunday loop",
+  "distance": 12.3,
+  "estimated_time": 2700,
+  "start_at": "2026-10-15T09:00:00Z",
+  "end_at": "2026-10-15T09:45:00Z",
+  "duration": 2700,
+  "is_finished": true,
+  "max_speed": 31.5,
+  "min_speed": 6.2,
+  "avg_speed": 19.8,
+  "author": 1,
+  "participants": [{"id": 1, "username": "rider"}],
+  "created_at": "2026-10-15T09:45:02Z"
+}
+```
+
+`duration` and `estimated_time` are **whole seconds**; `distance` is the
+route's, in km, and `route_name`, `distance` and `estimated_time` come from the
+route. The list rows (`RideSummaryListSerializer`) carry only `id`, `route`,
+`route_name`, `distance`, `start_at`, `end_at`, `duration`, `is_finished`, `avg_speed` and
+`created_at`, so the row can be drawn without the participants or extremes.
+
+Deleting a ride removes the `RouteSummary` row (and its participant links) for
+everyone who rode it, and leaves the route alone. It is limited to the author
+because a delete is shared: a participant who did not write the ride can read it
+but not erase it for the others.
+
 
 ## Points
 

@@ -7,16 +7,17 @@ Creating a route is in [map.md](map.md#route-creator), riding one in
 ## Entry: the route menu
 
 The route button of the map controls (top right, under the locate button) opens
-a menu with two items: **Create a new route** (`RouteCreatorView`) and
-**Preview routes** (`RouteListView`). `views/map/RouteMenu.tsx` implements the
+a menu with three items: **Create a new route** (`RouteCreatorView`),
+**Preview routes** (`RouteListView`) and **Ride history** ([ride-history.md](ride-history.md)).
+`views/map/RouteMenu.tsx` implements the
 WAI-ARIA menu button pattern: the button has `aria-haspopup="menu"` and
 `aria-expanded`; opening moves focus to the first item; Escape closes it and
 returns focus to the button; ArrowUp and ArrowDown move between items; a press
 outside closes it; choosing an item closes it and acts. The panel is the guide's
 `menu-panel`, opaque.
 
-`MapOverview` keeps a mode, `browse`, `create` or `list`. Location is only
-needed for the first two; the list does not use it.
+`MapOverview` keeps a mode, `browse`, `create`, `list` or `history`. Location is only
+needed for the first two; the list and the history do not use it.
 
 ## Route list
 
@@ -39,12 +40,12 @@ of Ride.
 
 ## Delete
 
-**Delete** opens the guide's confirm dialog (`ConfirmDeleteDialog`: a native
+**Delete** opens the guide's confirm dialog (`components/feedback/ConfirmDeleteDialog`, shared with the [ride history](ride-history.md#delete): a native
 `<dialog class="dialog" role="alertdialog">`, "Delete this route?", the route
 name, Cancel first and the solid error Delete last). It is the one place the
 guide allows a solid error button.
 
-`useRouteDeletion` runs the two steps. Cancel (or Escape) closes it and keeps
+`useRouteDeletion` (a wrapper over `useConfirmedDeletion`, which the ride history shares) runs the two steps. Cancel (or Escape) closes it and keeps
 the route. Confirming calls `DELETE /api/routes/<id>/`; while it runs both
 buttons are disabled and Delete shows the loading state. On success the dialog
 closes, the selection is cleared (so the preview goes back to "Select a route")

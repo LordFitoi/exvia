@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 
 import Toast from '@/components/feedback/Toast'
+import RideSummariesView from '@/views/history/RideSummariesView'
 import MapStatusView from '@/views/map/MapStatusView'
 import UserMap from '@/views/map/UserMap'
 import RouteCreatorView from '@/views/routes/RouteCreatorView'
@@ -19,7 +20,7 @@ interface StatusMessage {
   description: string
 }
 
-type MapMode = 'browse' | 'create' | 'list'
+type MapMode = 'browse' | 'create' | 'list' | 'history'
 
 type WaitingKey = Exclude<GeolocationStatus, 'ready'> | Exclude<StreetPositionStatus, 'ready'>
 
@@ -77,6 +78,7 @@ export default function MapOverview() {
     setMode('browse')
   }
 
+  if (mode === 'history') return <RideSummariesView onClose={() => setMode('browse')} />
   if (mode === 'list') {
     return <RouteListView onClose={() => setMode('browse')} onCreateRoute={() => setMode('create')} />
   }
@@ -95,6 +97,7 @@ export default function MapOverview() {
         coordinates={street.coordinates}
         onCreateRoute={() => setMode('create')}
         onPreviewRoutes={() => setMode('list')}
+        onViewHistory={() => setMode('history')}
       >
         {savedMessage && <Toast message={savedMessage} onDismiss={dismissSavedMessage} />}
       </UserMap>

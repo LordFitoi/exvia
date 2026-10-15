@@ -15,7 +15,7 @@ export const formatDuration = (seconds: number): string => {
 
 const SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR
 const CLOCK_DIGITS = 2
-const NO_SPEED = '–'
+export const NO_VALUE = '–'
 const KILOMETRES_PER_HOUR_PER_METRE_PER_SECOND = 3.6
 
 const padClock = (value: number): string => String(value).padStart(CLOCK_DIGITS, '0')
@@ -32,12 +32,20 @@ export const formatClock = (seconds: number): string => {
 
 /** The average speed in km/h ("24.5") for a distance covered in a time, or a dash when no time has passed. */
 export const formatAverageSpeed = (kilometres: number, seconds: number): string => {
-  if (seconds <= 0) return NO_SPEED
+  if (seconds <= 0) return NO_VALUE
   return ((kilometres * SECONDS_PER_HOUR) / seconds).toFixed(1)
 }
 
 /** The speed in km/h as a whole number ("24"), or a dash when the device gave none. */
 export const formatCurrentSpeed = (metersPerSecond: number | null): string => {
-  if (metersPerSecond === null) return NO_SPEED
+  if (metersPerSecond === null) return NO_VALUE
   return String(Math.round(metersPerSecond * KILOMETRES_PER_HOUR_PER_METRE_PER_SECOND))
 }
+
+/** A speed in km/h with one decimal ("24.5"), or a dash when it was not recorded. */
+export const formatSpeed = (kilometresPerHour: number | null): string =>
+  kilometresPerHour === null ? NO_VALUE : kilometresPerHour.toFixed(1)
+
+/** The day of a ride as the reader's locale writes it, such as "15 Oct 2026". */
+export const formatRideDate = (isoDateTime: string): string =>
+  new Date(isoDateTime).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })

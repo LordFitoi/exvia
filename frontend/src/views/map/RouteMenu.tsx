@@ -6,13 +6,14 @@ import type { KeyboardEvent } from 'react'
 interface RouteMenuProps {
   onCreate: () => void
   onPreview: () => void
+  onHistory: () => void
 }
 
 const MENU_ITEM_SELECTOR = '[role="menuitem"]'
 const KEY_STEPS: Readonly<Record<string, number>> = { ArrowDown: 1, ArrowUp: -1 }
 
-/** The route button of the map controls: opens a menu to create a route or browse the saved ones. */
-export default function RouteMenu({ onCreate, onPreview }: RouteMenuProps) {
+/** The route button of the map controls: opens a menu to create a route, browse the saved ones or see the ride history. */
+export default function RouteMenu({ onCreate, onPreview, onHistory }: RouteMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -74,6 +75,12 @@ export default function RouteMenu({ onCreate, onPreview }: RouteMenuProps) {
             <button className="menu-item" type="button" role="menuitem" onClick={() => handleChoose(onPreview)}>
               <span className="icon icon-list" aria-hidden="true"></span>
               Preview routes
+            </button>
+          </li>
+          <li role="none">
+            <button className="menu-item" type="button" role="menuitem" onClick={() => handleChoose(onHistory)}>
+              <span className="icon icon-calendar" aria-hidden="true"></span>
+              Ride history
             </button>
           </li>
         </ul>

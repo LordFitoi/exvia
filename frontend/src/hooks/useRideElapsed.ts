@@ -5,11 +5,11 @@ import { useEffect, useState } from 'react'
 const MILLISECONDS_PER_SECOND = 1000
 
 /**
- * The seconds since ride mode opened, counting up once per second until `finishedAt` (when the
- * rider arrived, in milliseconds since the epoch; null while still riding), where it stops.
+ * The seconds since `startedAt` (when ride mode opened, in milliseconds since the epoch), counting
+ * up once per second until `finishedAt` (when the rider arrived, in milliseconds since the epoch;
+ * null while still riding), where it stops.
  */
-export const useRideElapsed = (finishedAt: number | null): number => {
-  const [startedAt] = useState(() => Date.now())
+export const useRideElapsed = (startedAt: number, finishedAt: number | null): number => {
   const [now, setNow] = useState(startedAt)
   const isRunning = finishedAt === null
 

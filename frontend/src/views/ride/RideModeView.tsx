@@ -6,15 +6,19 @@ import { useState } from 'react'
 
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
+import { useQuitRide } from '@/hooks/useQuitRide'
 import { useRideArrival } from '@/hooks/useRideArrival'
 import { useRideElapsed } from '@/hooks/useRideElapsed'
 import { useRideLines } from '@/hooks/useRideLines'
 import { useRideMap } from '@/hooks/useRideMap'
 import { useRideProgress } from '@/hooks/useRideProgress'
+import { useRideSpeeds } from '@/hooks/useRideSpeeds'
+import { useSaveRideSummary } from '@/hooks/useSaveRideSummary'
 import { useStreetPosition } from '@/hooks/useStreetPosition'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import MapStatusView from '@/views/map/MapStatusView'
+import ConfirmQuitRideDialog from '@/views/ride/ConfirmQuitRideDialog'
 import RideStatsPanel from '@/views/ride/RideStatsPanel'
 import RideSummarySheet from '@/views/ride/RideSummarySheet'
 import type { RouteDetail } from '@/types/route'
@@ -43,14 +47,31 @@ export default function RideModeView({ route, onQuit, onFinish }: RideModeViewPr
     rider,
   })
   const arrivedAt = useRideArrival({ progress, fixTime: location.timestamp })
-  const elapsedSeconds = useRideElapsed(arrivedAt)
+  const [startedAt] = useState(() => Date.now())
+  const elapsedSeconds = useRideElapsed(startedAt, arrivedAt)
+  const speeds = useRideSpeeds({
+    speed: location.speed,
+    fixTime: location.timestamp,
+    isRiding: arrivedAt === null,
+  })
+  const save = useSaveRideSummary({ routeId: route.id, startedAt, endedAt: arrivedAt, speeds })
   const [isSummaryDismissed, setIsSummaryDismissed] = useState(false)
+  const [isQuitConfirmOpen, setIsQuitConfirmOpen] = useState(false)
+  const quit = useQuitRide({ routeId: route.id, startedAt, speeds, onQuit })
   const { containerRef, hasLoadFailed, recenter } = useRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     path: route.points,
     lines,
     rider,
   })
+
+  // Once the ride is finished it is already saved, so the X leaves at once.
+  const handleCloseClick = () => (arrivedAt === null ? setIsQuitConfirmOpen(true) : onQuit())
+
+  const handleKeepRiding = () => {
+    quit.reset()
+    setIsQuitConfirmOpen(false)
+  }
 
   // The load-failure screen has no way out of its own, so it keeps the tab bar.
   useHideTabBar(!hasLoadFailed)
@@ -72,7 +93,7 @@ export default function RideModeView({ route, onQuit, onFinish }: RideModeViewPr
         <div ref={containerRef} className="map-canvas"></div>
         <div className="map-overlay">
           <div className="map-controls">
-            <button className="icon-button" type="button" aria-label="Quit ride" onClick={onQuit}>
+            <button className="icon-button" type="button" aria-label="Quit ride" onClick={handleCloseClick}>
               <span className="icon icon-x" aria-hidden="true"></span>
             </button>
           </div>
@@ -87,11 +108,20 @@ export default function RideModeView({ route, onQuit, onFinish }: RideModeViewPr
         </button>
       </div>
       <RideStatsPanel elapsedSeconds={elapsedSeconds} speed={location.speed} />
+      <ConfirmQuitRideDialog
+        isOpen={isQuitConfirmOpen}
+        isPending={quit.isPending}
+        error={quit.error}
+        onKeepRiding={handleKeepRiding}
+        onQuit={quit.confirm}
+      />
       {arrivedAt !== null && (
         <RideSummarySheet
           isOpen={!isSummaryDismissed}
           route={route}
           rideSeconds={elapsedSeconds}
+          saveStatus={save.status}
+          onRetrySave={save.retry}
           onClose={() => setIsSummaryDismissed(true)}
           onDone={onFinish}
         />

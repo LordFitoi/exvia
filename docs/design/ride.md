@@ -26,6 +26,7 @@ one.
 | Preview | `components/route/RoutePreview.tsx` | Placeholder, loading and failure states, or the preview map |
 | List | `components/route/RouteChoiceList.tsx` | Skeleton, error, empty and ready states of the routes |
 | Ride mode | `views/ride/RideModeView.tsx` | Full-bleed 3D map with the quit and recenter buttons |
+| Quit | `views/ride/ConfirmQuitRideDialog.tsx`, `hooks/useQuitRide.ts` | "Quit this ride?" dialog opened by the X, and saving the unfinished ride before leaving |
 | Routes | `hooks/useMyRoutes.ts` | `GET /api/routes/`, with `reload` |
 | Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<id>/` for the selected route, with `retry` |
 | Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start and finish markers, framed in view |
@@ -36,13 +37,15 @@ one.
 | Ride lines | `hooks/useRideLines.ts` | The lines to draw from that progress |
 | Arrival | `hooks/useRideArrival.ts` | Detects the finish (the time of the first GPS fix at the end); vibrates on arrival |
 | Elapsed | `hooks/useRideElapsed.ts` | The seconds since ride mode opened, ticking once a second until the finish |
+| Save | `hooks/useSaveRideSummary.ts`, `views/ride/RideSaveStatus.tsx` | Saves the finished ride on the server once, and shows saving, saved, or a failure with Try again |
+| Speeds | `hooks/useRideSpeeds.ts`, `services/rideSpeed.ts` | Max, lowest and mean speed of the ride from the GPS readings |
 | Stats strip | `views/ride/RideStatsPanel.tsx` | The time and current speed under the map |
 | Summary | `views/ride/RideSummarySheet.tsx` | The "You've arrived!" modal sheet with time, distance and average speed |
 | Wake lock | `hooks/useWakeLock.ts` | Keeps the screen on while riding (Screen Wake Lock API) |
 | Way to start | `hooks/useApproachPath.ts` | Street path from the rider to the route start (Directions API) |
 | Track maths | `services/routeProgress.ts`, `services/rideLines.ts` | Distance along the track, and the split of the track |
 | Ride layers | `services/rideMapLayers.ts` | The Mapbox line layers of a ride |
-| API | `services/routesApi.ts` | `fetchRoutes`, `fetchRoute` (and `createRoute`) |
+| API | `services/routesApi.ts`, `services/rideSummariesApi.ts` | `fetchRoutes`, `fetchRoute` (and `createRoute`); `createRideSummary` |
 | Format | `services/formatRoute.ts` | "42.1 km", "42 min", "1 h 05 min", "42:10", "24.5", "26" |
 
 ## Picker
@@ -161,6 +164,24 @@ uses the same two sizes, so both screens have the same map.
   rider actually took.
   The guide shows it in [patterns.html](../ui-ux/patterns.html) ("Ride summary"),
   with `map-scrim` standing in for the dialog backdrop.
+  **Saving the ride**: when the summary appears, `useSaveRideSummary` posts the
+  ride once to `POST /api/routes/<id>/summaries/` ([routes.md](routes.md#route-summaries))
+  with the time ride mode opened as `start_at`, the arrival time as `end_at`
+  (the same two instants the Time box measures) and the speeds below. The sheet
+  shows "Saving your ride…", then "Ride saved."; if the request fails it shows
+  "Could not save your ride." with **Try again**, and Done and the X still work
+  (an unsaved ride is lost when the rider leaves). A fix older than the ride
+  (the browser may reuse a cached one) is moved to one second after the start so
+  the server accepts it (`createRideSummary` does this for every save).
+  Quitting before the finish saves an unfinished ride (see the X below). Saved rides
+  are listed in the [ride history](ride-history.md).
+- **Ride speeds** (`useRideSpeeds`, `services/rideSpeed.ts`): each new GPS fix
+  (counted once per `timestamp`) adds its `coords.speed` to running totals, with
+  no list of readings kept. Readings under 3 km/h (`MOVING_SPEED_KMH`) are stops
+  and are ignored; the rest give the max, the lowest and the mean, in km/h. The
+  totals freeze when the rider arrives and are sent with the ride. With no
+  speed from the device (or only stops) they are null, which the history shows as
+  a dash.
 - **The screen stays on** while riding (`useWakeLock`, Screen Wake Lock API),
   except on the map-failure screen. Browsers release the lock whenever the page
   is hidden (another app, a locked phone), so it is requested again when the
@@ -174,10 +195,22 @@ uses the same two sizes, so both screens have the same map.
   the grayscale map), within reach of either thumb whichever hand is on the
   throttle. The rarely used **X** stays at the top right, out of the way of
   accidental taps.
-- **X** (top right, `Quit ride`) returns to the picker with the same route
-  still selected; the tab bar stays hidden, as it is in the picker. Nothing is stored about a ride
-  yet: no recording, no turn-by-turn, and the summary is shown once (it is not
-  kept after the ride is left).
+- **X** (top right, `Quit ride`) asks first while the ride is in progress:
+  `ConfirmQuitRideDialog` (the guide's confirm dialog, a native
+  `<dialog class="dialog" role="alertdialog">`) says "Quit this ride? The ride so
+  far is saved to your ride history, marked as not finished." with **Keep
+  riding** (outline, first) and **Quit ride** (`button-error`). Keep riding and
+  Esc close the dialog and the ride goes on.
+  **Quit ride** saves the ride so far, then leaves (`useQuitRide`): `start_at` is
+  when ride mode opened, `end_at` is now, `is_finished` is `false`, and the speeds
+  so far go with it. While it saves, both buttons are disabled and Quit shows
+  the loading state. If the save fails the dialog stays open with the error and
+  the button reads **Quit anyway**, which leaves without saving, so a bad
+  connection never traps the rider. Leaving goes back to the picker with the same
+  route still selected. After arrival the ride is already saved, so the X leaves
+  at once with no dialog and no second summary. The tab bar stays hidden, as it is
+  in the picker. Nothing is recorded while riding (no track, no turn-by-turn); the
+  server keeps only the summary of the ride.
 
 ## Key decisions
 

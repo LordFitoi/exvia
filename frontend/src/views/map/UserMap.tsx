@@ -14,11 +14,18 @@ interface UserMapProps {
   coordinates: Coordinates
   onCreateRoute: () => void
   onPreviewRoutes: () => void
+  onViewHistory: () => void
   /** Floating notices, rendered at the top of the map. */
   children?: ReactNode
 }
 
-export default function UserMap({ coordinates, onCreateRoute, onPreviewRoutes, children }: UserMapProps) {
+export default function UserMap({
+  coordinates,
+  onCreateRoute,
+  onPreviewRoutes,
+  onViewHistory,
+  children,
+}: UserMapProps) {
   const { containerRef, hasLoadFailed, recenter } = useUserMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     coordinates,
@@ -43,7 +50,7 @@ export default function UserMap({ coordinates, onCreateRoute, onPreviewRoutes, c
           <button className="icon-button" type="button" aria-label="Center on my location" onClick={recenter}>
             <span className="icon icon-locate" aria-hidden="true"></span>
           </button>
-          <RouteMenu onCreate={onCreateRoute} onPreview={onPreviewRoutes} />
+          <RouteMenu onCreate={onCreateRoute} onPreview={onPreviewRoutes} onHistory={onViewHistory} />
         </div>
       </div>
     </main>
