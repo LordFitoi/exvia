@@ -20,7 +20,7 @@ or `open` (macOS).
 | `components.html` | Controls: buttons, checkbox, radio, switch, slider, segmented control, chips |
 | `forms.html` | Fields, select and dropdown, form sections, disclosure, step indicator |
 | `content.html` | Feedback and states, lists, avatars, cards, app bar, tabs, tab bar, bottom sheet, modal sheet form, dialog |
-| `patterns.html` | Full mobile screens in phone frames: sign in, home feed, map, route creator, ride summary, profile |
+| `patterns.html` | Full mobile screens in phone frames: sign in, home feed, map, route creator, ride mode, ride summary, profile |
 | `exvia-ui.css` | Product design system entry point; only `@import`s the files below |
 | `fonts.css`, `fonts/` | `@font-face` for Public Sans and Barlow, vendored latin subsets with their OFL licenses |
 | `tokens.css` | Design tokens (`:root` custom properties) |

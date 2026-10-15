@@ -34,14 +34,16 @@ one.
 | Heading | `hooks/useRiderHeading.ts` | The direction the rider is moving in, from their last positions |
 | Progress | `hooks/useRideProgress.ts` | Where the rider is on the track (the last spot reached) |
 | Ride lines | `hooks/useRideLines.ts` | The lines to draw from that progress |
-| Arrival | `hooks/useRideArrival.ts` | Detects the finish and the time the ride took; vibrates on arrival |
+| Arrival | `hooks/useRideArrival.ts` | Detects the finish (the time of the first GPS fix at the end); vibrates on arrival |
+| Elapsed | `hooks/useRideElapsed.ts` | The seconds since ride mode opened, ticking once a second until the finish |
+| Stats strip | `views/ride/RideStatsPanel.tsx` | The time and current speed under the map |
 | Summary | `views/ride/RideSummarySheet.tsx` | The "You've arrived!" modal sheet with time, distance and average speed |
 | Wake lock | `hooks/useWakeLock.ts` | Keeps the screen on while riding (Screen Wake Lock API) |
 | Way to start | `hooks/useApproachPath.ts` | Street path from the rider to the route start (Directions API) |
 | Track maths | `services/routeProgress.ts`, `services/rideLines.ts` | Distance along the track, and the split of the track |
 | Ride layers | `services/rideMapLayers.ts` | The Mapbox line layers of a ride |
 | API | `services/routesApi.ts` | `fetchRoutes`, `fetchRoute` (and `createRoute`) |
-| Format | `services/formatRoute.ts` | "42.1 km", "42 min", "1 h 05 min", "42:10", "24.5" |
+| Format | `services/formatRoute.ts` | "42.1 km", "42 min", "1 h 05 min", "42:10", "24.5", "26" |
 
 ## Picker
 
@@ -95,7 +97,8 @@ uses the same two sizes, so both screens have the same map.
   shown and followed once the phone has a position. The "You" marker appears
   and **the camera centers on it** by default: the first fix moves the camera
   there at once. Dragging the map stops the following; the locate button
-  resumes it (an 800 ms ease to the rider's position and heading). Without a
+  (bottom center, see below) resumes it (an 800 ms ease to the rider's position, heading and the ride zoom of 16.5, so
+  a pinch-out is undone too). Without a
   position the camera stays at the route start.
 - **Heading** (`useRiderHeading`): the compass bearing from the position the
   last reading was taken from to the current one, read only after the rider has
@@ -132,6 +135,17 @@ uses the same two sizes, so both screens have the same map.
   the whole track is searched once, to pick the ride up again after a shortcut.
   A rider who leaves the track keeps the last spot reached, and no way back is
   drawn.
+- **Stats strip** (`RideStatsPanel`): the screen is the map above a strip, not an
+  overlay, so it never covers the map (`ride-screen`, `ride-panel`; the tab bar
+  is hidden, so the strip carries the bottom safe area). Two boxes: **Time**
+  (`useRideElapsed`, as a stopwatch `min:sec`, `h:mm:ss` from an hour up) and
+  **Speed** in km/h. Time starts at 0:00 when ride mode opens (the way to the
+  start counts, and it does not wait for a GPS fix), counts up each second, and
+  stops at the finish, where it matches the summary. Speed is
+  the GPS reading (`coords.speed`, passed on by `useGeolocation`, m/s rounded
+  to km/h); it is a dash when the device gives none. It is not a blocking modal
+  on purpose: the rider keeps the map while the numbers stay in view. The locate
+  button sits at the middle of the map's bottom edge, just above the strip.
 - **Arrival** (`useRideArrival`): the rider has arrived when the progress on
   the track is within 40 m of its end (`ARRIVAL_METERS`). The phone vibrates
   and `RideSummarySheet` opens: a modal sheet ("You've arrived!", the guide's
@@ -140,12 +154,11 @@ uses the same two sizes, so both screens have the same map.
   and a **Done** button. Done ends the ride and opens the Map tab (`router.replace('/map')`, so Back does
   not return to the finished ride); the X on the map still goes back to the
   picker. Closing the sheet
-  (X, Esc) keeps the map open. The clock starts at the first GPS fix on the
-  track (so the way to the start does not count) and stops at the first fix at
-  the end. Both times are the fixes' own timestamps (`GeolocationPosition.timestamp`,
-  passed on by `useGeolocation`), so they are exact and need no timer. Stops
-  are not paused, so Time is the elapsed time, and Distance and Avg speed use
-  the route's own length, not the path the rider actually took.
+  (X, Esc) keeps the map open. Time is the strip's clock, stopped at the
+  first GPS fix at the end (that fix's own timestamp, `GeolocationPosition.timestamp`,
+  passed on by `useGeolocation`). Stops are not paused, so Time is the elapsed
+  time, and Distance and Avg km/h use the route's own length, not the path the
+  rider actually took.
   The guide shows it in [patterns.html](../ui-ux/patterns.html) ("Ride summary"),
   with `map-scrim` standing in for the dialog backdrop.
 - **The screen stays on** while riding (`useWakeLock`, Screen Wake Lock API),
@@ -155,6 +168,12 @@ uses the same two sizes, so both screens have the same map.
   the browser refuses (low battery, for example), nothing happens beyond a
   console message and the screen follows the device's own timeout. The API
   needs a secure context (HTTPS or localhost).
+- **Locate button placement.** The recenter button is the one control a rider
+  needs while moving, so it sits **centered above the stats strip** (`map-control-bottom-center`,
+  a filled primary round button, since the raised, translucent one blends into
+  the grayscale map), within reach of either thumb whichever hand is on the
+  throttle. The rarely used **X** stays at the top right, out of the way of
+  accidental taps.
 - **X** (top right, `Quit ride`) returns to the picker with the same route
   still selected; the tab bar stays hidden, as it is in the picker. Nothing is stored about a ride
   yet: no recording, no turn-by-turn, and the summary is shown once (it is not

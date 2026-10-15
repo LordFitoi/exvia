@@ -77,7 +77,7 @@ export const useRideMap = ({ accessToken, path, lines, rider }: RideMapOptions):
   }, [mounted, lines])
 
   const heading = useRiderHeading(rider)
-  const recenter = useRiderFollow({ mounted, rider, heading, fallback: path[0] })
+  const recenter = useRiderFollow({ mounted, rider, heading, fallback: path[0], recenterZoom: RIDE_ZOOM })
 
   return { containerRef, hasLoadFailed, recenter }
 }

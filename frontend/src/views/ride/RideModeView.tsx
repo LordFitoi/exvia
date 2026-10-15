@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useRideArrival } from '@/hooks/useRideArrival'
+import { useRideElapsed } from '@/hooks/useRideElapsed'
 import { useRideLines } from '@/hooks/useRideLines'
 import { useRideMap } from '@/hooks/useRideMap'
 import { useRideProgress } from '@/hooks/useRideProgress'
@@ -14,6 +15,7 @@ import { useStreetPosition } from '@/hooks/useStreetPosition'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import MapStatusView from '@/views/map/MapStatusView'
+import RideStatsPanel from '@/views/ride/RideStatsPanel'
 import RideSummarySheet from '@/views/ride/RideSummarySheet'
 import type { RouteDetail } from '@/types/route'
 
@@ -40,7 +42,8 @@ export default function RideModeView({ route, onQuit, onFinish }: RideModeViewPr
     progress,
     rider,
   })
-  const rideSeconds = useRideArrival({ progress, fixTime: location.timestamp })
+  const arrivedAt = useRideArrival({ progress, fixTime: location.timestamp })
+  const elapsedSeconds = useRideElapsed(arrivedAt)
   const [isSummaryDismissed, setIsSummaryDismissed] = useState(false)
   const { containerRef, hasLoadFailed, recenter } = useRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -63,24 +66,32 @@ export default function RideModeView({ route, onQuit, onFinish }: RideModeViewPr
   }
 
   return (
-    <main className="map">
+    <main className="ride-screen">
       <h1 className="visually-hidden">Riding {route.name}</h1>
-      <div ref={containerRef} className="map-canvas"></div>
-      <div className="map-overlay">
-        <div className="map-controls">
-          <button className="icon-button" type="button" aria-label="Quit ride" onClick={onQuit}>
-            <span className="icon icon-x" aria-hidden="true"></span>
-          </button>
-          <button className="icon-button" type="button" aria-label="Center on my location" onClick={recenter}>
-            <span className="icon icon-locate" aria-hidden="true"></span>
-          </button>
+      <div className="map">
+        <div ref={containerRef} className="map-canvas"></div>
+        <div className="map-overlay">
+          <div className="map-controls">
+            <button className="icon-button" type="button" aria-label="Quit ride" onClick={onQuit}>
+              <span className="icon icon-x" aria-hidden="true"></span>
+            </button>
+          </div>
         </div>
+        <button
+          className="icon-button icon-button-primary map-control-bottom-center"
+          type="button"
+          aria-label="Center on my location"
+          onClick={recenter}
+        >
+          <span className="icon icon-locate" aria-hidden="true"></span>
+        </button>
       </div>
-      {rideSeconds !== null && (
+      <RideStatsPanel elapsedSeconds={elapsedSeconds} speed={location.speed} />
+      {arrivedAt !== null && (
         <RideSummarySheet
           isOpen={!isSummaryDismissed}
           route={route}
-          rideSeconds={rideSeconds}
+          rideSeconds={elapsedSeconds}
           onClose={() => setIsSummaryDismissed(true)}
           onDone={onFinish}
         />

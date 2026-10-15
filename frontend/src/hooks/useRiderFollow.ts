@@ -26,6 +26,8 @@ interface RiderFollowOptions {
   heading: number | null
   /** Where the locate button goes while the rider's position is unknown. */
   fallback: Coordinates
+  /** The zoom the locate button returns the camera to. */
+  recenterZoom: number
 }
 
 const createMarker = ({ mapboxgl, map }: BaseMap, position: Coordinates): Marker =>
@@ -37,9 +39,16 @@ const createMarker = ({ mapboxgl, map }: BaseMap, position: Coordinates): Marker
 /**
  * Shows the rider on the map and keeps the camera on them, turned to face their heading. Each new
  * fix glides the marker and the camera there (position and bearing together); the first one jumps.
- * Dragging the map stops the following until the returned `recenter` is called.
+ * Dragging the map stops the following until the returned `recenter` is called, which also
+ * brings the camera back to `recenterZoom`.
  */
-export const useRiderFollow = ({ mounted, rider, heading, fallback }: RiderFollowOptions): (() => void) => {
+export const useRiderFollow = ({
+  mounted,
+  rider,
+  heading,
+  fallback,
+  recenterZoom,
+}: RiderFollowOptions): (() => void) => {
   const markerRef = useRef<Marker | null>(null)
   const viewRef = useRef<RiderView | null>(null)
   const isFollowingRef = useRef(true)
@@ -84,6 +93,7 @@ export const useRiderFollow = ({ mounted, rider, heading, fallback }: RiderFollo
     mounted?.map.easeTo({
       center: toLngLat(view?.position ?? fallback),
       bearing: view?.bearing ?? mounted.map.getBearing(),
+      zoom: recenterZoom,
       duration: RECENTER_DURATION_MS,
     })
   }

@@ -17,4 +17,6 @@ export interface GeolocationState {
   readonly coordinates: Coordinates | null
   /** When the position was taken, in milliseconds since the epoch; null while it is unknown. */
   readonly timestamp: number | null
+  /** Meters per second, or null when the device cannot tell (it often can't while standing). */
+  readonly speed: number | null
 }

@@ -226,14 +226,44 @@
               <path class="map-water" d="M0 520 C80 470 140 560 230 520 S330 440 360 470 V700 H0Z"></path>
               <path class="map-road" d="M0 120 H360 M0 300 H360 M0 420 H360 M90 0 V560 M250 0 V560"></path>
               <path class="map-route-casing" d="M100 238 L250 154 L280 308"></path>
+              <path class="map-route map-route-passed" d="M100 238 L250 154 L262 215.6"></path>
+              <path class="map-route" d="M262 215.6 L280 308"></path>
+            </svg>
+            <div class="map-overlay">
+              <div class="map-controls">
+                <button class="icon-button" type="button" aria-label="Quit ride"><span class="icon icon-x" aria-hidden="true"></span></button>
+              </div>
+            </div>
+            <button class="marker marker-start marker-pos-a" type="button" aria-label="Start: Harbour"><span class="icon icon-sm icon-flag" aria-hidden="true"></span></button>
+            <button class="marker marker-primary marker-pos-c" type="button" aria-label="Finish: Lighthouse"><span class="icon icon-sm icon-flag-checkered" aria-hidden="true"></span></button>
+            <span class="marker-me marker-pos-rider" role="img" aria-label="You are here"></span>
+            <button class="icon-button icon-button-primary map-control-bottom-center" type="button" aria-label="Center on my location"><span class="icon icon-locate" aria-hidden="true"></span></button>
+          </div>
+          <section class="ride-panel" aria-label="Ride stats">
+            <div class="route-stat"><span class="route-stat-value data">12:34</span><span class="text-caption">Time (min:sec)</span></div>
+            <div class="route-stat"><span class="route-stat-value data">26</span><span class="text-caption">Speed (km/h)</span></div>
+          </section>
+        </div>
+        <figcaption class="phone-caption">Ride mode: the map fills the screen above a stats strip with the time and current speed; the center button sits in the middle, right above the strip; no tab bar</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="map">
+            <svg class="map-canvas" viewBox="0 0 360 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+              <rect class="map-land" width="360" height="700"></rect>
+              <path class="map-water" d="M0 520 C80 470 140 560 230 520 S330 440 360 470 V700 H0Z"></path>
+              <path class="map-road" d="M0 120 H360 M0 300 H360 M0 420 H360 M90 0 V560 M250 0 V560"></path>
+              <path class="map-route-casing" d="M100 238 L250 154 L280 308"></path>
               <path class="map-route map-route-passed" d="M100 238 L250 154 L280 308"></path>
             </svg>
             <div class="map-overlay">
               <div class="map-controls">
                 <button class="icon-button" type="button" aria-label="Quit ride"><span class="icon icon-x" aria-hidden="true"></span></button>
-                <button class="icon-button" type="button" aria-label="Center on my location"><span class="icon icon-locate" aria-hidden="true"></span></button>
               </div>
             </div>
+            <button class="icon-button icon-button-primary map-control-bottom-center" type="button" aria-label="Center on my location"><span class="icon icon-locate" aria-hidden="true"></span></button>
             <button class="marker marker-start marker-pos-a" type="button" aria-label="Start: Harbour"><span class="icon icon-sm icon-flag" aria-hidden="true"></span></button>
             <button class="marker marker-primary marker-pos-c" type="button" aria-label="Finish: Lighthouse"><span class="icon icon-sm icon-flag-checkered" aria-hidden="true"></span></button>
             <div class="map-scrim"></div>
