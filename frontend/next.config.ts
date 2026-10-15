@@ -3,9 +3,14 @@ import type { NextConfig } from "next";
 const DEFAULT_BACKEND_URL = "http://localhost:8000";
 const BACKEND_URL = process.env.BACKEND_URL ?? DEFAULT_BACKEND_URL;
 const BACKEND_URL_PREFIXES = ["api", "admin"];
+// Matches every user agent, so metadata is always rendered in <head> instead of
+// being streamed into <body> for agents missing from Next's built-in bot list
+// (Instagram's in-app browser, plain fetchers, new crawlers).
+const ALL_USER_AGENTS = /.*/;
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  htmlLimitedBots: ALL_USER_AGENTS,
   partialPrefetching: true,
   // Django routes end in "/"; Next only forwards it when trailingSlash is on.
   trailingSlash: true,

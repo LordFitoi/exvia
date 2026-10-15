@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent, RefObject } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent } from 'react'
 
 const LONG_PRESS_MS = 400
 const MOVE_TOLERANCE_PX = 8
@@ -43,8 +43,11 @@ interface DragReorderOptions {
 }
 
 interface DragReorderHandle {
-  /** The scrolling element that contains the rows. It must be positioned (`position: relative`). */
-  listRef: RefObject<HTMLDivElement | null>
+  /**
+   * Ref callback for the scrolling element that contains the rows. It must be positioned
+   * (`position: relative`). The element may mount after the hook, e.g. once the first row exists.
+   */
+  listRef: (node: HTMLDivElement | null) => void
   getRowProps: (index: number, rowCount: number) => RowProps
 }
 
@@ -110,12 +113,18 @@ const getRowStyle = (drag: DragState | null, index: number): CSSProperties | und
  * Alt+ArrowDown move a focused row for keyboard users.
  */
 export const useDragReorder = ({ onReorder }: DragReorderOptions): DragReorderHandle => {
-  const listRef = useRef<HTMLDivElement>(null)
+  const listNodeRef = useRef<HTMLDivElement | null>(null)
+  const [listNode, setListNode] = useState<HTMLDivElement | null>(null)
   const gestureRef = useRef<Gesture>(createIdleGesture())
   const [drag, setDrag] = useState<DragState | null>(null)
 
+  const listRef = useCallback((node: HTMLDivElement | null) => {
+    listNodeRef.current = node
+    setListNode(node)
+  }, [])
+
   const updateDrag = () => {
-    const list = listRef.current
+    const list = listNodeRef.current
     const gesture = gestureRef.current
     if (!list || gesture.phase !== 'dragging') return
     const rows = getRows(list)
@@ -131,7 +140,7 @@ export const useDragReorder = ({ onReorder }: DragReorderOptions): DragReorderHa
   }
 
   const autoscroll = () => {
-    const list = listRef.current
+    const list = listNodeRef.current
     if (!list) return
     const { top, bottom } = list.getBoundingClientRect()
     const { clientY } = gestureRef.current
@@ -142,7 +151,7 @@ export const useDragReorder = ({ onReorder }: DragReorderOptions): DragReorderHa
   }
 
   const startDragging = () => {
-    const list = listRef.current
+    const list = listNodeRef.current
     const gesture = gestureRef.current
     if (!list || !gesture.row) return
     gesture.phase = 'dragging'
@@ -167,16 +176,16 @@ export const useDragReorder = ({ onReorder }: DragReorderOptions): DragReorderHa
   }
 
   // Once dragging, touch scrolling must be vetoed on the touchmove itself: touch-action cannot
-  // change after the touch started.
+  // change after the touch started. Bound to the mounted list node, which can appear after the
+  // first render (the list is not rendered while it has no rows).
   useEffect(() => {
-    const list = listRef.current
-    if (!list) return
+    if (!listNode) return
     const preventScroll = (event: TouchEvent) => {
       if (gestureRef.current.phase === 'dragging') event.preventDefault()
     }
-    list.addEventListener('touchmove', preventScroll, { passive: false })
-    return () => list.removeEventListener('touchmove', preventScroll)
-  }, [])
+    listNode.addEventListener('touchmove', preventScroll, { passive: false })
+    return () => listNode.removeEventListener('touchmove', preventScroll)
+  }, [listNode])
 
   useEffect(() => {
     const gesture = gestureRef

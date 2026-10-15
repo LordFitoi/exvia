@@ -134,8 +134,13 @@ reaches the preview, only the exact image does.
   private API still only lists the owner's routes, so a link is never revealed
   by anything the app shows other users.
 - **Server-rendered for crawlers.** WhatsApp, Instagram and others do not run
-  JavaScript, so the tags have to be in the HTML. Metadata for bots is not
-  streamed by Next, so they get the title and image tags in the first bytes.
+  JavaScript, so the tags have to be in the HTML, inside `<head>`. With Cache
+  Components Next streams metadata into `<body>` for every user agent that is
+  not in its built-in bot list, and that list misses some preview fetchers
+  (Instagram's in-app browser, for one). `htmlLimitedBots: /.*/` in
+  [next.config.ts](../../frontend/next.config.ts) matches every user agent, so
+  metadata blocks the response and always lands in `<head>`. The cost is that
+  the first byte of this page waits for the route fetch (cached for minutes).
 - **Own image route instead of pointing `og:image` at Mapbox**: the URL is on
   the app's domain, stable, and keeps the token out of the page source.
 - **The link is given from the route list**: its Share button
