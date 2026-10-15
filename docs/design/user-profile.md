@@ -64,15 +64,18 @@ the signal; call it only if profiles are created separately.
 ## Media storage
 
 `avatar` is an `ImageField` (requires Pillow) uploading to `avatars/`
-under `MEDIA_ROOT` (`<project>/media/`, git-ignored), exposed at
-`MEDIA_URL` (`/media/`). In `DEBUG`, [config/urls.py](../../config/urls.py)
+under `MEDIA_ROOT`, exposed at `MEDIA_URL` (`/media/`). `MEDIA_ROOT` is read
+from the `MEDIA_ROOT` environment variable and defaults to `<project>/media/`
+(git-ignored) locally. In `DEBUG`, [config/urls.py](../../config/urls.py)
 serves it through Django.
 
-Local filesystem storage is **not durable on Railway**: the container
-disk is wiped on each deploy. Before relying on avatars in production,
-attach a Railway volume mounted at `MEDIA_ROOT` or switch the default
-storage to an object store (S3-compatible, via `django-storages`).
-Outside `DEBUG`, something other than Django must serve `/media/`.
+On Railway the container disk is wiped on each deploy, so `Server` mounts
+the `media-volume` volume at `/data/media` and sets `MEDIA_ROOT` to that path
+([railway.ts](../../.railway/railway.ts), see
+[frontend.md](frontend.md#deployment-railway)). Uploads survive redeploys.
+The frontend proxies `/media/...` to Django; Django serves it only while
+`DEBUG` is on, so turning `DEBUG` off in production needs a different way to
+serve `/media/` first.
 
 ## Admin
 

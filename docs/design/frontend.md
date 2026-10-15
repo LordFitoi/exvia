@@ -40,6 +40,7 @@ deprecated `railway.json` config-as-code files, which were deleted.
 | Resource | Source | Build | Pre-deploy | Start |
 |----------|--------|-------|------------|-------|
 | `Postgres` (database) + `postgres-volume` | Railway Postgres | n/a | n/a | n/a |
+| `media-volume` (5 GB, mounted on `Server`) | Railway volume | n/a | n/a | n/a |
 | `Server` (Django backend) | repo root, `main` | Railpack | `python manage.py migrate` | `python manage.py collectstatic --noinput && gunicorn config.wsgi` |
 | `frontend` | `frontend/` root directory, `main` | Railpack, `pnpm build` | n/a | `pnpm start` |
 
@@ -60,6 +61,11 @@ renaming one would delete it and create a new one.
   only public service; `Server` is reachable only through the private network
   (`server.railway.internal:8000`). See
   [Single domain](#single-domain).
+- `media-volume` is mounted on `Server` at `/data/media` and the service gets
+  `MEDIA_ROOT=/data/media`, so uploaded images (avatars, clan images, notice
+  attachments) persist across deploys. It sits in `DATABASE_REGION`, like the
+  service replica, and can be resized online. A volume mounts at runtime only:
+  nothing is written to it during build or pre-deploy.
 - `postgres()` in the SDK defaults to a plain `postgres:18` image, while the
   live database has no image set. `railway.ts` clears `db.source` so applying
   does not redeploy the database with a different image.
@@ -77,6 +83,7 @@ paths to Django (`BACKEND_URL`, default `http://localhost:8000` locally and
 |-------------|-----------|
 | `/api/...`, `/admin/...` | Django (proxied) |
 | `/static/...` | Django + whitenoise (admin assets) |
+| `/media/...` | Django (uploaded images, read from the media volume) |
 | everything else | Next.js |
 
 - `trailingSlash: true` with `skipTrailingSlashRedirect: true`: Next strips

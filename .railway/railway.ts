@@ -4,6 +4,7 @@ const GITHUB_REPO = "LordFitoi/exvia";
 const APP_DOMAIN = "exvia.up.railway.app";
 const BACKEND_PRIVATE_URL = "http://server.railway.internal:8000";
 const DATABASE_REGION = "us-west2";
+const MEDIA_MOUNT_PATH = "/data/media";
 
 export default defineRailway(() => {
   const db = postgres("Postgres", { region: DATABASE_REGION });
@@ -19,6 +20,15 @@ export default defineRailway(() => {
     alerts: { usage: { "80": {}, "95": {}, "100": {} } },
   });
 
+  // Uploaded images (avatars, clan images, notice attachments). The container
+  // disk is wiped on every deploy, so they live on a volume mounted at MEDIA_ROOT.
+  const mediaVolume = volume("media-volume", {
+    region: DATABASE_REGION,
+    sizeMB: 5000,
+    allowOnlineResize: true,
+    alerts: { usage: { "80": {}, "95": {}, "100": {} } },
+  });
+
   const server = service("Server", {
     source: github(GITHUB_REPO, { branch: "main", checkSuites: false }),
     build: { builder: "RAILPACK" },
@@ -26,9 +36,11 @@ export default defineRailway(() => {
     start: "python manage.py collectstatic --noinput && gunicorn config.wsgi",
     replicas: { [DATABASE_REGION]: 1 },
     networking: { privateNetworkEndpoint: "server" },
+    volumeMounts: { [MEDIA_MOUNT_PATH]: mediaVolume },
     env: {
       DISABLE_COLLECTSTATIC: "1",
       PORT: "8000",
+      MEDIA_ROOT: MEDIA_MOUNT_PATH,
       PGDATABASE: db.env.PGDATABASE,
       PGUSER: db.env.PGUSER,
       PGPASSWORD: db.env.PGPASSWORD,
@@ -52,6 +64,6 @@ export default defineRailway(() => {
   });
 
   return project("Exvia", {
-    resources: [dbVolume, group("Django", [server, db]), frontend],
+    resources: [dbVolume, mediaVolume, group("Django", [server, db]), frontend],
   });
 });
