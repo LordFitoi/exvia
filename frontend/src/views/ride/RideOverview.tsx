@@ -9,6 +9,7 @@ import RideModeView from '@/views/ride/RideModeView'
 import RoutePickerView from '@/views/ride/RoutePickerView'
 
 const HOME_PATH = '/'
+const MAP_PATH = '/map'
 
 export default function RideOverview() {
   const router = useRouter()
@@ -23,8 +24,15 @@ export default function RideOverview() {
     else router.replace(HOME_PATH)
   }
 
+  // Replacing /ride with the map keeps Back from returning to a ride that is over.
   if (isRiding && detail.route) {
-    return <RideModeView route={detail.route} onQuit={() => setIsRiding(false)} />
+    return (
+      <RideModeView
+        route={detail.route}
+        onQuit={() => setIsRiding(false)}
+        onFinish={() => router.replace(MAP_PATH)}
+      />
+    )
   }
   return (
     <RoutePickerView

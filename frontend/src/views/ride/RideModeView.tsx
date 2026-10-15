@@ -2,22 +2,30 @@
 
 import 'mapbox-gl/dist/mapbox-gl.css'
 
+import { useState } from 'react'
+
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
+import { useRideArrival } from '@/hooks/useRideArrival'
 import { useRideLines } from '@/hooks/useRideLines'
 import { useRideMap } from '@/hooks/useRideMap'
+import { useRideProgress } from '@/hooks/useRideProgress'
 import { useStreetPosition } from '@/hooks/useStreetPosition'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import MapStatusView from '@/views/map/MapStatusView'
+import RideSummarySheet from '@/views/ride/RideSummarySheet'
 import type { RouteDetail } from '@/types/route'
 
 interface RideModeViewProps {
   route: RouteDetail
+  /** Leaves ride mode for the picker, with the route still selected. */
   onQuit: () => void
+  /** Leaves ride mode for good, after the summary of a finished ride. */
+  onFinish: () => void
 }
 
-export default function RideModeView({ route, onQuit }: RideModeViewProps) {
+export default function RideModeView({ route, onQuit, onFinish }: RideModeViewProps) {
   const location = useGeolocation()
   const street = useStreetPosition({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -25,11 +33,15 @@ export default function RideModeView({ route, onQuit }: RideModeViewProps) {
   })
   // A fix that cannot be snapped to a street (or not yet) still shows where the rider is.
   const rider = street.coordinates ?? location.coordinates
+  const progress = useRideProgress({ path: route.points, rider })
   const lines = useRideLines({
     accessToken: MAPBOX_ACCESS_TOKEN,
     path: route.points,
+    progress,
     rider,
   })
+  const rideSeconds = useRideArrival({ progress, fixTime: location.timestamp })
+  const [isSummaryDismissed, setIsSummaryDismissed] = useState(false)
   const { containerRef, hasLoadFailed, recenter } = useRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     path: route.points,
@@ -64,6 +76,15 @@ export default function RideModeView({ route, onQuit }: RideModeViewProps) {
           </button>
         </div>
       </div>
+      {rideSeconds !== null && (
+        <RideSummarySheet
+          isOpen={!isSummaryDismissed}
+          route={route}
+          rideSeconds={rideSeconds}
+          onClose={() => setIsSummaryDismissed(true)}
+          onDone={onFinish}
+        />
+      )}
     </main>
   )
 }

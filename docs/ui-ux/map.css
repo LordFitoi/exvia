@@ -165,6 +165,15 @@
   z-index: var(--z-sheet);
 }
 
+/* Scrim over the map, under a modal sheet: the guide's stand-in for the
+   dialog backdrop, which the real modal sheet gets from showModal() */
+.map-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-sheet);
+  background: var(--color-scrim);
+}
+
 /* Map preview inside a screen: a rounded frame around a map canvas, with a
    centered message while there is nothing to show */
 .route-preview {

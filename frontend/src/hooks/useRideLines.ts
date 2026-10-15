@@ -1,24 +1,17 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import { useApproachPath } from '@/hooks/useApproachPath'
+import type { RideProgress } from '@/hooks/useRideProgress'
 import { splitTrack } from '@/services/rideLines'
 import type { RideLines } from '@/services/rideLines'
-import { measurePath, trackProgress } from '@/services/routeProgress'
-import type { MeasuredPath, PathLocation } from '@/services/routeProgress'
 import type { Coordinates } from '@/types/geolocation'
-
-interface Progress {
-  readonly measured: MeasuredPath
-  readonly rider: Coordinates | null
-  /** The last spot of the track the rider was on, or null before they reached it. */
-  readonly reached: PathLocation | null
-}
 
 interface RideLinesOptions {
   accessToken: string | undefined
   path: readonly Coordinates[]
+  progress: RideProgress
   /** The rider's position, or null while it is unknown. */
   rider: Coordinates | null
 }
@@ -26,18 +19,9 @@ interface RideLinesOptions {
 /**
  * What to draw on the route for this rider. Until the rider reaches the track, the way to the
  * start plus the whole track; once on it, the part ridden and the part left.
- * Progress only moves forward, and leaving the track keeps the last spot reached on it.
  */
-export const useRideLines = ({ accessToken, path, rider }: RideLinesOptions): RideLines => {
-  const measured = useMemo(() => measurePath(path), [path])
-  // Progress is kept per rider position; it is worked out while rendering, when a new one arrives.
-  const [progress, setProgress] = useState<Progress>({ measured, rider: null, reached: null })
-  if (progress.rider !== rider || progress.measured !== measured) {
-    const previous = progress.measured === measured ? progress.reached : null
-    const found = rider && trackProgress(measured, rider, previous?.distance ?? 0)
-    setProgress({ measured, rider, reached: found || previous })
-  }
-  const { reached } = progress
+export const useRideLines = ({ accessToken, path, progress, rider }: RideLinesOptions): RideLines => {
+  const { measured, reached } = progress
 
   const isApproaching = rider !== null && reached === null
   const approach = useApproachPath({

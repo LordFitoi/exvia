@@ -32,13 +32,16 @@ one.
 | Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines and the start and finish markers |
 | Rider | `hooks/useRiderFollow.ts`, `services/riderMotion.ts` | The "You" marker and the camera that follows it, gliding between fixes, with `recenter` |
 | Heading | `hooks/useRiderHeading.ts` | The direction the rider is moving in, from their last positions |
-| Ride lines | `hooks/useRideLines.ts` | Where the rider is on the track, and the lines to draw from it |
+| Progress | `hooks/useRideProgress.ts` | Where the rider is on the track (the last spot reached) |
+| Ride lines | `hooks/useRideLines.ts` | The lines to draw from that progress |
+| Arrival | `hooks/useRideArrival.ts` | Detects the finish and the time the ride took; vibrates on arrival |
+| Summary | `views/ride/RideSummarySheet.tsx` | The "You've arrived!" modal sheet with time, distance and average speed |
 | Wake lock | `hooks/useWakeLock.ts` | Keeps the screen on while riding (Screen Wake Lock API) |
 | Way to start | `hooks/useApproachPath.ts` | Street path from the rider to the route start (Directions API) |
-| Progress | `services/routeProgress.ts`, `services/rideLines.ts` | Distance along the track, and the split of the track |
+| Track maths | `services/routeProgress.ts`, `services/rideLines.ts` | Distance along the track, and the split of the track |
 | Ride layers | `services/rideMapLayers.ts` | The Mapbox line layers of a ride |
 | API | `services/routesApi.ts` | `fetchRoutes`, `fetchRoute` (and `createRoute`) |
-| Format | `services/formatRoute.ts` | "42.1 km", "42 min", "1 h 05 min" |
+| Format | `services/formatRoute.ts` | "42.1 km", "42 min", "1 h 05 min", "42:10", "24.5" |
 
 ## Picker
 
@@ -129,6 +132,22 @@ uses the same two sizes, so both screens have the same map.
   the whole track is searched once, to pick the ride up again after a shortcut.
   A rider who leaves the track keeps the last spot reached, and no way back is
   drawn.
+- **Arrival** (`useRideArrival`): the rider has arrived when the progress on
+  the track is within 40 m of its end (`ARRIVAL_METERS`). The phone vibrates
+  and `RideSummarySheet` opens: a modal sheet ("You've arrived!", the guide's
+  `sheet-modal` with a close X) with the route name and three `route-stats`:
+  **Time**, **Distance** and **Avg km/h**, then the route's estimated time
+  and a **Done** button. Done ends the ride and opens the Map tab (`router.replace('/map')`, so Back does
+  not return to the finished ride); the X on the map still goes back to the
+  picker. Closing the sheet
+  (X, Esc) keeps the map open. The clock starts at the first GPS fix on the
+  track (so the way to the start does not count) and stops at the first fix at
+  the end. Both times are the fixes' own timestamps (`GeolocationPosition.timestamp`,
+  passed on by `useGeolocation`), so they are exact and need no timer. Stops
+  are not paused, so Time is the elapsed time, and Distance and Avg speed use
+  the route's own length, not the path the rider actually took.
+  The guide shows it in [patterns.html](../ui-ux/patterns.html) ("Ride summary"),
+  with `map-scrim` standing in for the dialog backdrop.
 - **The screen stays on** while riding (`useWakeLock`, Screen Wake Lock API),
   except on the map-failure screen. Browsers release the lock whenever the page
   is hidden (another app, a locked phone), so it is requested again when the
@@ -138,7 +157,8 @@ uses the same two sizes, so both screens have the same map.
   needs a secure context (HTTPS or localhost).
 - **X** (top right, `Quit ride`) returns to the picker with the same route
   still selected; the tab bar stays hidden, as it is in the picker. Nothing is stored about a ride
-  yet: no progress, no recording, no turn-by-turn.
+  yet: no recording, no turn-by-turn, and the summary is shown once (it is not
+  kept after the ride is left).
 
 ## Key decisions
 

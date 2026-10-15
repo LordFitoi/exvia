@@ -12,3 +12,25 @@ export const formatDuration = (seconds: number): string => {
   if (hours === 0) return `${minutes} min`
   return `${hours} h ${String(minutes).padStart(MINUTE_DIGITS, '0')} min`
 }
+
+const SECONDS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR
+const CLOCK_DIGITS = 2
+const NO_SPEED = '–'
+
+const padClock = (value: number): string => String(value).padStart(CLOCK_DIGITS, '0')
+
+/** An elapsed time as a stopwatch reads: "42:10", or "1:05:12" from an hour up. */
+export const formatClock = (seconds: number): string => {
+  const total = Math.floor(seconds)
+  const hours = Math.floor(total / SECONDS_PER_HOUR)
+  const minutes = Math.floor((total % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE)
+  const rest = padClock(total % SECONDS_PER_MINUTE)
+  if (hours === 0) return `${minutes}:${rest}`
+  return `${hours}:${padClock(minutes)}:${rest}`
+}
+
+/** The average speed in km/h ("24.5") for a distance covered in a time, or a dash when no time has passed. */
+export const formatAverageSpeed = (kilometres: number, seconds: number): string => {
+  if (seconds <= 0) return NO_SPEED
+  return ((kilometres * SECONDS_PER_HOUR) / seconds).toFixed(1)
+}

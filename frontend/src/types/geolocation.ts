@@ -15,4 +15,6 @@ export interface StreetPositionState {
 export interface GeolocationState {
   readonly status: GeolocationStatus
   readonly coordinates: Coordinates | null
+  /** When the position was taken, in milliseconds since the epoch; null while it is unknown. */
+  readonly timestamp: number | null
 }
