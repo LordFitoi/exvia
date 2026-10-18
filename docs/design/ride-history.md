@@ -84,7 +84,7 @@ those who did not write it.
   derive them from a start, an end and a route length. `useRideSpeeds` keeps
   running totals of the GPS readings (`services/rideSpeed.ts`) and sends max,
   lowest and mean with the ride; see [ride.md](ride.md#ride-mode).
-- **"Moving" excludes stops**: readings under 3 km/h (`MOVING_SPEED_KMH`) are
+- **"Moving" excludes stops**: readings under 10 km/h (`MOVING_SPEED_KMH`) are
   ignored, otherwise the lowest speed would always be 0 and the mean would
   drop at every light.
 - **Two averages on purpose**: "Avg km/h" matches the number the rider saw when

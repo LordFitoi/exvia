@@ -180,7 +180,7 @@ uses the same two sizes, so both screens have the same map.
   are listed in the [ride history](ride-history.md).
 - **Ride speeds** (`useRideSpeeds`, `services/rideSpeed.ts`): each new GPS fix
   (counted once per `timestamp`) adds its `coords.speed` to running totals, with
-  no list of readings kept. Readings under 3 km/h (`MOVING_SPEED_KMH`) are stops
+  no list of readings kept. Readings under 10 km/h (`MOVING_SPEED_KMH`) are stops
   and are ignored; the rest give the max, the lowest and the mean, in km/h. The
   totals freeze when the rider arrives and are sent with the ride. With no
   speed from the device (or only stops) they are null, which the history shows as

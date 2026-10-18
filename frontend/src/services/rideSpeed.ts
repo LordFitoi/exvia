@@ -1,6 +1,6 @@
 const KILOMETRES_PER_HOUR_PER_METRE_PER_SECOND = 3.6
-// Readings below this are a stop at a light or a rest, not riding, so they are left out of the stats.
-export const MOVING_SPEED_KMH = 3
+// Readings below this are parking-pace speeds (a stop, a rest, manoeuvring), not riding, so they are left out of the stats.
+export const MOVING_SPEED_KMH = 10
 
 /** Running totals of the GPS speed readings of a ride, in km/h, stops left out. */
 export interface SpeedStats {
