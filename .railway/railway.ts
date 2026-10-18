@@ -1,4 +1,4 @@
-import { defineRailway, github, group, postgres, preserve, project, service, volume } from "railway/iac";
+import { defineRailway, github, group, postgres, preserve, project, redis, service, volume } from "railway/iac";
 
 const GITHUB_REPO = "LordFitoi/exvia";
 const APP_DOMAIN = "exvia.up.railway.app";
@@ -12,6 +12,11 @@ export default defineRailway(() => {
   // changing it would redeploy the database.
   db.source = undefined;
   db.networking = { privateNetworkEndpoint: "postgres", tcpProxies: { "5432": {} } };
+
+  // Backs the Channels layer so WebSocket messages reach every Server replica.
+  // Nothing in it must survive a restart, so it has no volume.
+  const cache = redis("Redis", { region: DATABASE_REGION });
+  cache.networking = { privateNetworkEndpoint: "redis" };
 
   const dbVolume = volume("postgres-volume", {
     region: DATABASE_REGION,
@@ -33,7 +38,7 @@ export default defineRailway(() => {
     source: github(GITHUB_REPO, { branch: "main", checkSuites: false }),
     build: { builder: "RAILPACK" },
     preDeploy: "python manage.py migrate",
-    start: "python manage.py collectstatic --noinput && gunicorn config.wsgi",
+    start: "python manage.py collectstatic --noinput && uvicorn config.asgi:application --host 0.0.0.0 --port $PORT",
     replicas: { [DATABASE_REGION]: 1 },
     networking: { privateNetworkEndpoint: "server" },
     volumeMounts: { [MEDIA_MOUNT_PATH]: mediaVolume },
@@ -46,6 +51,7 @@ export default defineRailway(() => {
       PGPASSWORD: db.env.PGPASSWORD,
       PGHOST: db.env.PGHOST,
       PGPORT: db.env.PGPORT,
+      REDIS_URL: cache.env.REDIS_URL,
     },
   });
 
@@ -64,6 +70,6 @@ export default defineRailway(() => {
   });
 
   return project("Exvia", {
-    resources: [dbVolume, mediaVolume, group("Django", [server, db]), frontend],
+    resources: [dbVolume, mediaVolume, group("Django", [server, db, cache]), frontend],
   });
 });

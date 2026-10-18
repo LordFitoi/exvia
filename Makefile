@@ -5,12 +5,13 @@ PGUSER ?= exvia
 PGPASSWORD ?= exvia
 PGHOST ?= localhost
 PGPORT ?= 5432
+REDIS_URL ?= redis://localhost:6379
 
-export PGDATABASE PGUSER PGPASSWORD PGHOST PGPORT
+export PGDATABASE PGUSER PGPASSWORD PGHOST PGPORT REDIS_URL
 
 STYLEGUIDE = docs/ui-ux/index.html
 
-.PHONY: help install railway_install railway_login db_setup db_migrate db_shell db_seed run_server run_frontend open_styleguide railway_plan railway_apply create_app
+.PHONY: help install railway_install railway_login db_setup redis_setup db_migrate db_shell db_seed run_redis stop_redis run_server run_frontend open_styleguide railway_plan railway_apply create_app
 
 ##@ Help
 
@@ -34,6 +35,9 @@ db_setup: ## Install PostgreSQL if missing and create the project database
 	@sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='$(PGDATABASE)'" | grep -q 1 \
 		|| sudo -u postgres psql -c "CREATE DATABASE $(PGDATABASE) OWNER $(PGUSER);"
 
+redis_setup: ## Install Redis if missing (WebSocket channel layer)
+	@command -v redis-server >/dev/null 2>&1 || sudo apt-get install -y redis-server
+
 db_migrate: ## Run Django database migrations
 	poetry run python manage.py migrate
 
@@ -45,8 +49,14 @@ db_seed: ## Seed the database with baseline records (e.g. default admin user)
 
 ##@ Run
 
-run_server: ## Run the Django development server
-	poetry run python manage.py runserver
+run_redis: ## Start the local Redis service (WebSocket channel layer)
+	@sudo service redis-server start
+
+stop_redis: ## Stop the local Redis service
+	@sudo service redis-server stop
+
+run_server: ## Run the ASGI development server (HTTP + WebSockets) with auto-reload
+	poetry run uvicorn config.asgi:application --reload
 
 run_frontend: ## Run the Next.js development server (frontend/)
 	cd frontend && corepack pnpm dev

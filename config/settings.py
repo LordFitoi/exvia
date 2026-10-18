@@ -82,8 +82,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
@@ -96,6 +94,17 @@ DATABASES = {
         'PASSWORD': os.environ["PGPASSWORD"],
         'HOST': os.environ["PGHOST"],
         'PORT': os.environ["PGPORT"],
+    }
+}
+
+
+# Channels
+# https://channels.readthedocs.io/en/stable/topics/channel_layers.html
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {'hosts': [os.environ["REDIS_URL"]]},
     }
 }
 

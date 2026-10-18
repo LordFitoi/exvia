@@ -40,11 +40,12 @@ deprecated `railway.json` config-as-code files, which were deleted.
 | Resource | Source | Build | Pre-deploy | Start |
 |----------|--------|-------|------------|-------|
 | `Postgres` (database) + `postgres-volume` | Railway Postgres | n/a | n/a | n/a |
+| `Redis` (no volume) | Railway Redis | n/a | n/a | n/a |
 | `media-volume` (5 GB, mounted on `Server`) | Railway volume | n/a | n/a | n/a |
-| `Server` (Django backend) | repo root, `main` | Railpack | `python manage.py migrate` | `python manage.py collectstatic --noinput && gunicorn config.wsgi` |
+| `Server` (Django backend) | repo root, `main` | Railpack | `python manage.py migrate` | `python manage.py collectstatic --noinput && uvicorn config.asgi:application --host 0.0.0.0 --port $PORT` |
 | `frontend` | `frontend/` root directory, `main` | Railpack, `pnpm build` | n/a | `pnpm start` |
 
-`Postgres` and `Server` are grouped under the existing `Django` canvas group.
+`Postgres`, `Redis` and `Server` are grouped under the existing `Django` canvas group.
 The resource names are the ones that already exist in the Railway project;
 renaming one would delete it and create a new one.
 
@@ -54,6 +55,10 @@ renaming one would delete it and create a new one.
   `DISABLE_COLLECTSTATIC=1` were already set on the service and are kept.
   `DISABLE_COLLECTSTATIC` stops Railpack from running `collectstatic` at build
   time, when the database variables are not usable.
+- `Server` also receives `REDIS_URL` as a reference to `Redis`, reachable on
+  the private network as `redis.railway.internal`. `Redis` has no volume: it
+  only carries the WebSocket channel layer, which is rebuilt as clients
+  reconnect ([asgi-websockets.md](asgi-websockets.md)).
 - Migrations run in the pre-deploy step so a failing migration stops the
   release. `collectstatic` stays in the start command because pre-deploy
   runs in a separate container and its files would not reach the running one.

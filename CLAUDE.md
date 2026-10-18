@@ -67,7 +67,7 @@ A minimal Django template (`config/`) plus a Next.js app (`frontend/`),
 deployed on Railway as infrastructure-as-code (see
 [.railway/railway.ts](.railway/railway.ts) and
 [docs/design/frontend.md](docs/design/frontend.md)): the backend migrates,
-collects static files, then serves with gunicorn.
+collects static files, then serves ASGI (HTTP + WebSockets) with uvicorn.
 
 - Python 3.11 ([runtime.txt](runtime.txt))
 - Dependencies managed with Poetry ([pyproject.toml](pyproject.toml))
@@ -82,11 +82,12 @@ collects static files, then serves with gunicorn.
 ```bash
 poetry install
 python manage.py migrate
-python manage.py runserver
+make run_server  # uvicorn config.asgi:application --reload
 ```
 
 `DATABASES` in [config/settings.py](config/settings.py) always connects to
-Postgres via `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGHOST`, `PGPORT` — these
-are read with `os.environ[...]` (no default, no SQLite fallback), so every
-`manage.py` command fails with a `KeyError` unless all five are exported
-first.
+Postgres via `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGHOST`, `PGPORT`, and
+`CHANNEL_LAYERS` to Redis via `REDIS_URL` — these are read with
+`os.environ[...]` (no default, no SQLite fallback), so every `manage.py`
+command fails with a `KeyError` unless all six are exported first. The
+Makefile exports local defaults (`make redis_setup` installs Redis, `make run_redis` starts it, `make stop_redis` stops it).
