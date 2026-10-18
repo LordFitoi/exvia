@@ -14,6 +14,7 @@ interface RoutePickerViewProps {
   selectedId: string | null
   onSelect: (id: string) => void
   onRide: () => void
+  onFreeRide: () => void
   onClose: () => void
 }
 
@@ -23,6 +24,7 @@ export default function RoutePickerView({
   selectedId,
   onSelect,
   onRide,
+  onFreeRide,
   onClose,
 }: RoutePickerViewProps) {
   // A full-height screen with its own close button, so the tab bar steps aside.
@@ -52,15 +54,21 @@ export default function RoutePickerView({
           }
         />
       </div>
-      <button
-        className="button button-primary button-lg button-block"
-        type="button"
-        disabled={!detail.route}
-        onClick={onRide}
-      >
-        <span className="icon icon-flag-checkered" aria-hidden="true"></span>
-        Ride
-      </button>
+      <div className="stack-sm">
+        <button
+          className="button button-primary button-lg button-block"
+          type="button"
+          disabled={!detail.route}
+          onClick={onRide}
+        >
+          <span className="icon icon-flag-checkered" aria-hidden="true"></span>
+          Ride
+        </button>
+        <button className="button button-outline button-lg button-block" type="button" onClick={onFreeRide}>
+          <span className="icon icon-route" aria-hidden="true"></span>
+          Free ride
+        </button>
+      </div>
     </main>
   )
 }

@@ -10,15 +10,17 @@ const WATCH_OPTIONS: PositionOptions = {
   timeout: 20_000,
 }
 
-const PENDING_STATE: GeolocationState = { status: 'pending', coordinates: null, timestamp: null, speed: null }
-const DENIED_STATE: GeolocationState = { status: 'denied', coordinates: null, timestamp: null, speed: null }
-const UNAVAILABLE_STATE: GeolocationState = { status: 'unavailable', coordinates: null, timestamp: null, speed: null }
+const NO_FIX = { coordinates: null, timestamp: null, speed: null, accuracy: null } as const
+const PENDING_STATE: GeolocationState = { status: 'pending', ...NO_FIX }
+const DENIED_STATE: GeolocationState = { status: 'denied', ...NO_FIX }
+const UNAVAILABLE_STATE: GeolocationState = { status: 'unavailable', ...NO_FIX }
 
 const toReadyState = ({ coords, timestamp }: GeolocationPosition): GeolocationState => ({
   status: 'ready',
   coordinates: { longitude: coords.longitude, latitude: coords.latitude },
   timestamp,
   speed: coords.speed,
+  accuracy: coords.accuracy,
 })
 
 // A timeout or a lost signal after a first fix keeps the last known position on screen.

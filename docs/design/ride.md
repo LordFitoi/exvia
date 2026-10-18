@@ -21,11 +21,14 @@ one.
 | Piece | File | Job |
 |-------|------|-----|
 | Page | `app/(app)/ride/page.tsx` | Renders `RideOverview` |
-| Screen | `views/ride/RideOverview.tsx` | Holds the selected route id and whether the ride is on; shows the picker or ride mode |
-| Picker | `views/ride/RoutePickerView.tsx` | "Ride" heading, preview, route list, Ride button |
+| Screen | `views/ride/RideOverview.tsx` | Holds the selected route id and the stage (picker, route ride or free ride); shows the matching view |
+| Picker | `views/ride/RoutePickerView.tsx` | "Ride" heading, preview, route list, Ride and Free ride buttons |
 | Preview | `components/route/RoutePreview.tsx` | Placeholder, loading and failure states, or the preview map |
 | List | `components/route/RouteChoiceList.tsx` | Skeleton, error, empty and ready states of the routes |
 | Ride mode | `views/ride/RideModeView.tsx` | Full-bleed 3D map with the quit and recenter buttons |
+| Free ride | `views/ride/FreeRideView.tsx`, `FreeRideWaitingView.tsx`, `FreeRideSessionView.tsx`, `FinishFreeRideDialog.tsx` | Ride with no route: waits for the first fix, then records the track; see [Free ride](#free-ride) |
+| Free ride logic | `hooks/useTrackRecorder.ts`, `hooks/useFinishFreeRide.ts`, `hooks/useFreeRideMap.ts` | Records the fixes, saves the route and the ride, and draws the map |
+| Track maths | `services/trackRecorder.ts`, `services/trackOptimizer.ts` | Which fixes enter the track, and how the track is shrunk before it is saved |
 | Quit | `views/ride/ConfirmQuitRideDialog.tsx`, `hooks/useQuitRide.ts` | "Quit this ride?" dialog opened by the X, and saving the unfinished ride before leaving |
 | Routes | `hooks/useMyRoutes.ts` | `GET /api/routes/`, with `reload` |
 | Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<uuid>/` for the selected route, with `retry` |
@@ -209,8 +212,50 @@ uses the same two sizes, so both screens have the same map.
   connection never traps the rider. Leaving goes back to the picker with the same
   route still selected. After arrival the ride is already saved, so the X leaves
   at once with no dialog and no second summary. The tab bar stays hidden, as it is
-  in the picker. Nothing is recorded while riding (no track, no turn-by-turn); the
+  in the picker. Nothing is recorded while riding a route (no track, no turn-by-turn); the
   server keeps only the summary of the ride.
+
+## Free ride
+
+The **Free ride** button (outline, `icon-route`) sits under **Ride** in the picker and needs
+no selected route. It opens a ride with no route to follow: the rider's own track is
+recorded, and on finishing it is saved as a new route and then as a ride of that route.
+
+- **Start** (`FreeRideView`): a free ride cannot start without a position, so until the first
+  GPS fix arrives `FreeRideWaitingView` shows the status ("Finding your location", "Location
+  is turned off", "Location unavailable") with an X back to the picker. The fix (snapped to a
+  street when possible, as in ride mode) then opens `FreeRideSessionView`, so `start_at` is the
+  time the session opened.
+- **Screen** (`FreeRideSessionView`): the same layout as ride mode: pitched 3D map that follows
+  the rider (`useFreeRideMap`, which reuses `useRiderFollow`/`useRiderHeading`), the stats strip
+  (time and speed), the locate button, no tab bar, screen kept on. The recorded track is
+  drawn live as the route line (`addRouteLine`). The top-right button is a checkered flag,
+  **Finish ride**, not an X: there is no destination, so the rider ends it whenever they want.
+- **Recording** (`useTrackRecorder`, `services/trackRecorder.ts`): each new GPS fix (once per
+  `timestamp`) is added to the track unless its `accuracy` is over 30 m (a guess that would
+  draw a spike; a missing accuracy counts as good) or it is within 5 m of the last point kept
+  (standing still, or GPS noise, adds nothing). The raw fix is recorded, not the street-snapped
+  one, so paths off the road network (bike paths, parks) are kept. `useGeolocation` now passes
+  `coords.accuracy` on for this.
+- **Optimizing** (`services/trackOptimizer.ts`), run once when the ride is saved: coordinates are
+  rounded to 6 decimals (about 0.1 m); consecutive repeated points are removed; then
+  Douglas-Peucker (`simplifyPath`) drops every point a straight line can replace within 5 m,
+  keeping the first and last. The longitude is stretched by the cosine of the mean latitude
+  before simplifying, so the 5 m tolerance is the same in every direction. A track of
+  hundreds of fixes along a street becomes a handful of points; a corner stays.
+- **Finish ride** opens `FinishFreeRideDialog` ("Finish this ride?", **Keep riding** first). Confirming
+  (`useFinishFreeRide`) saves, in order: the route with `POST /api/routes/`
+  (name "Free ride 18 Oct, 14:32" from the start time, empty description, the optimized track
+  as `points`, no `waypoints`; the server calculates its distance and time), then the ride with
+  `POST /api/routes/<uuid>/summaries/` using that route, `is_finished: true`, the start and
+  now as the times, and the speeds. On success the rider lands on the Map tab, as after **Done**
+  in ride mode. The temporary name is changed from the route list like any route.
+- **Failure**: the dialog stays open with the error and the button reads **Leave without
+  saving**; **Keep riding** clears the error and recording goes on, so finishing again
+  is the retry. If the route was saved but the ride was not, the retry reuses that route
+  instead of making another.
+- **Nothing to save**: with fewer than two points recorded (the rider has not moved) the dialog
+  says so and the button reads **Leave**, which goes back to the picker with nothing saved.
 
 ## Key decisions
 
@@ -230,5 +275,6 @@ uses the same two sizes, so both screens have the same map.
 ## Not included
 
 Distance left, off-route detection and a way back to the track after leaving
-it (only the way to the start is drawn), voice guidance, recording the ride,
-and terrain elevation.
+it (only the way to the start is drawn), voice guidance, and terrain elevation.
+Riding a route records nothing; only a free ride records its track. A free ride does not
+snap its track to the roads, does not pause, and a reload loses it.

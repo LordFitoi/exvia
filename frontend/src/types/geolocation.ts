@@ -19,4 +19,6 @@ export interface GeolocationState {
   readonly timestamp: number | null
   /** Meters per second, or null when the device cannot tell (it often can't while standing). */
   readonly speed: number | null
+  /** The radius, in meters, within which the position is expected to be; null while it is unknown. */
+  readonly accuracy: number | null
 }

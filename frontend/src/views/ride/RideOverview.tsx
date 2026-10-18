@@ -5,16 +5,19 @@ import { useState } from 'react'
 
 import { useMyRoutes } from '@/hooks/useMyRoutes'
 import { useRouteDetail } from '@/hooks/useRouteDetail'
+import FreeRideView from '@/views/ride/FreeRideView'
 import RideModeView from '@/views/ride/RideModeView'
 import RoutePickerView from '@/views/ride/RoutePickerView'
 
 const HOME_PATH = '/'
 const MAP_PATH = '/map'
 
+type RideStage = 'picker' | 'route' | 'free'
+
 export default function RideOverview() {
   const router = useRouter()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [isRiding, setIsRiding] = useState(false)
+  const [stage, setStage] = useState<RideStage>('picker')
   const myRoutes = useMyRoutes()
   const detail = useRouteDetail(selectedId)
 
@@ -25,14 +28,12 @@ export default function RideOverview() {
   }
 
   // Replacing /ride with the map keeps Back from returning to a ride that is over.
-  if (isRiding && detail.route) {
-    return (
-      <RideModeView
-        route={detail.route}
-        onQuit={() => setIsRiding(false)}
-        onFinish={() => router.replace(MAP_PATH)}
-      />
-    )
+  const handleFinish = () => router.replace(MAP_PATH)
+  const handleBackToPicker = () => setStage('picker')
+
+  if (stage === 'free') return <FreeRideView onLeave={handleBackToPicker} onSaved={handleFinish} />
+  if (stage === 'route' && detail.route) {
+    return <RideModeView route={detail.route} onQuit={handleBackToPicker} onFinish={handleFinish} />
   }
   return (
     <RoutePickerView
@@ -40,7 +41,8 @@ export default function RideOverview() {
       detail={detail}
       selectedId={selectedId}
       onSelect={setSelectedId}
-      onRide={() => setIsRiding(true)}
+      onRide={() => setStage('route')}
+      onFreeRide={() => setStage('free')}
       onClose={handleClose}
     />
   )

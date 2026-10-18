@@ -1,6 +1,6 @@
 import type { Coordinates } from '@/types/geolocation'
 
-const METERS_PER_DEGREE_LATITUDE = 111_320
+export const METERS_PER_DEGREE_LATITUDE = 111_320
 // A rider this close to the track is on it; GPS and street snapping are never exact.
 const ON_TRACK_METERS = 40
 // Progress only moves forward, and only this far ahead of the last fix, so a loop that comes back
