@@ -6,6 +6,16 @@
   box-sizing: border-box;
 }
 
+/* No scrollbars anywhere in the app: content still scrolls by touch, wheel and
+   keyboard, the bars are just not drawn */
+* {
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;

@@ -145,7 +145,8 @@ Exvia changes the following on purpose:
   `route-preview-fill` makes it take the free height of its column instead of
   a fixed one, for screens that pin their action to the bottom edge. A long
   list scrolls inside its container (`route-choice-list`, exactly four rows
-  tall) instead of pushing the page.
+  tall) instead of pushing the page; it scrolls vertically only,
+  and long row titles wrap anywhere so a name without spaces cannot widen the row.
 - **Group ride pieces** (`group.html`). The setup screen reuses what exists: a
   `section-heading` (title left, a `button.link-action` right, such as **Change** and **Add**),
   grouped `list` rows, and `list-item-icon-primary` with `icon-navigation` for **Free mode**,
@@ -207,3 +208,6 @@ guide pages themselves (`styleguide.css`, `specimens.css`, `devices.css`,
 Porting the tokens to a Tailwind `@theme` instead (token names follow
 Minimals: `primary`, `secondary`, `info`, `success`, `warning`, `error`,
 `grey`) is still possible, but nothing needs it yet.
+
+**No scrollbars.** `base.css` hides every scrollbar in the app (`scrollbar-width: none` and
+`::-webkit-scrollbar`); scrolling still works by touch, wheel and keyboard.

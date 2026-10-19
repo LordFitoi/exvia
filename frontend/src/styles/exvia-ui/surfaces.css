@@ -67,6 +67,7 @@ button.list-item[aria-pressed="true"] .list-item-title { color: var(--color-prim
 }
 
 .list-item-title {
+  overflow-wrap: anywhere;
   font-size: var(--text-body2);
   font-weight: var(--weight-semibold);
   line-height: var(--leading-compact);
