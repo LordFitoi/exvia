@@ -3,23 +3,28 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { useMyRoutes } from '@/hooks/useMyRoutes'
-import { useRouteDetail } from '@/hooks/useRouteDetail'
-import FreeRideView from '@/views/ride/FreeRideView'
-import RideModeView from '@/views/ride/RideModeView'
+import { useActiveGroupPrompt } from '@/hooks/useActiveGroupPrompt'
+import { useRideSetup } from '@/hooks/useRideSetup'
+import { useStartGroupRide } from '@/hooks/useStartGroupRide'
+import type { RouteGroup } from '@/types/routeGroup'
+import ActiveGroupDialog from '@/views/ride/ActiveGroupDialog'
+import GroupRideView from '@/views/ride/GroupRideView'
 import RoutePickerView from '@/views/ride/RoutePickerView'
 
 const HOME_PATH = '/'
 const MAP_PATH = '/map'
+const RIDE_PATH = '/ride'
 
-type RideStage = 'picker' | 'route' | 'free'
-
+/** The Ride screen: the setup (route, invitations), then the ride of the group that Ride creates. */
 export default function RideOverview() {
   const router = useRouter()
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [stage, setStage] = useState<RideStage>('picker')
-  const myRoutes = useMyRoutes()
-  const detail = useRouteDetail(selectedId)
+  const setup = useRideSetup()
+  const [group, setGroup] = useState<RouteGroup | null>(null)
+  const start = useStartGroupRide(setGroup)
+  const prompt = useActiveGroupPrompt({
+    onJoin: ({ id }) => router.push(`${RIDE_PATH}/${id}`),
+    onStart: start.start,
+  })
 
   // Back to wherever the rider came from, or Home when the app was opened on this screen.
   const handleClose = () => {
@@ -29,21 +34,24 @@ export default function RideOverview() {
 
   // Replacing /ride with the map keeps Back from returning to a ride that is over.
   const handleFinish = () => router.replace(MAP_PATH)
-  const handleBackToPicker = () => setStage('picker')
 
-  if (stage === 'free') return <FreeRideView onLeave={handleBackToPicker} onSaved={handleFinish} />
-  if (stage === 'route' && detail.route) {
-    return <RideModeView route={detail.route} onQuit={handleBackToPicker} onFinish={handleFinish} />
-  }
+  // Leaving a ride goes back to the setup, with the same route and invitations still chosen.
+  if (group) return <GroupRideView group={group} onLeave={() => setGroup(null)} onFinish={handleFinish} />
   return (
-    <RoutePickerView
-      myRoutes={myRoutes}
-      detail={detail}
-      selectedId={selectedId}
-      onSelect={setSelectedId}
-      onRide={() => setStage('route')}
-      onFreeRide={() => setStage('free')}
-      onClose={handleClose}
-    />
+    <>
+      <RoutePickerView
+        setup={setup}
+        start={start}
+        isChecking={prompt.isChecking}
+        onRide={prompt.requestRide}
+        onClose={handleClose}
+      />
+      <ActiveGroupDialog
+        group={prompt.offeredGroup}
+        onJoin={prompt.join}
+        onStartAnother={prompt.startAnother}
+        onDismiss={prompt.dismiss}
+      />
+    </>
   )
 }

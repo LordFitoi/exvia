@@ -4,11 +4,13 @@ import { useEffect, useRef } from 'react'
 import type { RefObject } from 'react'
 
 import { useMapInstance } from '@/hooks/useMapInstance'
+import { useRiderMarkers } from '@/hooks/useRiderMarkers'
 import { useRiderFollow } from '@/hooks/useRiderFollow'
 import { useRiderHeading } from '@/hooks/useRiderHeading'
 import type { BaseMap } from '@/services/baseMap'
 import { addBuildingsLayer } from '@/services/buildingsLayer'
 import { addRouteLine, updateRouteLine } from '@/services/routeMapLayers'
+import type { RiderMarkerData } from '@/services/riderMarkers'
 import type { Coordinates } from '@/types/geolocation'
 
 const RIDE_ZOOM = 16.5
@@ -20,6 +22,8 @@ interface FreeRideMapOptions {
   track: readonly Coordinates[]
   /** The rider's position. */
   rider: Coordinates
+  /** The other riders of the group, drawn as bubbles. */
+  riders: readonly RiderMarkerData[]
 }
 
 interface FreeRideMapHandle {
@@ -32,7 +36,7 @@ interface FreeRideMapHandle {
  * The pitched 3D map of a ride with no route: it starts at the rider, follows them turning to face
  * their heading until the map is dragged, and draws the track recorded so far.
  */
-export const useFreeRideMap = ({ accessToken, track, rider }: FreeRideMapOptions): FreeRideMapHandle => {
+export const useFreeRideMap = ({ accessToken, track, rider, riders }: FreeRideMapOptions): FreeRideMapHandle => {
   const trackRef = useRef(track)
 
   useEffect(() => {
@@ -55,6 +59,8 @@ export const useFreeRideMap = ({ accessToken, track, rider }: FreeRideMapOptions
   useEffect(() => {
     if (mounted) updateRouteLine(mounted.map, track)
   }, [mounted, track])
+
+  useRiderMarkers(mounted, riders)
 
   const heading = useRiderHeading(rider)
   const recenter = useRiderFollow({ mounted, rider, heading, fallback: rider, recenterZoom: RIDE_ZOOM })

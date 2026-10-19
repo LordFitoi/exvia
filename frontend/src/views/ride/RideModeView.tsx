@@ -5,6 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { useState } from 'react'
 
 import { useGeolocation } from '@/hooks/useGeolocation'
+import { useGroupRide } from '@/hooks/useGroupRide'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useQuitRide } from '@/hooks/useQuitRide'
 import { useRideArrival } from '@/hooks/useRideArrival'
@@ -21,17 +22,20 @@ import MapStatusView from '@/views/map/MapStatusView'
 import ConfirmQuitRideDialog from '@/views/ride/ConfirmQuitRideDialog'
 import RideStatsPanel from '@/views/ride/RideStatsPanel'
 import RideSummarySheet from '@/views/ride/RideSummarySheet'
-import type { RouteDetail } from '@/types/route'
+import type { RideRoute } from '@/types/route'
+import type { RouteGroup } from '@/types/routeGroup'
 
 interface RideModeViewProps {
-  route: RouteDetail
+  route: RideRoute
+  /** The group riding this route; its other riders are shown on the map. */
+  group: RouteGroup
   /** Leaves ride mode for the picker, with the route still selected. */
   onQuit: () => void
   /** Leaves ride mode for good, after the summary of a finished ride. */
   onFinish: () => void
 }
 
-export default function RideModeView({ route, onQuit, onFinish }: RideModeViewProps) {
+export default function RideModeView({ route, group, onQuit, onFinish }: RideModeViewProps) {
   const location = useGeolocation()
   const street = useStreetPosition({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -39,6 +43,7 @@ export default function RideModeView({ route, onQuit, onFinish }: RideModeViewPr
   })
   // A fix that cannot be snapped to a street (or not yet) still shows where the rider is.
   const rider = street.coordinates ?? location.coordinates
+  const riders = useGroupRide({ group, rider, location })
   const progress = useRideProgress({ path: route.points, rider })
   const lines = useRideLines({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -63,6 +68,7 @@ export default function RideModeView({ route, onQuit, onFinish }: RideModeViewPr
     path: route.points,
     lines,
     rider,
+    riders,
   })
 
   // Once the ride is finished it is already saved, so the X leaves at once.

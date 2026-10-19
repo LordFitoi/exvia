@@ -21,6 +21,7 @@ or `open` (macOS).
 | `forms.html` | Fields, select and dropdown, form sections, disclosure, step indicator |
 | `content.html` | Feedback and states, lists, avatars, cards, app bar, tabs, tab bar, bottom sheet, modal sheet form, dialog |
 | `patterns.html` | Full mobile screens in phone frames: sign in, home feed, map, route creator, ride mode, ride summary, profile |
+| `group.html` | Group rides: ride setup (route and invitations), free mode, the choose-a-route sheet, the group map with rider bubbles, Home notifications, the Riding now row and the join-back dialog |
 | `exvia-ui.css` | Product design system entry point; only `@import`s the files below |
 | `fonts.css`, `fonts/` | `@font-face` for Public Sans and Barlow, vendored latin subsets with their OFL licenses |
 | `tokens.css` | Design tokens (`:root` custom properties) |
@@ -30,8 +31,8 @@ or `open` (macOS).
 | `surfaces.css`, `feedback.css` | Cards, lists, avatars, labels, chips; alerts, toast, progress, skeleton, state views |
 | `motion.css` | Shared keyframes (`fade-in`, `screen-in`, `tab-pop`) and the transitions that give taps and new content feedback |
 | `navigation.css`, `overlays.css`, `sections.css` | Bars, tabs, segmented control; sheet and dialog; form sections, disclosure, stepper, list footer |
-| `map.css`, `profile.css`, `clan.css` | Domain components (map overlays and markers, profile, ride and notice cards) |
-| `styleguide.css`, `specimens.css`, `devices.css` | Chrome of the guide pages only (header, specimen boxes, swatches, shadow boxes, 393pt phone frames). Not for the product |
+| `map.css`, `profile.css`, `clan.css` | Domain components (map overlays and markers, including `rider-marker`; profile; ride and notice cards) |
+| `styleguide.css`, `specimens.css`, `devices.css` | Chrome of the guide pages only (header, specimen boxes, swatches, shadow boxes, 393pt phone frames, `phone-footer` and `phone-sheet` for a pinned action and a sheet over a non-map screen). Not for the product |
 | `theme.js`, `slider.js` | Guide only: cycles system, light and dark theme; keeps the slider fill in sync (demo of the `--value` contract) |
 
 ## Where the design comes from
@@ -145,6 +146,17 @@ Exvia changes the following on purpose:
   a fixed one, for screens that pin their action to the bottom edge. A long
   list scrolls inside its container (`route-choice-list`, exactly four rows
   tall) instead of pushing the page.
+- **Group ride pieces** (`group.html`). The setup screen reuses what exists: a
+  `section-heading` (title left, a `button.link-action` right, such as **Change** and **Add**),
+  grouped `list` rows, and `list-item-icon-primary` with `icon-navigation` for **Free mode**,
+  so it reads as a route row that is plainly not a route. New: `rider-marker` (another rider on
+  the map: a bubble with their picture or initials above a dot at their position, zero-size so
+  it sits on the point, `pointer-events: none`, in primary green so it differs from the ink
+  "You" dot); `icon-button-badged` (a count on an icon button's corner, the aria-label carrying
+  it too); `list-item-stacked` (a row whose answer buttons wrap under its text, for a
+  notification whose title needs the width); `.avatar > img` (a picture fills the disc);
+  `button.link-action` (the link without the button box); and `section-heading` also styles
+  an `h2`.
 - **Collapsible sheet.** `sheet-grab` (handle and header) slides the sheet
   down by the height of `sheet-body` when dragged down and back when dragged
   up, so the content behind a sheet can be seen. The offset is an inline

@@ -1,7 +1,7 @@
 # ASGI and WebSockets
 
 The backend runs as an ASGI app so it can serve WebSockets next to HTTP.
-No consumer exists yet; this is the groundwork.
+The one consumer is the live channel of a route group ([route-groups.md](route-groups.md#live-channel)).
 
 ## Architecture
 
@@ -33,6 +33,24 @@ Locally `make redis_setup` installs Redis, `make run_redis` starts it, `make sto
 `REDIS_URL=redis://localhost:6379`. Like the `PG*` variables it has no
 default in settings, so it must be exported.
 
+## Through the frontend
+
+The browser only talks to the frontend's domain ([frontend.md](frontend.md)), so the websocket goes
+through Next's rewrites too: `ws` is one of the proxied prefixes in
+[next.config.ts](../../frontend/next.config.ts), so `/ws/...` reaches Django's `/ws/...`. Next
+forwards the upgrade: checked with a client that sends a rejected token and gets Django's own close
+code `4401` back, with `next dev` and with a production build served by `next start`. No separate
+public domain or `NEXT_PUBLIC_*` websocket URL is needed, and the origin check passes because
+`ALLOWED_HOSTS` allows the frontend's host.
+
+## Tests
+
+Consumers are tested with `apps.core.websocket_testing.WebsocketClient`, a small client over
+`asgiref.testing.ApplicationCommunicator`, with the in-memory channel layer
+(`override_settings(CHANNEL_LAYERS=...)`) and `TransactionTestCase`, because the consumer's
+database calls run in other threads. `channels.testing.WebsocketCommunicator` is not used: importing `channels.testing` requires
+`daphne`, which is not installed (the server is uvicorn).
+
 ## Adding a WebSocket endpoint
 
 1. Write a consumer in the owning app (`apps/<app>/consumers.py`).
@@ -42,13 +60,9 @@ default in settings, so it must be exported.
 
 ## Not decided yet
 
-- **Authentication.** The API uses JWT in the `Authorization` header, which
-  browsers cannot set on a WebSocket. A consumer needs its own scheme (a
-  short-lived token in the query string or first message).
-- **Frontend proxy.** The browser reaches the backend through Next rewrites
-  ([frontend.md](frontend.md)). Whether `next start` forwards WebSocket
-  upgrades through them is unverified; the fallback is exposing the backend
-  on its own public domain.
+- **Reauthentication.** The first-message JWT scheme is in use
+  ([route-groups.md](route-groups.md#live-channel)); a socket is not closed when the
+  15-minute access token expires.
 - **Unrouted paths.** `URLRouter` raises `ValueError` for a WebSocket path with
   no route, so uvicorn answers HTTP 500 (and logs a traceback) instead of a
   clean rejection.

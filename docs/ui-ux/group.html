@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#141a21" media="(prefers-color-scheme: dark)">
+  <title>Exvia UI/UX Style Guide: Group rides</title>
+  <link rel="stylesheet" href="exvia-ui.css">
+  <link rel="stylesheet" href="styleguide.css">
+  <link rel="stylesheet" href="devices.css">
+  <script src="theme.js" defer></script>
+</head>
+<body>
+  <header class="guide-header">
+    <a class="guide-brand" href="index.html">Exvia UI</a>
+    <nav class="guide-nav" aria-label="Style guide">
+      <a href="index.html">Overview</a>
+      <a href="foundations.html">Foundations</a>
+      <a href="components.html">Controls</a>
+      <a href="forms.html">Forms</a>
+      <a href="content.html">Content</a>
+      <a href="patterns.html">Screens</a>
+      <a href="group.html" aria-current="page">Group rides</a>
+    </nav>
+    <button id="theme-toggle" class="button button-soft button-sm" type="button">Theme: system</button>
+  </header>
+
+  <main class="guide-main guide-main-wide">
+    <section class="guide-hero">
+      <p class="text-overline">Group rides</p>
+      <h1>Set up, invite, follow</h1>
+      <p>Riding with others: the Ride screen picks the route (or free mode) and who to invite, the Home bell lists the invitations waiting for an answer, and the ride map shows each rider as a bubble above a dot.</p>
+    </section>
+
+    <div class="phone-row">
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="phone-body">
+            <div class="screen-header">
+              <h2 class="text-heading">Ride</h2>
+              <button class="icon-button" type="button" aria-label="Close"><span class="icon icon-x" aria-hidden="true"></span></button>
+            </div>
+            <div class="route-preview" aria-label="Map preview of Coast loop"></div>
+            <section aria-labelledby="route-title">
+              <div class="section-heading">
+                <h3 id="route-title">Route</h3>
+                <button class="link-action" type="button">Change</button>
+              </div>
+              <ul class="list">
+                <li class="list-item">
+                  <span class="list-item-icon" aria-hidden="true"><span class="icon icon-route"></span></span>
+                  <span class="list-item-body"><span class="list-item-title">Coast loop</span><span class="list-item-meta">17.8 km &middot; 45 min</span></span>
+                </li>
+              </ul>
+            </section>
+            <section aria-labelledby="invitations-title">
+              <div class="section-heading">
+                <h3 id="invitations-title">Invitations</h3>
+                <button class="link-action" type="button">Add</button>
+              </div>
+              <ul class="list">
+                <li class="list-item">
+                  <span class="avatar avatar-sm" aria-hidden="true">AN</span>
+                  <span class="list-item-body"><span class="list-item-title">ana</span></span>
+                  <button class="icon-button" type="button" aria-label="Remove ana"><span class="icon icon-x" aria-hidden="true"></span></button>
+                </li>
+                <li class="list-item">
+                  <span class="avatar avatar-sm" aria-hidden="true">BE</span>
+                  <span class="list-item-body"><span class="list-item-title">ben</span></span>
+                  <button class="icon-button" type="button" aria-label="Remove ben"><span class="icon icon-x" aria-hidden="true"></span></button>
+                </li>
+              </ul>
+            </section>
+          </div>
+          <div class="phone-footer">
+            <button class="button button-primary button-lg button-block" type="button"><span class="icon icon-flag-checkered" aria-hidden="true"></span>Ride</button>
+          </div>
+        </div>
+        <figcaption class="phone-caption">Ride setup: the route and the invitations are two sections with their own action, Ride is the one filled button; with no invitations the section says it is a solo ride</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="phone-body">
+            <div class="screen-header">
+              <h2 class="text-heading">Ride</h2>
+              <button class="icon-button" type="button" aria-label="Close"><span class="icon icon-x" aria-hidden="true"></span></button>
+            </div>
+            <div class="route-preview" aria-label="No route: free mode"></div>
+            <section aria-labelledby="free-route-title">
+              <div class="section-heading">
+                <h3 id="free-route-title">Route</h3>
+                <button class="link-action" type="button">Change</button>
+              </div>
+              <ul class="list">
+                <li class="list-item">
+                  <span class="list-item-icon list-item-icon-primary" aria-hidden="true"><span class="icon icon-navigation"></span></span>
+                  <span class="list-item-body"><span class="list-item-title">Free mode</span><span class="list-item-meta">No route, ride wherever you want</span></span>
+                </li>
+              </ul>
+            </section>
+            <section aria-labelledby="free-invitations-title">
+              <div class="section-heading">
+                <h3 id="free-invitations-title">Invitations</h3>
+                <button class="link-action" type="button">Add</button>
+              </div>
+              <p class="text-small text-muted">Riding solo. Add riders by username to ride together.</p>
+            </section>
+          </div>
+          <div class="phone-footer">
+            <button class="button button-primary button-lg button-block" type="button"><span class="icon icon-flag-checkered" aria-hidden="true"></span>Ride</button>
+          </div>
+        </div>
+        <figcaption class="phone-caption">Free mode is a route row too, with the primary tile and the words &ldquo;Free mode&rdquo; so it is never mistaken for a route; it is what a rider with no routes starts with</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="phone-body">
+            <div class="screen-header">
+              <h2 class="text-heading">Ride</h2>
+              <button class="icon-button" type="button" aria-label="Close"><span class="icon icon-x" aria-hidden="true"></span></button>
+            </div>
+            <div class="route-preview" aria-hidden="true"></div>
+          </div>
+          <div class="map-scrim"></div>
+          <div class="sheet phone-sheet" role="dialog" aria-labelledby="choose-route-title">
+            <span class="sheet-handle"></span>
+            <div class="sheet-header">
+              <h3 class="text-subtitle" id="choose-route-title">Choose a route</h3>
+              <button class="icon-button" type="button" aria-label="Close Choose a route"><span class="icon icon-x" aria-hidden="true"></span></button>
+            </div>
+            <ul class="list">
+              <li>
+                <button class="list-item" type="button" aria-pressed="false">
+                  <span class="list-item-icon list-item-icon-primary" aria-hidden="true"><span class="icon icon-navigation"></span></span>
+                  <span class="list-item-body"><span class="list-item-title">Free mode</span><span class="list-item-meta">No route, ride wherever you want</span></span>
+                </button>
+              </li>
+              <li>
+                <button class="list-item" type="button" aria-pressed="true">
+                  <span class="list-item-icon" aria-hidden="true"><span class="icon icon-route"></span></span>
+                  <span class="list-item-body"><span class="list-item-title">Coast loop</span><span class="list-item-meta">17.8 km &middot; 45 min</span></span>
+                  <span class="icon icon-check" aria-hidden="true"></span>
+                </button>
+              </li>
+              <li>
+                <button class="list-item" type="button" aria-pressed="false">
+                  <span class="list-item-icon" aria-hidden="true"><span class="icon icon-route"></span></span>
+                  <span class="list-item-body"><span class="list-item-title">Hill climb</span><span class="list-item-meta">32.4 km &middot; 1 h 05 min</span></span>
+                </button>
+              </li>
+            </ul>
+            <button class="button button-primary button-lg button-block" type="button">Save</button>
+          </div>
+        </div>
+        <figcaption class="phone-caption">Choose a route: a modal sheet over a scrim, Free mode first, the chosen row is tinted and checked; Save applies it, the X leaves the choice as it was</figcaption>
+      </figure>
+    </div>
+
+    <div class="phone-row">
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="map">
+            <svg class="map-canvas" viewBox="0 0 360 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+              <rect class="map-land" width="360" height="700"></rect>
+              <path class="map-water" d="M0 520 C80 470 140 560 230 520 S330 440 360 470 V700 H0Z"></path>
+              <path class="map-road" d="M0 120 H360 M0 300 H360 M0 420 H360 M90 0 V560 M250 0 V560"></path>
+              <path class="map-route-casing" d="M100 238 L250 154 L280 308"></path>
+              <path class="map-route" d="M100 238 L250 154 L280 308"></path>
+            </svg>
+            <div class="map-overlay">
+              <div class="map-controls">
+                <button class="icon-button" type="button" aria-label="Quit ride"><span class="icon icon-x" aria-hidden="true"></span></button>
+              </div>
+            </div>
+            <span class="marker marker-start marker-pos-a" role="img" aria-label="Start"><span class="icon icon-sm icon-flag" aria-hidden="true"></span></span>
+            <span class="marker marker-primary marker-pos-c" role="img" aria-label="Finish"><span class="icon icon-sm icon-flag-checkered" aria-hidden="true"></span></span>
+            <span class="rider-marker marker-pos-b" role="img" aria-label="ana"><span class="avatar">AN</span><span class="rider-dot"></span></span>
+            <span class="rider-marker marker-pos-rider" role="img" aria-label="ben"><span class="avatar">BE</span><span class="rider-dot"></span></span>
+            <span class="marker-me marker-pos-me" role="img" aria-label="You are here"></span>
+            <button class="icon-button icon-button-primary map-control-bottom-center" type="button" aria-label="Center on my location"><span class="icon icon-locate" aria-hidden="true"></span></button>
+          </div>
+          <section class="ride-panel" aria-label="Ride stats">
+            <div class="route-stat"><span class="route-stat-value data">12:34</span><span class="text-caption">Time (min:sec)</span></div>
+            <div class="route-stat"><span class="route-stat-value data">26</span><span class="text-caption">Speed (km/h)</span></div>
+          </section>
+        </div>
+        <figcaption class="phone-caption">Group ride: each other rider is a bubble (their picture, or initials without one) above a green dot on their exact position; &ldquo;You&rdquo; stays the ink dot with the pulse</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="phone-body">
+            <div class="screen-header">
+              <h2 class="text-heading">Home</h2>
+              <button class="icon-button icon-button-badged" type="button" aria-label="Notifications, 2 waiting for an answer">
+                <span class="icon icon-bell" aria-hidden="true"></span>
+                <span class="badge" aria-hidden="true">2</span>
+              </button>
+            </div>
+            <p class="text-small text-muted">Welcome back, mario.</p>
+          </div>
+          <div class="map-scrim"></div>
+          <div class="sheet phone-sheet" role="dialog" aria-labelledby="notifications-title">
+            <span class="sheet-handle"></span>
+            <div class="sheet-header">
+              <h3 class="text-subtitle" id="notifications-title">Notifications</h3>
+              <button class="icon-button" type="button" aria-label="Close Notifications"><span class="icon icon-x" aria-hidden="true"></span></button>
+            </div>
+            <ul class="list">
+              <li class="list-item list-item-stacked">
+                <span class="avatar" aria-hidden="true">OW</span>
+                <span class="list-item-body"><span class="list-item-title">owner invited you</span><span class="list-item-meta">Coast loop &middot; 5 min ago</span></span>
+                <div class="button-row">
+                  <button class="button button-outline button-sm" type="button">Reject</button>
+                  <button class="button button-primary button-sm" type="button">Accept</button>
+                </div>
+              </li>
+              <li class="list-item list-item-stacked">
+                <span class="avatar" aria-hidden="true">LU</span>
+                <span class="list-item-body"><span class="list-item-title">lucia invited you</span><span class="list-item-meta">Free mode &middot; 2 hr. ago</span></span>
+                <div class="button-row">
+                  <button class="button button-outline button-sm" type="button">Reject</button>
+                  <button class="button button-primary button-sm" type="button">Accept</button>
+                </div>
+              </li>
+              <li class="list-item">
+                <span class="avatar" aria-hidden="true">TO</span>
+                <span class="list-item-body"><span class="list-item-title">tom invited you</span><span class="list-item-meta">Hill climb &middot; yesterday</span></span>
+                <span class="badge badge-success">Accepted</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <figcaption class="phone-caption">Home notifications: the bell carries the count of invitations waiting; the sheet lists them with Reject and Accept, and an answered one keeps its row with a status badge; Accept starts the ride at once</figcaption>
+      </figure>
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="phone-body">
+            <div class="screen-header">
+              <h2 class="text-heading">Home</h2>
+              <button class="icon-button" type="button" aria-label="Notifications"><span class="icon icon-bell" aria-hidden="true"></span></button>
+            </div>
+            <p class="text-small text-muted">Welcome back, mario.</p>
+            <section class="stack-sm" aria-labelledby="riding-now-title">
+              <h3 class="text-overline" id="riding-now-title">Riding now</h3>
+              <ul class="list">
+                <li class="list-item list-item-stacked">
+                  <span class="list-item-icon list-item-icon-primary" aria-hidden="true"><span class="icon icon-route"></span></span>
+                  <span class="list-item-body"><span class="list-item-title">Coast loop</span><span class="list-item-meta">Led by owner &middot; 3 riders</span></span>
+                  <div class="button-row">
+                    <button class="button button-primary button-sm" type="button">Join back</button>
+                  </div>
+                </li>
+              </ul>
+            </section>
+          </div>
+          <div class="map-scrim"></div>
+          <div class="dialog phone-dialog" role="dialog" aria-labelledby="join-back-title" aria-describedby="join-back-text">
+            <h3 class="text-subtitle" id="join-back-title">Join your group ride?</h3>
+            <p class="text-small text-muted" id="join-back-text">Coast loop is still rolling. Led by owner &middot; 3 riders. Join it again, or ride with another group.</p>
+            <div class="dialog-actions">
+              <button class="button button-outline" type="button">Ride another</button>
+              <button class="button button-primary" type="button">Join back</button>
+            </div>
+          </div>
+        </div>
+        <figcaption class="phone-caption">Join back: while a group still has a rider connected, Home leads with a &ldquo;Riding now&rdquo; row and its Join back button (the section is absent otherwise); pressing Ride in the setup asks first, with Ride another first and Join back last. The dialog is drawn over Home here to save a frame</figcaption>
+      </figure>
+    </div>
+  </main>
+</body>
+</html>

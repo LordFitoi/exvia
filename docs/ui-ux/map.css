@@ -208,6 +208,39 @@
   .marker-me::before { animation: none; }
 }
 
+/* Another rider of a group ride: their picture (or initials) in a bubble above a dot at their exact
+   position, so the dot is what you follow and the bubble says who it is. The box has no size and sits
+   on the position (anchor it at its top-left corner); the dot and the bubble are placed around that
+   point. Not interactive, so the map keeps every tap; name the rider with role="img" and aria-label */
+.rider-marker {
+  --rider-dot-size: 0.875rem;
+  position: absolute;
+  inline-size: 0;
+  block-size: 0;
+  pointer-events: none;
+}
+
+.rider-marker > .avatar {
+  position: absolute;
+  inset-block-end: calc(var(--rider-dot-size) / 2 + var(--space-1));
+  inset-inline-start: 0;
+  translate: -50% 0;
+  border: 3px solid var(--color-surface);
+  box-shadow: var(--shadow-z8);
+  color: var(--color-text);
+}
+
+.rider-dot {
+  position: absolute;
+  inset: 0;
+  inline-size: var(--rider-dot-size);
+  block-size: var(--rider-dot-size);
+  translate: -50% -50%;
+  border: 3px solid var(--color-surface);
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+}
+
 /* Sheet content over the map */
 .map-sheet {
   position: relative;

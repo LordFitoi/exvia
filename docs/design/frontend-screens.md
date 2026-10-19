@@ -19,6 +19,7 @@ both: it is public and has no layout of its own.
 | `(app)` | `/` | Home | authenticated only |
 | `(app)` | `/map` | Map, see [map.md](map.md) | authenticated only |
 | `(app)` | `/ride` | Ride, see [ride.md](ride.md) | authenticated only |
+| `(app)` | `/ride/<group uuid>` | The ride of a group the rider accepted, see [ride.md](ride.md#pieces) | authenticated only |
 | `(app)` | `/clans` | Clans, see [clans.md](clans.md#frontend) | authenticated only |
 | `(app)` | `/profile` | Profile, with log out | authenticated only |
 | none | `/routes/<uuid>` | Shared route, see [route-sharing.md](route-sharing.md) | public |
@@ -90,6 +91,24 @@ with "The server is taking too long to respond" (or, at startup, the login
 screen).
 
 ## Placeholder content
+
+Home has a **bell** at the right of its title (`icon-button-badged`): its badge counts the
+invitations to ride waiting for an answer, and the button's label says it ("Notifications, 2
+waiting for an answer"). It opens `NotificationsSheet`, a modal sheet listing the invitations
+(`GET /api/notifications/`, see [notifications.md](notifications.md#api)): who invited you, the
+route (or "Free mode") and how long ago, with **Reject** and **Accept**; an answered one keeps
+its row with an **Accepted** or **Rejected** badge. **Accept** goes straight to
+`/ride/<group id>`, where the ride starts at once; **Reject** only refreshes the list. The list
+loads when Home opens and again whenever the app comes back to the foreground
+(`useRouteInvitations`, which keeps the list it has when a refresh fails); it is not live while
+Home stays in front.
+
+Above everything else on Home, **Riding now** (`ActiveGroupSection`) shows the group the rider can join
+back: a list row with the route name (or Free mode), "Led by ana · 3 riders" and a **Join back** button
+that goes to `/ride/<group id>`. It is there only while `GET /api/routes/groups/active/` answers a group
+(another rider still connected and not ended, see [route-groups.md](route-groups.md#active-group)); with no
+group, or if loading fails, the section is not rendered. It loads when Home opens and when the app comes
+back to the foreground (`useActiveGroup`); it is not live while Home stays in front.
 
 The "Next ride" block on Home still shows the guide's empty `state-view`
 ("No rides planned"): clan rides have no endpoints yet. Clans and the Home

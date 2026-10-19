@@ -39,6 +39,17 @@
   min-block-size: 0;
 }
 
+/* A route screen whose sections can add up to more than the screen: the body scrolls between the
+   header and the pinned actions, and its parts keep their own height instead of being squashed */
+.route-screen-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.route-screen-scroll > * {
+  flex: none;
+}
+
 /* Map screen: full-bleed, fills the column above the tab bar */
 .app-shell > .map {
   flex: 1;

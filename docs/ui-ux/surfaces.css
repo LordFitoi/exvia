@@ -77,6 +77,15 @@ button.list-item[aria-pressed="true"] .list-item-title { color: var(--color-prim
   color: var(--color-text-muted);
 }
 
+/* A row whose answer buttons sit under its text instead of beside it, when the text needs the width
+   (a notification with Reject and Accept). The buttons line up with the text, after the leading tile */
+.list-item-stacked { flex-wrap: wrap; }
+
+.list-item-stacked > .button-row {
+  flex-basis: 100%;
+  padding-inline-start: calc(2.5rem + var(--space-3));
+}
+
 .list-item > .icon-chevron-right {
   inline-size: 1rem;
   block-size: 1rem;
@@ -120,6 +129,13 @@ button.list-item[aria-pressed="true"] .list-item-title { color: var(--color-prim
   font-size: var(--text-body2);
   font-weight: var(--weight-medium);
   overflow: hidden;
+}
+
+/* A picture fills the disc; without one the disc shows initials */
+.avatar > img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
 }
 
 .avatar-sm { inline-size: 2rem; block-size: 2rem; font-size: var(--text-caption); }

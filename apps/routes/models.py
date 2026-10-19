@@ -7,10 +7,12 @@ from django.db import models
 
 from apps.core.models import TimeStampedModel
 from apps.routes.geometry import calculate_distance_km, calculate_estimated_time
+from apps.routes.group_meta import validate_group_meta
 from apps.routes.validators import validate_points, validate_waypoints
 
 NAME_MAX_LENGTH = 100
 DESCRIPTION_MAX_LENGTH = 255
+MAX_GROUP_PARTICIPANTS = 10
 SPEED_FIELD = {'null': True, 'blank': True, 'validators': [MinValueValidator(0)]}
 
 
@@ -77,3 +79,28 @@ class RouteSummary(TimeStampedModel):
 
     def __str__(self) -> str:
         return f'{self.route} ({self.start_at:%Y-%m-%d %H:%M})'
+
+
+class RouteGroup(TimeStampedModel):
+    """Riders rolling together, led by the author; the route is optional (none means free mode)."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    route = models.ForeignKey(
+        Route, on_delete=models.SET_NULL, null=True, blank=True, related_name='groups',
+        help_text='Empty for free mode; the author can change it at any moment.',
+    )
+    participants = models.ManyToManyField(
+        User, related_name='route_groups', blank=True,
+        help_text='Capped at MAX_GROUP_PARTICIPANTS riders.',
+    )
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='authored_route_groups')
+    meta_json = models.JSONField(
+        default=dict, blank=True, validators=[validate_group_meta],
+        help_text='Per-participant status and latest position; the shape is in group_meta.py.',
+    )
+
+    class Meta:
+        ordering = ('-created_at',)
+
+    def __str__(self) -> str:
+        return f'{self.route or "Free ride"} ({self.author})'

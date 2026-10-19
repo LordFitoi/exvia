@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import type { RefObject } from 'react'
 
 import { useMapInstance } from '@/hooks/useMapInstance'
+import { useRiderMarkers } from '@/hooks/useRiderMarkers'
 import { useRiderFollow } from '@/hooks/useRiderFollow'
 import { useRiderHeading } from '@/hooks/useRiderHeading'
 import { calculateBearing } from '@/services/bearing'
@@ -12,6 +13,7 @@ import { addBuildingsLayer } from '@/services/buildingsLayer'
 import type { RideLines } from '@/services/rideLines'
 import { addRideLines, updateRideLines } from '@/services/rideMapLayers'
 import { addEndpointMarkers } from '@/services/routeMapLayers'
+import type { RiderMarkerData } from '@/services/riderMarkers'
 import type { Coordinates } from '@/types/geolocation'
 
 const RIDE_ZOOM = 16.5
@@ -25,6 +27,8 @@ interface RideMapOptions {
   lines: RideLines
   /** The rider's position, or null while it is unknown. */
   rider: Coordinates | null
+  /** The other riders of the group, drawn as bubbles. */
+  riders: readonly RiderMarkerData[]
 }
 
 interface RideMapHandle {
@@ -41,7 +45,7 @@ const getRouteBearing = (path: readonly Coordinates[]): number =>
  * rider (or the route start), facing along the route; then it follows the rider, turning to face
  * the direction they move in, until the map is dragged.
  */
-export const useRideMap = ({ accessToken, path, lines, rider }: RideMapOptions): RideMapHandle => {
+export const useRideMap = ({ accessToken, path, lines, rider, riders }: RideMapOptions): RideMapHandle => {
   const linesRef = useRef(lines)
 
   useEffect(() => {
@@ -75,6 +79,8 @@ export const useRideMap = ({ accessToken, path, lines, rider }: RideMapOptions):
   useEffect(() => {
     if (mounted) updateRideLines(mounted.map, lines)
   }, [mounted, lines])
+
+  useRiderMarkers(mounted, riders)
 
   const heading = useRiderHeading(rider)
   const recenter = useRiderFollow({ mounted, rider, heading, fallback: path[0], recenterZoom: RIDE_ZOOM })

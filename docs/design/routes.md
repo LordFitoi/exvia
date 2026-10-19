@@ -13,13 +13,14 @@ The app lives in [apps/routes/](../../apps/routes/) and is registered in
 
 | File | Responsibility |
 |------|----------------|
-| [models.py](../../apps/routes/models.py) | `Route` and `RouteSummary` models |
+| [models.py](../../apps/routes/models.py) | `Route`, `RouteSummary` and `RouteGroup` models |
 | [geometry.py](../../apps/routes/geometry.py) | Distance and travel time calculation |
 | [validators.py](../../apps/routes/validators.py) | `points` validator |
 | [serializers.py](../../apps/routes/serializers.py) | `RouteSerializer`, `SharedRouteSerializer`, `RideSummarySerializer`, `RideSummaryListSerializer` |
 | [views.py](../../apps/routes/views.py) | The route views, the public shared route view and the three ride summary views (create, list, detail) |
 | [urls.py](../../apps/routes/urls.py) | Routes, mounted at `api/routes/` in `config/urls.py` |
-| [admin.py](../../apps/routes/admin.py) | `RouteAdmin`, `RouteSummaryAdmin` |
+| [admin.py](../../apps/routes/admin.py) | `RouteAdmin`, `RouteSummaryAdmin`, `RouteGroupAdmin` |
+| [group_meta.py](../../apps/routes/group_meta.py), [group_service.py](../../apps/routes/group_service.py), [group_serializers.py](../../apps/routes/group_serializers.py), [group_views.py](../../apps/routes/group_views.py), [signals.py](../../apps/routes/signals.py) | Route groups, see [route-groups.md](route-groups.md) |
 
 ## Data model
 
@@ -136,6 +137,11 @@ everyone who rode it, and leaves the route alone. It is limited to the author
 because a delete is shared: a participant who did not write the ride can read it
 but not erase it for the others.
 
+
+## Route groups
+
+`RouteGroup` (riders rolling together under one leader, with optional route) has its own
+design file: [route-groups.md](route-groups.md). Its code lives in this app.
 
 ## Points
 

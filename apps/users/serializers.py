@@ -32,3 +32,19 @@ class SignupSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data: dict[str, Any]) -> User:
         return User.objects.create_user(**validated_data)
+
+
+class UserBriefSerializer(serializers.ModelSerializer):
+    """Who a user is, for lists and map bubbles: id, username and the avatar URL (null when none).
+    Read `profile` with `select_related` to avoid a query per user."""
+
+    avatar = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'avatar')
+        read_only_fields = fields
+
+    def get_avatar(self, user: User) -> str | None:
+        avatar = user.profile.avatar
+        return avatar.url if avatar else None

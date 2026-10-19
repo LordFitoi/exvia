@@ -1,8 +1,9 @@
 # Ride
 
-The Ride tab in [frontend/](../../frontend/): pick one of your own routes,
-preview it, then ride it in a 3D map. The routes come from the API in
-[routes.md](routes.md); the route creator that makes them is in
+The Ride tab in [frontend/](../../frontend/): choose one of your own routes (or free
+mode), invite riders, preview the route, then ride it in a 3D map, alone or with the
+group the **Ride** button creates ([route-groups.md](route-groups.md)). The routes come
+from the API in [routes.md](routes.md); the route creator that makes them is in
 [map.md](map.md#route-creator). The shell and tab bar are in
 [frontend-screens.md](frontend-screens.md).
 
@@ -21,10 +22,19 @@ one.
 | Piece | File | Job |
 |-------|------|-----|
 | Page | `app/(app)/ride/page.tsx` | Renders `RideOverview` |
-| Screen | `views/ride/RideOverview.tsx` | Holds the selected route id and the stage (picker, route ride or free ride); shows the matching view |
-| Picker | `views/ride/RoutePickerView.tsx` | "Ride" heading, preview, route list, Ride and Free ride buttons |
-| Preview | `components/route/RoutePreview.tsx` | Placeholder, loading and failure states, or the preview map |
-| List | `components/route/RouteChoiceList.tsx` | Skeleton, error, empty and ready states of the routes |
+| Page of a joined ride | `app/(app)/ride/[groupId]/page.tsx` | Where accepting an invitation lands; renders `JoinedRideView` |
+| Screen | `views/ride/RideOverview.tsx` | Shows the picker, or the ride of the group that **Ride** created (`GroupRideView`); leaving a ride goes back to the picker with the choices kept |
+| Joined ride | `views/ride/JoinedRideView.tsx`, `hooks/useRouteGroup.ts` | Loads the group of `/ride/<id>` and rides in it at once; leaving goes to a fresh `/ride` |
+| Group ride | `views/ride/GroupRideView.tsx` | Ride mode on the group's route, or a free ride when it has none |
+| Setup state | `hooks/useRideSetup.ts` | The routes, what is selected (default: the newest route, or free mode with no routes) and the invitees |
+| Join back | `hooks/useActiveGroupPrompt.ts`, `views/ride/ActiveGroupDialog.tsx` | Before **Ride** creates a group, asks whether to join the group that is still rolling; see [Join back](#join-back) |
+| Starting | `hooks/useStartGroupRide.ts`, `services/routeGroupApi.ts` | `POST /api/routes/groups/`; errors of `invitees` and `route` become the message under the button |
+| Picker | `views/ride/RoutePickerView.tsx` | "Ride" heading, preview, the Route and Invitations sections, the Ride button |
+| Sections | `views/ride/RideRouteSection.tsx`, `views/ride/InvitationsSection.tsx` | The chosen route (or free mode) with **Change**; the invited riders with **Add** and a remove X each |
+| Dialogs | `views/ride/RouteChoiceDialog.tsx`, `views/ride/RideChoiceList.tsx`, `views/ride/InviteRiderDialog.tsx` | Modal sheets: choose the route (Free mode first) with **Save**; add a rider by username |
+| Preview | `components/route/RoutePreview.tsx` | Placeholder (or free mode), loading and failure states, or the preview map |
+| Rows | `components/route/RouteItemBody.tsx`, `components/route/FreeModeItemBody.tsx`, `components/rider/RiderAvatar.tsx` | The inside of a route row, of the free mode row, and a rider's picture or initials |
+| List | `components/route/RouteChoiceList.tsx` | Skeleton, error, empty and ready states of the routes (used by the route list screen) |
 | Ride mode | `views/ride/RideModeView.tsx` | Full-bleed 3D map with the quit and recenter buttons |
 | Free ride | `views/ride/FreeRideView.tsx`, `FreeRideWaitingView.tsx`, `FreeRideSessionView.tsx`, `FinishFreeRideDialog.tsx` | Ride with no route: waits for the first fix, then records the track; see [Free ride](#free-ride) |
 | Free ride logic | `hooks/useTrackRecorder.ts`, `hooks/useFinishFreeRide.ts`, `hooks/useFreeRideMap.ts` | Records the fixes, saves the route and the ride, and draws the map |
@@ -33,7 +43,9 @@ one.
 | Routes | `hooks/useMyRoutes.ts` | `GET /api/routes/`, with `reload` |
 | Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<uuid>/` for the selected route, with `retry` |
 | Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start and finish markers, framed in view |
-| Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines and the start and finish markers |
+| Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines, the start and finish markers and the other riders |
+| Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts`, `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 5 s and collects the others'; see [Group ride](#group-ride) |
+| Rider markers | `hooks/useRiderMarkers.ts`, `services/riderBubbleMarker.ts`, `services/riderMarkers.ts` | One bubble marker per other rider, moved as they move and removed when they go quiet |
 | Rider | `hooks/useRiderFollow.ts`, `services/riderMotion.ts` | The "You" marker and the camera that follows it, gliding between fixes, with `recenter` |
 | Heading | `hooks/useRiderHeading.ts` | The direction the rider is moving in, from their last positions |
 | Progress | `hooks/useRideProgress.ts` | Where the rider is on the track (the last spot reached) |
@@ -54,35 +66,60 @@ one.
 ## Picker
 
 `RoutePreview` and `RouteChoiceList` live in `components/route/` because the
-[route list](route-management.md) uses them too, with a small map
-(`size="compact"`) and a list that fills the column (`size="fill"`); the picker
-uses the same two sizes, so both screens have the same map.
+[route list](route-management.md) uses them too (the list with `size="fill"`, the preview
+with `size="compact"`). The picker uses the preview the same way, so both screens have the
+same map, and the route rows are the shared `RouteItemBody`. The group-ride look is in the
+style guide's [Group rides](../ui-ux/group.html) page.
 
 - The tab bar is hidden here (`useHideTabBar`), so the picker is a full-height
   screen with its own way out: an **X** at the top right (`screen-header`,
   labeled "Close"). It goes back to the screen the rider came from
   (`router.back()`), or to Home when the app was opened directly on `/ride`.
   The raised Ride button is therefore only seen on the other tabs.
-- Top to bottom: the header with the X, the preview, the list of routes, the
-  **Ride** button. The screen is one full-height column with 24px between its
-  parts: the **preview map is compact** (`route-preview`, `min(35dvh, 18rem)`,
-  the same as the route list), the **route list takes all the height the other
-  parts leave** and scrolls inside its own box (`route-choice-list-fill`), and
-  the **Ride button sits at the bottom edge** with the safe-area padding. The
-  page itself never scrolls.
-- Before a route is selected the preview shows "Select a route" and Ride is
-  disabled. The list is the user's routes, newest first, each row showing the
-  name, distance and estimated time (from the server). The selected row has
-  `aria-pressed` and a check (`button.list-item`). The list scrolls inside its
-  own box and keeps its scroll position while a route loads.
-- Selecting a row fetches that route's path (the list does not carry points)
-  and the map frames it with a start flag and a finish flag. The previous
-  route stays on the map until the next one has loaded, so it does not blink;
-  Ride is enabled only when the **selected** route has loaded, not a previous
-  one.
-- States: skeleton rows while loading; "Could not load your routes" with Try
-  again; "No routes yet" with a link to the map; "Could not load this route"
-  with Try again in the preview.
+- Top to bottom: the header with the X, the **compact preview map**
+  (`route-preview`, `min(35dvh, 18rem)`), the **Route** section, the **Invitations**
+  section, and the **Ride** button pinned at the bottom edge with the safe-area padding.
+  The middle (`route-screen-scroll`) scrolls when the sections add up to more than the
+  screen, between the header and the pinned button; with many invitees the screen scrolls
+  instead of squashing the map.
+- **Route section.** One row, the selected route (icon, name, distance and estimated time)
+  or **Free mode** (primary icon tile, "No route, ride wherever you want"), with **Change**
+  on the heading's right. The default is the **newest route**; a rider with no routes starts
+  in free mode. While the routes load the row is a skeleton and Ride is disabled.
+- **Change** opens `RouteChoiceDialog`, a modal sheet ("Choose a route"): **Free mode first,
+  then the routes**, newest first, in a box exactly four rows tall that scrolls. The chosen
+  row has `aria-pressed` and a check, as before. **Save** applies the choice and closes the
+  sheet; the X or Esc closes it and leaves the choice as it was. Free mode is **not a button
+  below Ride any more**: it is a row of this list, so it is chosen like a route. Loading and
+  failure ("Could not load your routes", with Try again) show under the list, so free mode is
+  always choosable.
+- **Preview.** A route's path is fetched when it is chosen (the list does not carry points)
+  and the map frames it with a start flag and a finish flag; the previous route stays on
+  the map until the next has loaded. Free mode shows "Free mode: no route to follow".
+  Ride is enabled when free mode is chosen, or the **chosen** route has loaded (not a
+  previous one).
+- **Invitations section.** Empty: "Riding solo. Add riders by username to ride together."
+  **Add** opens `InviteRiderDialog` (the guide's modal sheet form, label above the field):
+  the username is checked against `GET /api/auth/users/lookup/`, so an unknown name is
+  refused **in the dialog** ("No rider with this username."), not when Ride is pressed; so
+  is your own name ("You lead this ride already.") and a name already added. Each invited
+  rider is a row with their picture or initials, their name and an X (`Remove <name>`).
+  At nine invitees (`MAX_INVITEES`, ten riders with you) **Add** goes away and a line says
+  the group is full. Nobody is notified yet: that happens when Ride is pressed.
+- **Ride** creates the group (`POST /api/routes/groups/`, see
+  [route-groups.md](route-groups.md#api)), which also notifies the invitees, then opens the
+  ride. While it works the button shows the loading state; a failure (unknown name, network)
+  appears as an alert above the button and the setup stays as it is.
+- **Join back.** Pressing **Ride** first asks the server for the active group
+  (`GET /api/routes/groups/active/`, see [route-groups.md](route-groups.md#active-group)); the button
+  shows its loading state meanwhile. With none (or if the check fails: not knowing must not block a
+  ride) the group is created as usual. With one, `ActiveGroupDialog` opens
+  ("Join your group ride?", the route name or Free mode and "Led by ana · 3 riders"): **Join back**
+  goes to `/ride/<id>`, **Ride another** creates the new group the rider set up, and Esc closes
+  the dialog with nothing started. The new group then becomes the active one for everybody else. Home
+  shows the same group in its own section, see [frontend-screens.md](frontend-screens.md#placeholder-content).
+- States: skeleton row while loading; "Could not load this route" with Try again in the
+  preview.
 
 ## Ride mode
 
@@ -217,9 +254,10 @@ uses the same two sizes, so both screens have the same map.
 
 ## Free ride
 
-The **Free ride** button (outline, `icon-route`) sits under **Ride** in the picker and needs
-no selected route. It opens a ride with no route to follow: the rider's own track is
+A ride in **free mode** (chosen as a row of the route dialog, see [Picker](#picker); there is
+no Free ride button any more) has no route to follow: the rider's own track is
 recorded, and on finishing it is saved as a new route and then as a ride of that route.
+It is a group of its own like any ride, so riders invited to it see each other on the map.
 
 - **Start** (`FreeRideView`): a free ride cannot start without a position, so until the first
   GPS fix arrives `FreeRideWaitingView` shows the status ("Finding your location", "Location
@@ -260,8 +298,13 @@ recorded, and on finishing it is saved as a new route and then as a ride of that
 ## Key decisions
 
 - **Not a separate page for ride mode**: it is state in `RideOverview`, so
-  quitting is instant and the selection survives. A reload while riding goes
-  back to the picker, since the ride is not stored.
+  quitting is instant and the selection and invitations survive. A reload while riding goes
+  back to the picker, since the ride is not stored; the exception is `/ride/<group id>`,
+  where a rider who accepted an invitation rides, and a reload there reopens the ride of
+  that group (the timer and recorded track start again).
+- **A ride is always a group**: even alone, **Ride** creates a `RouteGroup`, so there is one
+  path for solo and shared rides. Quitting and riding again creates a new group (and
+  notifies the invitees again); the earlier one stays on the server.
 - **The list does not include points**: so the picker fetches one route when
   selected, and only that route's thousands of path points are sent.
 - **Shared map pieces**: both maps and the route creator use `useMapInstance`
@@ -272,9 +315,49 @@ recorded, and on finishing it is saved as a new route and then as a ride of that
 - **The rider is not required to start**: a ride can be previewed or started
   without location permission; the map then shows the route only.
 
+## Group ride
+
+Ride mode and the free ride share the group's live channel
+([route-groups.md](route-groups.md#live-channel)); `useGroupRide` is the one hook both call.
+
+- **Sharing.** Once the socket has signed in and the server said `ready`
+  (`services/groupConnection.ts`), `useSharePosition` sends the rider's position at once and
+  then **every 5 seconds** (`POSITION_INTERVAL_MS`): the street position shown on the map
+  (or the raw fix when it cannot be snapped), the speed in km/h and the accuracy. Nothing is
+  sent while the position is unknown. The phone's clock is not used: the server stamps each
+  position when it receives it.
+- **Signing in.** The socket is same-origin, `wss://<host>/ws/routes/groups/<id>/`; Next's
+  rewrite forwards the upgrade to Django (checked with `next dev` and `next start`, see
+  [asgi-websockets.md](asgi-websockets.md)). The first message carries the access token, which
+  is renewed first when less than a minute is left (`getAccessToken`). A `4401` close renews it
+  once and retries; a `4403` (not in the group) or a second `4401` stops for good. Any other
+  drop reconnects after 1, 2, 4, 8, then every 15 seconds, and `ready` resets that.
+- **Others on the map.** Each rider who reported recently is a **bubble above a dot**
+  (`rider-marker`, the style guide's [Group rides](../ui-ux/group.html)): their picture, or
+  their initials, in a bubble with the dot on their exact position, in the primary green so
+  it differs from the ink "You" dot. The marker is named for screen readers
+  (`role="img"`, `aria-label` the username) and does not take taps. Names and pictures come
+  from the group (`GET /api/routes/groups/<id>/`), positions from the channel; one marker per
+  rider is created, moved on every position (it jumps every 5 s, no glide yet) and removed
+  when the rider goes quiet.
+- **Stale riders.** A rider with no report for **30 seconds** (`STALE_AFTER_MS`, six missed
+  reports) is taken off the map: the channel has no leave message, so a closed app would
+  otherwise freeze on the others' maps. The saved positions in `ready` are aged by the
+  server's clock (`server_time`) against each `recorded_at`, so a rider who left an hour ago
+  is not drawn for 30 seconds on arrival, and a phone with a wrong clock does not misjudge.
+  The check runs every 5 seconds (`useNow`).
+- **Failures are quiet.** If the channel cannot be joined the ride works as a solo ride: no
+  other riders are drawn and nothing blocks. There is no connection indicator yet.
+- **Finishing.** An accepted rider saves their own summary of the group's route
+  (`POST /api/routes/<uuid>/summaries/`, which accepts routes of accepted groups); the
+  summary lists only them as participant, there is no shared ride record yet.
+
 ## Not included
 
 Distance left, off-route detection and a way back to the track after leaving
 it (only the way to the start is drawn), voice guidance, and terrain elevation.
 Riding a route records nothing; only a free ride records its track. A free ride does not
-snap its track to the roads, does not pause, and a reload loses it.
+snap its track to the roads, does not pause, and a reload loses it. For group rides: changing
+the route of a group while it rides, a trail or history of the other riders, a rider list or
+connection indicator on the ride screen, and leaving a group in the middle of a ride (a rider
+who quits just stops reporting).

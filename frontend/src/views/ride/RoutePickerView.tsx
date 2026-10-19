@@ -1,34 +1,57 @@
 'use client'
 
-import { useHideTabBar } from '@/hooks/useHideTabBar'
-import Link from 'next/link'
+import { useState } from 'react'
 
-import RouteChoiceList from '@/components/route/RouteChoiceList'
+import FormAlert from '@/components/form/FormAlert'
 import RoutePreview from '@/components/route/RoutePreview'
-import type { useMyRoutes } from '@/hooks/useMyRoutes'
-import type { useRouteDetail } from '@/hooks/useRouteDetail'
+import { useAuth } from '@/hooks/useAuth'
+import { useHideTabBar } from '@/hooks/useHideTabBar'
+import type { useRideSetup } from '@/hooks/useRideSetup'
+import type { useStartGroupRide } from '@/hooks/useStartGroupRide'
+import { MAX_INVITEES } from '@/services/groupRules'
+import type { NewRouteGroup } from '@/types/routeGroup'
+import InvitationsSection from '@/views/ride/InvitationsSection'
+import InviteRiderDialog from '@/views/ride/InviteRiderDialog'
+import RideRouteSection from '@/views/ride/RideRouteSection'
+import RouteChoiceDialog from '@/views/ride/RouteChoiceDialog'
+
+type PickerDialog = 'route' | 'invite' | null
 
 interface RoutePickerViewProps {
-  myRoutes: ReturnType<typeof useMyRoutes>
-  detail: ReturnType<typeof useRouteDetail>
-  selectedId: string | null
-  onSelect: (id: string) => void
-  onRide: () => void
-  onFreeRide: () => void
+  setup: ReturnType<typeof useRideSetup>
+  start: ReturnType<typeof useStartGroupRide>
+  /** Whether it is being checked that no group is still rolling, before the ride starts. */
+  isChecking: boolean
+  /** Starts the ride: creates the group of this route and these invitees. */
+  onRide: (request: NewRouteGroup) => void
   onClose: () => void
 }
 
-export default function RoutePickerView({
-  myRoutes,
-  detail,
-  selectedId,
-  onSelect,
-  onRide,
-  onFreeRide,
-  onClose,
-}: RoutePickerViewProps) {
+export default function RoutePickerView({ setup, start, isChecking, onRide, onClose }: RoutePickerViewProps) {
   // A full-height screen with its own close button, so the tab bar steps aside.
   useHideTabBar(true)
+  const { user } = useAuth()
+  const [openDialog, setOpenDialog] = useState<PickerDialog>(null)
+  const { myRoutes, selection, detail, invitees } = setup
+  const isFreeMode = selection?.kind === 'free'
+  const canRide = isFreeMode || detail.route !== null
+  const isStarting = start.isPending || isChecking
+
+  const handleSave = (chosen: Parameters<typeof setup.select>[0]) => {
+    setup.select(chosen)
+    setOpenDialog(null)
+  }
+
+  const handleAdded = (rider: Parameters<typeof setup.addInvitee>[0]) => {
+    setup.addInvitee(rider)
+    setOpenDialog(null)
+  }
+
+  const handleRideClick = () =>
+    onRide({
+      routeId: selection?.kind === 'route' ? selection.id : null,
+      invitees: invitees.map(({ username }) => username),
+    })
 
   return (
     <main className="screen-body route-screen">
@@ -38,37 +61,51 @@ export default function RoutePickerView({
           <span className="icon icon-x" aria-hidden="true"></span>
         </button>
       </div>
-      <div className="route-screen-body">
-        <RoutePreview size="compact" status={detail.status} route={detail.shownRoute} onRetry={detail.retry} />
-        <RouteChoiceList
-          size="fill"
-          status={myRoutes.status}
-          routes={myRoutes.routes}
-          selectedId={selectedId}
-          onSelect={onSelect}
-          onRetry={myRoutes.reload}
-          emptyAction={
-            <Link className="button button-primary" href="/map">
-              Open the map
-            </Link>
-          }
+      <div className="route-screen-body route-screen-scroll">
+        <RoutePreview
+          size="compact"
+          status={detail.status}
+          route={detail.shownRoute}
+          isFreeMode={isFreeMode}
+          onRetry={detail.retry}
+        />
+        <RideRouteSection myRoutes={myRoutes} selection={selection} onChange={() => setOpenDialog('route')} />
+        <InvitationsSection
+          invitees={invitees}
+          canAdd={invitees.length < MAX_INVITEES}
+          onAdd={() => setOpenDialog('invite')}
+          onRemove={setup.removeInvitee}
         />
       </div>
       <div className="stack-sm">
+        <FormAlert message={start.error} />
         <button
-          className="button button-primary button-lg button-block"
+          className={`button button-primary button-lg button-block${isStarting ? ' button-loading' : ''}`}
           type="button"
-          disabled={!detail.route}
-          onClick={onRide}
+          disabled={!canRide || isStarting}
+          aria-busy={isStarting}
+          onClick={handleRideClick}
         >
           <span className="icon icon-flag-checkered" aria-hidden="true"></span>
           Ride
         </button>
-        <button className="button button-outline button-lg button-block" type="button" onClick={onFreeRide}>
-          <span className="icon icon-route" aria-hidden="true"></span>
-          Free ride
-        </button>
       </div>
+      {openDialog === 'route' && (
+        <RouteChoiceDialog
+          myRoutes={myRoutes}
+          selection={selection}
+          onSave={handleSave}
+          onClose={() => setOpenDialog(null)}
+        />
+      )}
+      {openDialog === 'invite' && user && (
+        <InviteRiderDialog
+          ownUsername={user.username}
+          invitees={invitees}
+          onAdded={handleAdded}
+          onClose={() => setOpenDialog(null)}
+        />
+      )}
     </main>
   )
 }

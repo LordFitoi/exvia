@@ -10,10 +10,12 @@ interface RoutePreviewProps {
   status: 'idle' | 'loading' | 'ready' | 'failed'
   /** The last route that loaded; kept on the map while the next one loads. */
   route: RouteDetail | null
+  /** Free mode has no route to show, so the preview says so instead of asking for a selection. */
+  isFreeMode?: boolean
   onRetry: () => void
 }
 
-export default function RoutePreview({ size, status, route, onRetry }: RoutePreviewProps) {
+export default function RoutePreview({ size, status, route, isFreeMode = false, onRetry }: RoutePreviewProps) {
   const className = `route-preview${size === 'fill' ? ' route-preview-fill' : ''}`
   return (
     <div className={className} aria-busy={status === 'loading'}>
@@ -31,6 +33,10 @@ export default function RoutePreview({ size, status, route, onRetry }: RoutePrev
         </StateView>
       ) : route ? (
         <PreviewMap path={route.points} />
+      ) : isFreeMode ? (
+        <StateView title="Free mode" description="No route to follow: ride wherever you want.">
+          <span className="icon icon-lg icon-navigation"></span>
+        </StateView>
       ) : (
         <StateView
           title={status === 'loading' ? 'Loading route' : 'Select a route'}

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 import StateView from '@/components/feedback/StateView'
-import { formatDistance, formatDuration } from '@/services/formatRoute'
+import RouteItemBody from '@/components/route/RouteItemBody'
 import type { RouteSummary } from '@/types/route'
 
 const SKELETON_ROW_IDS = [1, 2, 3] as const
@@ -76,24 +76,16 @@ export default function RouteChoiceList({
   return (
     <div className={size === 'fill' ? 'route-choice-list route-choice-list-fill' : 'route-choice-list'}>
       <ul className="list">
-        {routes.map(({ id, name, distance, estimated_time }) => (
-          <li key={id}>
+        {routes.map((route) => (
+          <li key={route.id}>
             <button
               className="list-item"
               type="button"
-              aria-pressed={id === selectedId}
-              onClick={() => onSelect(id)}
+              aria-pressed={route.id === selectedId}
+              onClick={() => onSelect(route.id)}
             >
-              <span className="list-item-icon" aria-hidden="true">
-                <span className="icon icon-route"></span>
-              </span>
-              <span className="list-item-body">
-                <span className="list-item-title">{name}</span>
-                <span className="list-item-meta">
-                  {formatDistance(distance)} · {formatDuration(estimated_time)}
-                </span>
-              </span>
-              {id === selectedId && <span className="icon icon-check" aria-hidden="true"></span>}
+              <RouteItemBody route={route} />
+              {route.id === selectedId && <span className="icon icon-check" aria-hidden="true"></span>}
             </button>
           </li>
         ))}

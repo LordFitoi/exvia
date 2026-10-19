@@ -23,6 +23,7 @@ Mounted at `/api/auth/` (see [config/urls.py](../../config/urls.py)):
 | `token/verify/` | `TokenVerifyView` (simplejwt) | Check whether a token is still valid |
 | `signup/` | `apps.users.views.SignupView` | Public self-serve registration; creates a user from `username`, `email`, `password` |
 | `me/` | `apps.users.views.CurrentUserView` | Example protected endpoint; returns the authenticated caller's identity |
+| `users/lookup/?username=` | `apps.users.views.UserLookupView` | `{id, username, avatar}` of the active user with exactly that username, `404` otherwise |
 
 ## Configuration
 

@@ -67,7 +67,7 @@
   margin-block-end: var(--space-3);
 }
 
-.section-heading h3 {
+.section-heading :is(h2, h3) {
   font-family: var(--font-sans);
   font-size: var(--text-h6);
   font-weight: var(--weight-semibold);

@@ -87,6 +87,7 @@ paths to Django (`BACKEND_URL`, default `http://localhost:8000` locally and
 | Public path | Served by |
 |-------------|-----------|
 | `/api/...`, `/admin/...` | Django (proxied) |
+| `/ws/...` | Django websockets (proxied; see [asgi-websockets.md](asgi-websockets.md#through-the-frontend)) |
 | `/static/...` | Django + whitenoise (admin assets) |
 | `/media/...` | Django (uploaded images, read from the media volume) |
 | everything else | Next.js |

@@ -308,3 +308,26 @@ class UserAdminTests(TestCase):
         self.assertContains(change, 'Eve')
         self.assertContains(change, 'MT-07')
         self.assertEqual(add.status_code, status.HTTP_200_OK)
+
+
+class UserLookupTests(APITestCase):
+    def setUp(self) -> None:
+        self.caller = User.objects.create_user(username='caller', password='s3cr3t-pass')
+        self.rider = User.objects.create_user(username='rider', password='s3cr3t-pass')
+        self.client.force_authenticate(self.caller)
+        self.url = reverse('users:user_lookup')
+
+    def test_finds_a_user_by_exact_username(self) -> None:
+        response = self.client.get(self.url, {'username': 'rider'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'id': self.rider.pk, 'username': 'rider', 'avatar': None})
+
+    def test_unknown_blank_and_inactive_users_are_404(self) -> None:
+        User.objects.filter(pk=self.rider.pk).update(is_active=False)
+        for query in ({'username': 'ghost'}, {'username': ''}, {}, {'username': 'rider'}):
+            with self.subTest(query=query):
+                self.assertEqual(self.client.get(self.url, query).status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_requires_authentication(self) -> None:
+        self.client.force_authenticate(None)
+        self.assertEqual(self.client.get(self.url, {'username': 'rider'}).status_code, status.HTTP_401_UNAUTHORIZED)

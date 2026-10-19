@@ -4,11 +4,11 @@ import { useModalDialog } from '@/hooks/useModalDialog'
 import { formatAverageSpeed, formatClock, formatDistance, formatDuration } from '@/services/formatRoute'
 import type { SaveRideStatus } from '@/hooks/useSaveRideSummary'
 import RideSaveStatus from '@/views/ride/RideSaveStatus'
-import type { RouteDetail } from '@/types/route'
+import type { RideRoute } from '@/types/route'
 
 interface RideSummarySheetProps {
   isOpen: boolean
-  route: RouteDetail
+  route: RideRoute
   /** How long the ride took, in seconds. */
   rideSeconds: number
   /** Whether the ride has been saved on the server. */

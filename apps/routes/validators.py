@@ -25,10 +25,11 @@ def _validate_coordinate_list(value: object, *, minimum: int, maximum: int, labe
     if len(value) > maximum:
         raise ValidationError(f'A route can have at most {maximum} {label}, got {len(value)}.')
     for point in value:
-        _validate_point(point)
+        validate_point(point)
 
 
-def _validate_point(point: object) -> None:
+def validate_point(point: object) -> None:
+    """Accept only a [lng, lat] pair of numbers inside the world."""
     if not isinstance(point, list) or len(point) != 2 or not all(_is_number(c) for c in point):
         raise ValidationError(f'Point must be a [lng, lat] pair of numbers, got {point!r}.')
     lng, lat = point

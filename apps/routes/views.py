@@ -1,4 +1,5 @@
-from django.db.models import QuerySet
+from django.contrib.auth.models import User
+from django.db.models import Q, QuerySet
 from django.shortcuts import get_object_or_404
 from rest_framework.generics import (
     CreateAPIView,
@@ -12,6 +13,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.serializers import BaseSerializer
 
+from apps.routes.group_meta import ParticipantStatus
 from apps.routes.models import Route, RouteSummary
 from apps.routes.serializers import (
     RideSummaryListSerializer,
@@ -55,15 +57,21 @@ class SharedRouteView(RetrieveAPIView):
     queryset = Route.objects.select_related('author')
 
 
+def rideable_routes(user: User) -> QuerySet[Route]:
+    """The caller's routes, and the routes of the groups the caller has accepted to ride in."""
+    accepted_in_group = Q(**{f'groups__meta_json__participants__{user.pk}__status': ParticipantStatus.ACCEPTED})
+    return Route.objects.filter(Q(author=user) | accepted_in_group).distinct()
+
+
 class RideSummaryCreateView(CreateAPIView):
-    """Saves the summary of a ride of one of the caller's routes; other users' routes are 404.
-    The caller is its author and its only participant."""
+    """Saves the summary of a ride of a route the caller can ride (see `rideable_routes`); any other
+    route is 404. The caller is its author and its only participant."""
 
     serializer_class = RideSummarySerializer
 
     def initial(self, request: Request, *args: object, **kwargs: object) -> None:
         super().initial(request, *args, **kwargs)
-        self.route = get_object_or_404(Route.objects.filter(author=request.user), pk=kwargs['pk'])
+        self.route = get_object_or_404(rideable_routes(request.user), pk=kwargs['pk'])
 
     def perform_create(self, serializer: BaseSerializer) -> None:
         summary = serializer.save(route=self.route, author=self.request.user)

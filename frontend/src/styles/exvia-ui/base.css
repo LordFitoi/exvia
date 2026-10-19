@@ -185,6 +185,14 @@ svg {
   font-weight: var(--weight-semibold);
 }
 
+/* The same link as a <button>: no button box, so it reads as a link and keeps the hit area above */
+button.link-action {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary-text);
+}
+
 /* Compact controls look small but keep a 44px hit area (Fitts's Law). The
    pseudo-element grows the target only where the control is under 44px */
 .button-sm,

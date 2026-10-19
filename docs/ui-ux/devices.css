@@ -106,6 +106,30 @@
   color: var(--color-text-muted);
 }
 
+/* An action pinned under a scrolling screen body, like the Ride button of the ride setup */
+.phone-footer {
+  flex: none;
+  padding: var(--space-3) var(--space-5) var(--space-8);
+}
+
+/* A modal sheet over a screen that is not a map: at the bottom edge of the frame, above the scrim */
+.phone-sheet {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: var(--z-sheet);
+}
+
+/* A dialog over a screen: centered in the frame, above the scrim */
+.phone-dialog {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline: var(--space-4);
+  inline-size: auto;
+  translate: 0 -50%;
+  z-index: var(--z-sheet);
+}
+
 /* Demo marker positions on the map showcase */
 .marker-pos-a { inset: 34% auto auto 28%; }
 .marker-pos-b { inset: 22% auto auto 66%; }

@@ -6,6 +6,7 @@ import { useState } from 'react'
 
 import { useFinishFreeRide } from '@/hooks/useFinishFreeRide'
 import { useFreeRideMap } from '@/hooks/useFreeRideMap'
+import { useGroupRide } from '@/hooks/useGroupRide'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useRideElapsed } from '@/hooks/useRideElapsed'
 import { useRideSpeeds } from '@/hooks/useRideSpeeds'
@@ -13,11 +14,14 @@ import { useTrackRecorder } from '@/hooks/useTrackRecorder'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { Coordinates, GeolocationState } from '@/types/geolocation'
+import type { RouteGroup } from '@/types/routeGroup'
 import MapStatusView from '@/views/map/MapStatusView'
 import FinishFreeRideDialog from '@/views/ride/FinishFreeRideDialog'
 import RideStatsPanel from '@/views/ride/RideStatsPanel'
 
 interface FreeRideSessionViewProps {
+  /** The group riding together; its other riders are shown on the map. */
+  group: RouteGroup
   /** The latest GPS reading, whose fixes make up the recorded track. */
   location: GeolocationState
   /** Where to show the rider: the street position when there is one, else the raw fix. */
@@ -29,10 +33,17 @@ interface FreeRideSessionViewProps {
 }
 
 /** A ride with no route: the rider's own track is recorded, and saved as a new route when they finish. */
-export default function FreeRideSessionView({ location, rider, onLeave, onSaved }: FreeRideSessionViewProps) {
+export default function FreeRideSessionView({
+  group,
+  location,
+  rider,
+  onLeave,
+  onSaved,
+}: FreeRideSessionViewProps) {
   const [startedAt] = useState(() => Date.now())
   const elapsedSeconds = useRideElapsed(startedAt, null)
   const track = useTrackRecorder(location)
+  const riders = useGroupRide({ group, rider, location })
   const speeds = useRideSpeeds({ speed: location.speed, fixTime: location.timestamp, isRiding: true })
   const [isFinishOpen, setIsFinishOpen] = useState(false)
   const finish = useFinishFreeRide({ track, startedAt, speeds, onSaved, onLeave })
@@ -40,6 +51,7 @@ export default function FreeRideSessionView({ location, rider, onLeave, onSaved 
     accessToken: MAPBOX_ACCESS_TOKEN,
     track,
     rider,
+    riders,
   })
 
   const handleKeepRiding = () => {
