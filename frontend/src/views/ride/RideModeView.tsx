@@ -4,6 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 
 import { useState } from 'react'
 
+import Toast from '@/components/feedback/Toast'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useGroupRide } from '@/hooks/useGroupRide'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
@@ -43,7 +44,7 @@ export default function RideModeView({ route, group, onQuit, onFinish }: RideMod
   })
   // A fix that cannot be snapped to a street (or not yet) still shows where the rider is.
   const rider = street.coordinates ?? location.coordinates
-  const riders = useGroupRide({ group, rider, location })
+  const { riders, notice, dismissNotice } = useGroupRide({ group, rider, location })
   const progress = useRideProgress({ path: route.points, rider })
   const lines = useRideLines({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -95,6 +96,11 @@ export default function RideModeView({ route, group, onQuit, onFinish }: RideMod
   return (
     <main className="ride-screen">
       <h1 className="visually-hidden">Riding {route.name}</h1>
+      {notice && (
+        <div className="toast-region">
+          <Toast key={notice.id} message={notice.message} iconClass="icon-users" onDismiss={dismissNotice} />
+        </div>
+      )}
       <div className="map">
         <div ref={containerRef} className="map-canvas"></div>
         <div className="map-overlay">

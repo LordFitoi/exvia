@@ -46,11 +46,14 @@ class RouteGroupConsumerTests(TransactionTestCase):
         group_meta.set_status(group.meta_json, user.pk, answer)
         group.save(update_fields=['meta_json'])
 
-    async def _ride(self, user: User) -> WebsocketClient:
+    async def _ride(self, user: User, *listeners: WebsocketClient) -> WebsocketClient:
+        """Signs the user in; the listeners (riders already in) hear them join, and that is consumed here."""
         client = await open_channel(self.group.pk)
         await sign_in(client, user)
         ready = await client.receive_json()
         self.assertEqual(ready['type'], 'ready')
+        for listener in listeners:
+            self.assertEqual(await listener.receive_json(), {'type': 'presence', 'user_id': user.pk, 'status': 'joined'})
         return client
 
     async def test_an_accepted_rider_gets_ready_with_their_id_the_time_and_no_positions(self) -> None:
@@ -84,7 +87,7 @@ class RouteGroupConsumerTests(TransactionTestCase):
 
     async def test_a_position_is_broadcast_to_the_others_but_not_echoed_and_is_saved(self) -> None:
         owner_channel = await self._ride(self.owner)
-        ana_channel = await self._ride(self.ana)
+        ana_channel = await self._ride(self.ana, owner_channel)
         await ana_channel.send_json(POSITION)
         received = await owner_channel.receive_json()
         self.assertEqual((received['type'], received['user_id'], received['lng']), ('position', self.ana.pk, -3.7))
@@ -122,7 +125,7 @@ class RouteGroupConsumerTests(TransactionTestCase):
 
     async def test_positions_sent_too_fast_are_dropped(self) -> None:
         owner_channel = await self._ride(self.owner)
-        ana_channel = await self._ride(self.ana)
+        ana_channel = await self._ride(self.ana, owner_channel)
         await ana_channel.send_json(POSITION)
         await ana_channel.send_json({**POSITION, 'lng': 1})
         first = await owner_channel.receive_json()
@@ -141,3 +144,24 @@ class RouteGroupConsumerTests(TransactionTestCase):
         self.assertTrue(await owner_in_other.receive_nothing(SILENCE_SECONDS))
         await owner_in_other.disconnect()
         await ana_channel.disconnect()
+
+    async def test_riders_hear_when_another_rider_joins_and_leaves_but_not_themselves(self) -> None:
+        owner_channel = await self._ride(self.owner)
+        ana_channel = await self._ride(self.ana, owner_channel)
+        self.assertTrue(await ana_channel.receive_nothing(SILENCE_SECONDS))
+        await ana_channel.disconnect()
+        self.assertEqual(
+            await owner_channel.receive_json(), {'type': 'presence', 'user_id': self.ana.pk, 'status': 'left'},
+        )
+        self.assertTrue(await owner_channel.receive_nothing(SILENCE_SECONDS))
+        await owner_channel.disconnect()
+
+    async def test_a_rider_who_never_signed_in_is_not_announced(self) -> None:
+        owner_channel = await self._ride(self.owner)
+        stranger = await User.objects.acreate_user('stranger', password='pw')
+        refused = await open_channel(self.group.pk)
+        await sign_in(refused, stranger)
+        self.assertEqual(await refused.receive_close_code(), CLOSE_FORBIDDEN)
+        await refused.disconnect()
+        self.assertTrue(await owner_channel.receive_nothing(SILENCE_SECONDS))
+        await owner_channel.disconnect()

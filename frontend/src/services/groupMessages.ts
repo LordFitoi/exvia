@@ -15,6 +15,8 @@ export interface LivePosition {
   readonly seenAt: number
 }
 
+export type PresenceStatus = 'joined' | 'left'
+
 export type GroupMessage =
   | {
       readonly type: 'ready'
@@ -24,6 +26,7 @@ export type GroupMessage =
       readonly positions: readonly RiderPosition[]
     }
   | { readonly type: 'position'; readonly position: RiderPosition }
+  | { readonly type: 'presence'; readonly userId: number; readonly status: PresenceStatus }
   | { readonly type: 'error'; readonly detail: string }
 
 const parseRiderPosition = (userId: number, value: unknown): RiderPosition | null => {
@@ -43,6 +46,12 @@ const parseReady = (message: Record<string, unknown>): GroupMessage | null => {
   return { type: 'ready', userId: message.user_id, serverTime, positions }
 }
 
+const parsePresence = (message: Record<string, unknown>): GroupMessage | null => {
+  const { user_id: userId, status } = message
+  if (typeof userId !== 'number' || (status !== 'joined' && status !== 'left')) return null
+  return { type: 'presence', userId, status }
+}
+
 /** Reads one message of the group channel; null for anything that is not one the client knows. */
 export const parseGroupMessage = (raw: unknown): GroupMessage | null => {
   if (typeof raw !== 'string') return null
@@ -57,6 +66,7 @@ export const parseGroupMessage = (raw: unknown): GroupMessage | null => {
   if (message.type === 'error' && typeof message.detail === 'string') {
     return { type: 'error', detail: message.detail }
   }
+  if (message.type === 'presence') return parsePresence(message)
   if (message.type !== 'position' || typeof message.user_id !== 'number') return null
   const position = parseRiderPosition(message.user_id, message)
   return position ? { type: 'position', position } : null

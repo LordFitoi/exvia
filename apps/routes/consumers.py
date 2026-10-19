@@ -16,6 +16,8 @@ AUTH_TIMEOUT_SECONDS = 5
 MIN_POSITION_INTERVAL_SECONDS = 1
 CLOSE_UNAUTHORIZED = 4401
 CLOSE_FORBIDDEN = 4403
+PRESENCE_JOINED = 'joined'
+PRESENCE_LEFT = 'left'
 
 
 class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
@@ -25,7 +27,8 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
     headers on a websocket and a token in the URL ends up in logs. Close codes: 4401 for a missing,
     bad or late token, 4403 for a user who has not accepted the group. After `{"type": "ready",
     "user_id", "positions", "server_time"}` (the server's clock, to age the saved positions), a rider sends `{"type": "position", "lng", "lat", ...}` and everyone
-    else gets `{"type": "position", "user_id", ...position}`.
+    else gets `{"type": "position", "user_id", ...position}`. Everyone else also hears
+    `{"type": "presence", "user_id", "status": "joined" | "left"}` when a rider signs in or drops.
     """
 
     user_id: int | None = None
@@ -43,6 +46,7 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
         self.auth_deadline.cancel()
         if self.user_id is not None:
             await self.channel_layer.group_discard(self.channel_group, self.channel_name)
+            await self._announce_presence(PRESENCE_LEFT)
 
     async def receive_json(self, content: Any, **kwargs: Any) -> None:
         if not isinstance(content, dict):
@@ -57,6 +61,16 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
         """Delivers a position broadcast to the group, except to the rider who reported it."""
         if event['user_id'] != self.user_id:
             await self.send_json({'type': 'position', 'user_id': event['user_id'], **event['position']})
+
+    async def group_presence(self, event: dict[str, Any]) -> None:
+        """Delivers a rider's arrival or departure to the group, except to that rider."""
+        if event['user_id'] != self.user_id:
+            await self.send_json({'type': 'presence', 'user_id': event['user_id'], 'status': event['status']})
+
+    async def _announce_presence(self, status: str) -> None:
+        await self.channel_layer.group_send(
+            self.channel_group, {'type': 'group.presence', 'user_id': self.user_id, 'status': status},
+        )
 
     async def _close_unless_authenticated(self) -> None:
         await asyncio.sleep(AUTH_TIMEOUT_SECONDS)
@@ -76,6 +90,7 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({
             'type': 'ready', 'user_id': user_id, 'positions': positions, 'server_time': timezone.now().isoformat(),
         })
+        await self._announce_presence(PRESENCE_JOINED)
 
     @database_sync_to_async
     def _read_user_id(self, token: object) -> int | None:

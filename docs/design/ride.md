@@ -201,6 +201,11 @@ style guide's [Group rides](../ui-ux/group.html) page.
   passed on by `useGeolocation`). Stops are not paused, so Time is the elapsed
   time, and Distance and Avg km/h use the route's own length, not the path the
   rider actually took.
+  Every modal `<dialog>` is opened by `useModalDialog`, which also closes it when
+  the screen goes away. `cacheComponents` makes Next keep a left route hidden
+  instead of unmounting it, and a modal left open there keeps blocking the whole
+  document, so after leaving a ride (Done, or Quit with the confirm dialog open)
+  no button of the next screen could be tapped.
   The guide shows it in [patterns.html](../ui-ux/patterns.html) ("Ride summary"),
   with `map-scrim` standing in for the dialog backdrop.
   **Saving the ride**: when the summary appears, `useSaveRideSummary` posts the
@@ -318,6 +323,13 @@ Ride mode and the free ride share the group's live channel
   from the group (`GET /api/routes/groups/<id>/`), positions from the channel; one marker per
   rider is created, moved on every position (it jumps every 5 s, no glide yet) and removed
   when the rider goes quiet.
+- **Joins and leaves.** The channel tells the others when a rider signs in or drops
+  (`presence`, [route-groups.md](route-groups.md#live-channel)). `usePresenceNotice` turns it
+  into a toast at the top of the ride screen (`toast-region`, the `Toast` with the `users`
+  icon): "ana joined the ride" / "ana left the ride", the name read from the group's
+  participants. One toast at a time: a newer one replaces the one on screen, and each lasts
+  5 seconds. A dropped connection that reconnects shows "left" and then "joined", because the
+  server cannot tell it from a rider who really left.
 - **Stale riders.** A rider with no report for **30 seconds** (`STALE_AFTER_MS`, six missed
   reports) is taken off the map: the channel has no leave message, so a closed app would
   otherwise freeze on the others' maps. The saved positions in `ready` are aged by the

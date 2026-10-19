@@ -4,6 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 
 import { useState } from 'react'
 
+import Toast from '@/components/feedback/Toast'
 import { useFreeRideMap } from '@/hooks/useFreeRideMap'
 import { useGroupRide } from '@/hooks/useGroupRide'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
@@ -31,7 +32,7 @@ interface FreeRideSessionViewProps {
 export default function FreeRideSessionView({ group, location, rider, onLeave }: FreeRideSessionViewProps) {
   const [startedAt] = useState(() => Date.now())
   const elapsedSeconds = useRideElapsed(startedAt, null)
-  const riders = useGroupRide({ group, rider, location })
+  const { riders, notice, dismissNotice } = useGroupRide({ group, rider, location })
   const [isFinishOpen, setIsFinishOpen] = useState(false)
   const { containerRef, hasLoadFailed, recenter } = useFreeRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -57,6 +58,11 @@ export default function FreeRideSessionView({ group, location, rider, onLeave }:
   return (
     <main className="ride-screen">
       <h1 className="visually-hidden">Free ride</h1>
+      {notice && (
+        <div className="toast-region">
+          <Toast key={notice.id} message={notice.message} iconClass="icon-users" onDismiss={dismissNotice} />
+        </div>
+      )}
       <div className="map">
         <div ref={containerRef} className="map-canvas"></div>
         <div className="map-overlay">

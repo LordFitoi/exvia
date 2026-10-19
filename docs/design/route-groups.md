@@ -195,6 +195,7 @@ on every position instead.
 | server -> rider | `{"type": "ready", "user_id": 5, "positions": {"7": {...}}, "server_time": "..."}` right after a good `auth`: who you are, the latest saved position of every rider (so a late joiner sees the others at once) and the server's clock, so the client can tell how old each `recorded_at` is without trusting the phone's clock |
 | rider -> server | `{"type": "position", "lng": -3.7, "lat": 40.4, "heading": 90, "speed": 25.5, "accuracy": 8}`; `heading`, `speed` (km/h) and `accuracy` (m) are optional |
 | server -> others | `{"type": "position", "user_id": 5, "lng": ..., "lat": ..., "heading": ..., "speed": ..., "accuracy": ..., "recorded_at": "..."}`; not echoed back to the sender |
+| server -> others | `{"type": "presence", "user_id": 5, "status": "joined" \| "left"}` when a rider signs in (after their `ready`) or their socket drops; not sent to that rider, and not for a socket that never got past sign-in |
 | server -> rider | `{"type": "error", "detail": "..."}` for a bad position, an unknown type or a non-object; the socket stays open |
 
 Riders send their position every 5 s (the client's job, see [ride.md](ride.md)). Each
