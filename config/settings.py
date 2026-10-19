@@ -180,3 +180,9 @@ MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Web Push (notifications to the phone). All three are optional: without them no push is sent.
+# `python manage.py generate_vapid_keys` makes the pair; the contact is an email the push services may write to.
+VAPID_PUBLIC_KEY = os.environ.get('VAPID_PUBLIC_KEY', '')
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', '')
+VAPID_CONTACT_EMAIL = os.environ.get('VAPID_CONTACT_EMAIL', '')

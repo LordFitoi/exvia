@@ -59,6 +59,9 @@ renaming one would delete it and create a new one.
   the private network as `redis.railway.internal`. `Redis` has no volume: it
   only carries the WebSocket channel layer, which is rebuilt as clients
   reconnect ([asgi-websockets.md](asgi-websockets.md)).
+- `Server` also has `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_CONTACT_EMAIL`, `preserve()`d: set once
+  in the dashboard (keys from `python manage.py generate_vapid_keys`). Without them no Web Push is sent
+  ([notifications.md](notifications.md#web-push)).
 - Migrations run in the pre-deploy step so a failing migration stops the
   release. `collectstatic` stays in the start command because pre-deploy
   runs in a separate container and its files would not reach the running one.

@@ -52,6 +52,11 @@ export default defineRailway(() => {
       PGHOST: db.env.PGHOST,
       PGPORT: db.env.PGPORT,
       REDIS_URL: cache.env.REDIS_URL,
+      // Web Push keys (`python manage.py generate_vapid_keys`) and a contact email, set once in the
+      // Railway dashboard; without them no push is sent.
+      VAPID_PUBLIC_KEY: preserve(),
+      VAPID_PRIVATE_KEY: preserve(),
+      VAPID_CONTACT_EMAIL: preserve(),
     },
   });
 

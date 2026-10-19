@@ -97,7 +97,9 @@ invitations to ride waiting for an answer, and the button's label says it ("Noti
 waiting for an answer"). It opens `NotificationsSheet`, a modal sheet listing the invitations
 (`GET /api/notifications/`, see [notifications.md](notifications.md#api)): who invited you, the
 route (or "Free mode") and how long ago, with **Reject** and **Accept**; an answered one keeps
-its row with an **Accepted** or **Rejected** badge. **Accept** goes straight to
+its row with an **Accepted** or **Rejected** badge. At the top of the sheet, while phone notifications are off, a **Turn on** row asks for the permission and
+subscribes this browser to Web Push ([notifications.md](notifications.md#web-push)); if the browser blocked
+them, a line says to allow them in its settings. **Accept** goes straight to
 `/ride/<group id>`, where the ride starts at once; **Reject** only refreshes the list. The list
 loads when Home opens and again whenever the app comes back to the foreground
 (`useRouteInvitations`, which keeps the list it has when a refresh fails); it is not live while
@@ -107,8 +109,10 @@ Above everything else on Home, **Riding now** (`ActiveGroupSection`) shows the g
 back: a list row with the route name (or Free mode), "Led by ana · 3 riders" and a **Join back** button
 that goes to `/ride/<group id>`. It is there only while `GET /api/routes/groups/active/` answers a group
 (another rider still connected and not ended, see [route-groups.md](route-groups.md#active-group)); with no
-group, or if loading fails, the section is not rendered. It loads when Home opens and when the app comes
-back to the foreground (`useActiveGroup`); it is not live while Home stays in front.
+group, or if loading fails, the section is not rendered. It loads when Home opens, when the app comes
+back to the foreground and **every 10 seconds** while Home is visible (`useActiveGroup`), so a group whose
+riders have all left disappears within about 40 s (the server's 30 s window plus one refresh) without leaving
+Home. A refresh that fails hides the section instead of keeping a group that may have ended.
 
 The "Next ride" block on Home still shows the guide's empty `state-view`
 ("No rides planned"): clan rides have no endpoints yet. Clans and the Home

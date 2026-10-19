@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.notifications.models import NotificationEvent
+from apps.notifications.models import NotificationEvent, PushSubscription
 
 
 @admin.register(NotificationEvent)
@@ -10,3 +10,11 @@ class NotificationEventAdmin(admin.ModelAdmin):
     search_fields = ('author__username', 'destinations__username')
     readonly_fields = ('created_at', 'updated_at')
     autocomplete_fields = ('author', 'destinations', 'route_group')
+
+
+@admin.register(PushSubscription)
+class PushSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at')
+    search_fields = ('user__username',)
+    readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ('user',)
