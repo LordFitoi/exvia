@@ -26,6 +26,8 @@ interface FreeRideMapHandle {
   containerRef: RefObject<HTMLDivElement | null>
   hasLoadFailed: boolean
   recenter: () => void
+  /** Moves the camera to a position, to find another rider. */
+  focusOn: (position: Coordinates) => void
 }
 
 /**
@@ -46,7 +48,7 @@ export const useFreeRideMap = ({ accessToken, rider, riders }: FreeRideMapOption
   useRiderMarkers(mounted, riders)
 
   const heading = useRiderHeading(rider)
-  const recenter = useRiderFollow({ mounted, rider, heading, fallback: rider, recenterZoom: RIDE_ZOOM })
+  const { recenter, focusOn } = useRiderFollow({ mounted, rider, heading, fallback: rider, recenterZoom: RIDE_ZOOM })
 
-  return { containerRef, hasLoadFailed, recenter }
+  return { containerRef, hasLoadFailed, recenter, focusOn }
 }

@@ -9,6 +9,8 @@ from apps.users.serializers import UserBriefSerializer
 UNKNOWN_ROUTE_MESSAGE = 'No route with this id.'
 UNKNOWN_USERS_MESSAGE = 'No user with the username: {names}.'
 INVITED_YOURSELF_MESSAGE = 'You are already in your own group.'
+UNKNOWN_RIDER_MESSAGE = 'No rider with this username.'
+NOT_IN_GROUP_MESSAGE = 'This rider is not in the group.'
 TOO_MANY_MESSAGE = f'A group has at most {MAX_GROUP_PARTICIPANTS} riders, you included.'
 
 
@@ -62,3 +64,23 @@ class GroupCreateSerializer(serializers.Serializer):
         if len(users) + 1 > MAX_GROUP_PARTICIPANTS:
             raise serializers.ValidationError(TOO_MANY_MESSAGE)
         return users
+
+
+class GroupInviteSerializer(serializers.Serializer):
+    """The username of the rider to invite to a group that is already rolling."""
+
+    username = serializers.CharField(max_length=150)
+
+    def validate_username(self, username: str) -> User:
+        user = User.objects.filter(username=username.strip(), is_active=True).first()
+        if user is None:
+            raise serializers.ValidationError(UNKNOWN_RIDER_MESSAGE)
+        return user
+
+
+class GroupRemoveSerializer(serializers.Serializer):
+    """The id of the rider to take out of a group."""
+
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), error_messages={
+        'does_not_exist': NOT_IN_GROUP_MESSAGE, 'incorrect_type': NOT_IN_GROUP_MESSAGE,
+    })

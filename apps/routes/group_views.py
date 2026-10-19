@@ -4,26 +4,42 @@ from django.db.models import Prefetch, QuerySet
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.routes.group_meta import ParticipantStatus
-from apps.routes.group_serializers import GroupCreateSerializer, GroupSerializer
+from apps.routes.group_serializers import (
+    NOT_IN_GROUP_MESSAGE,
+    GroupCreateSerializer,
+    GroupInviteSerializer,
+    GroupRemoveSerializer,
+    GroupSerializer,
+)
 from apps.routes.group_service import (
+    AlreadyInGroup,
+    CannotRemoveLeader,
+    GroupFull,
     InvitationAlreadyAnswered,
+    NotInGroup,
     NotRidingInGroup,
     answer_invitation,
     create_group,
     find_active_group,
+    invite_rider,
     leave_group,
+    remove_rider,
 )
-from apps.routes.models import RouteGroup
+from apps.routes.models import MAX_GROUP_PARTICIPANTS, RouteGroup
 
 ALREADY_ANSWERED_MESSAGE = 'You have already answered this invitation.'
 NOT_RIDING_MESSAGE = 'You are not riding in this group.'
+NOT_LEADER_MESSAGE = 'Only the rider who leads the group can do this.'
+ALREADY_IN_GROUP_MESSAGE = 'This rider is already in the group.'
+GROUP_FULL_MESSAGE = f'A group has at most {MAX_GROUP_PARTICIPANTS} riders, you included.'
+CANNOT_REMOVE_LEADER_MESSAGE = 'You lead this group, so you cannot remove yourself.'
 
 
 def group_queryset() -> QuerySet[RouteGroup]:
@@ -32,6 +48,16 @@ def group_queryset() -> QuerySet[RouteGroup]:
     return RouteGroup.objects.select_related('route', 'author__profile').prefetch_related(
         Prefetch('participants', queryset=riders),
     )
+
+
+def lock_group_led_by(user: User, pk: str) -> RouteGroup:
+    """The group `pk`, locked, when `user` is in it and leads it: 404 for any other group, 403 for a
+    rider who does not lead it."""
+    locked = RouteGroup.objects.select_for_update(of=('self',)).filter(participants=user)
+    group = get_object_or_404(locked, pk=pk)
+    if group.author_id != user.pk:
+        raise PermissionDenied(NOT_LEADER_MESSAGE)
+    return group
 
 
 class GroupCreateView(APIView):
@@ -106,3 +132,37 @@ class GroupLeaveView(APIView):
         except NotRidingInGroup as error:
             raise ValidationError({'detail': NOT_RIDING_MESSAGE}) from error
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class GroupInviteView(APIView):
+    """The leader invites one more rider to a group that is already rolling; answers the group."""
+
+    @transaction.atomic
+    def post(self, request: Request, pk: str) -> Response:
+        group = lock_group_led_by(request.user, pk)
+        serializer = GroupInviteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            invite_rider(group, serializer.validated_data['username'])
+        except AlreadyInGroup as error:
+            raise ValidationError({'username': ALREADY_IN_GROUP_MESSAGE}) from error
+        except GroupFull as error:
+            raise ValidationError({'username': GROUP_FULL_MESSAGE}) from error
+        return Response(GroupSerializer(group_queryset().get(pk=group.pk)).data)
+
+
+class GroupRemoveView(APIView):
+    """The leader takes a rider, invited or riding, out of the group; answers the group."""
+
+    @transaction.atomic
+    def post(self, request: Request, pk: str) -> Response:
+        group = lock_group_led_by(request.user, pk)
+        serializer = GroupRemoveSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            remove_rider(group, serializer.validated_data['user'])
+        except CannotRemoveLeader as error:
+            raise ValidationError({'user': CANNOT_REMOVE_LEADER_MESSAGE}) from error
+        except NotInGroup as error:
+            raise ValidationError({'user': NOT_IN_GROUP_MESSAGE}) from error
+        return Response(GroupSerializer(group_queryset().get(pk=group.pk)).data)

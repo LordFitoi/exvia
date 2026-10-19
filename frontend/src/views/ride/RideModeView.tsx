@@ -22,21 +22,19 @@ import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import MapStatusView from '@/views/map/MapStatusView'
 import ConfirmQuitRideDialog from '@/views/ride/ConfirmQuitRideDialog'
 import RideStatsPanel from '@/views/ride/RideStatsPanel'
+import RidersControl from '@/views/ride/RidersControl'
 import RideSummarySheet from '@/views/ride/RideSummarySheet'
 import type { RideRoute } from '@/types/route'
-import type { RouteGroup } from '@/types/routeGroup'
 
 interface RideModeViewProps {
   route: RideRoute
-  /** The group riding this route; its other riders are shown on the map. */
-  group: RouteGroup
   /** Leaves ride mode for the picker, with the route still selected. */
   onQuit: () => void
   /** Leaves ride mode for good, after the summary of a finished ride. */
   onFinish: () => void
 }
 
-export default function RideModeView({ route, group, onQuit, onFinish }: RideModeViewProps) {
+export default function RideModeView({ route, onQuit, onFinish }: RideModeViewProps) {
   const location = useGeolocation()
   const street = useStreetPosition({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -44,7 +42,7 @@ export default function RideModeView({ route, group, onQuit, onFinish }: RideMod
   })
   // A fix that cannot be snapped to a street (or not yet) still shows where the rider is.
   const rider = street.coordinates ?? location.coordinates
-  const { riders, notice, dismissNotice } = useGroupRide({ group, rider, location })
+  const { riders, notice, dismissNotice } = useGroupRide({ rider, location })
   const progress = useRideProgress({ path: route.points, rider })
   const lines = useRideLines({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -64,7 +62,7 @@ export default function RideModeView({ route, group, onQuit, onFinish }: RideMod
   const [isSummaryDismissed, setIsSummaryDismissed] = useState(false)
   const [isQuitConfirmOpen, setIsQuitConfirmOpen] = useState(false)
   const quit = useQuitRide({ routeId: route.id, startedAt, speeds, onQuit })
-  const { containerRef, hasLoadFailed, recenter } = useRideMap({
+  const { containerRef, hasLoadFailed, recenter, focusOn } = useRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     path: route.points,
     lines,
@@ -108,6 +106,7 @@ export default function RideModeView({ route, group, onQuit, onFinish }: RideMod
             <button className="icon-button" type="button" aria-label="Quit ride" onClick={handleCloseClick}>
               <span className="icon icon-x" aria-hidden="true"></span>
             </button>
+            <RidersControl riders={riders} onFocus={focusOn} />
           </div>
         </div>
         <button

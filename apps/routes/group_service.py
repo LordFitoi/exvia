@@ -8,7 +8,7 @@ from django.db.models import QuerySet
 from apps.notifications.services import notify_route_invitation
 from apps.routes import group_meta
 from apps.routes.group_meta import ParticipantStatus
-from apps.routes.models import Route, RouteGroup
+from apps.routes.models import MAX_GROUP_PARTICIPANTS, Route, RouteGroup
 
 # A rider who reports nothing for this long is gone; the client hides such a rider after the same time.
 CONNECTED_WINDOW = timedelta(seconds=30)
@@ -20,6 +20,22 @@ class InvitationAlreadyAnswered(ValueError):
 
 class NotRidingInGroup(ValueError):
     """The user has not accepted the group, so there is nothing to leave."""
+
+
+class AlreadyInGroup(ValueError):
+    """The user is already invited to the group, or already riding in it."""
+
+
+class GroupFull(ValueError):
+    """The group has `MAX_GROUP_PARTICIPANTS` riders already."""
+
+
+class NotInGroup(ValueError):
+    """The user is not a participant of the group, so there is nothing to remove."""
+
+
+class CannotRemoveLeader(ValueError):
+    """The leader of a group cannot be removed from it."""
 
 
 @transaction.atomic
@@ -56,6 +72,32 @@ def leave_group(group: RouteGroup, user: User) -> None:
     group_meta.remove_participant(group.meta_json, user.pk)
     group.save(update_fields=['meta_json', 'updated_at'])
     group.participants.remove(user)
+
+
+def invite_rider(group: RouteGroup, invitee: User) -> None:
+    """Invites a user to a group that is already rolling and notifies them. A rider who rejected can be
+    invited again. Call it inside a transaction that holds a lock on `group`."""
+    if group_meta.get_status(group.meta_json, invitee.pk) in (ParticipantStatus.INVITED, ParticipantStatus.ACCEPTED):
+        raise AlreadyInGroup(f'User {invitee.pk} is already in group {group.pk}.')
+    if group.participants.count() >= MAX_GROUP_PARTICIPANTS:
+        raise GroupFull(f'Group {group.pk} already has {MAX_GROUP_PARTICIPANTS} riders.')
+    group_meta.set_status(group.meta_json, invitee.pk, ParticipantStatus.INVITED)
+    group.save(update_fields=['meta_json', 'updated_at'])
+    group.participants.add(invitee)
+    notify_route_invitation(group, [invitee])
+
+
+def remove_rider(group: RouteGroup, rider: User) -> None:
+    """Takes a rider, invited or accepted, out of the group, which frees their place. Their live channel
+    is closed at their next position, since they no longer have a place.
+    Call it inside a transaction that holds a lock on `group`."""
+    if rider.pk == group.author_id:
+        raise CannotRemoveLeader(f'User {rider.pk} leads group {group.pk}.')
+    if not group.participants.filter(pk=rider.pk).exists():
+        raise NotInGroup(f'User {rider.pk} is not in group {group.pk}.')
+    group_meta.remove_participant(group.meta_json, rider.pk)
+    group.save(update_fields=['meta_json', 'updated_at'])
+    group.participants.remove(rider)
 
 
 def load_positions(group_id: object, user_id: int) -> dict[str, dict[str, Any]] | None:

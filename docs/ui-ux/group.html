@@ -177,6 +177,7 @@
             <div class="map-overlay">
               <div class="map-controls">
                 <button class="icon-button" type="button" aria-label="Quit ride"><span class="icon icon-x" aria-hidden="true"></span></button>
+                <button class="icon-button" type="button" aria-label="Riders"><span class="icon icon-users" aria-hidden="true"></span></button>
               </div>
             </div>
             <span class="marker marker-start marker-pos-a" role="img" aria-label="Start"><span class="icon icon-sm icon-flag" aria-hidden="true"></span></span>
@@ -191,7 +192,42 @@
             <div class="route-stat"><span class="route-stat-value data">26</span><span class="text-caption">Speed (km/h)</span></div>
           </section>
         </div>
-        <figcaption class="phone-caption">Group ride: each other rider is a bubble (their picture, or initials without one) above a green dot on their exact position; &ldquo;You&rdquo; stays the ink dot with the pulse</figcaption>
+        <figcaption class="phone-caption">Group ride: each other rider is a bubble (their picture, or initials without one) above a green dot on their exact position; &ldquo;You&rdquo; stays the ink dot with the pulse; the users button under the X lists the riders</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <div class="map">
+            <svg class="map-canvas" viewBox="0 0 360 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+              <rect class="map-land" width="360" height="700"></rect>
+              <path class="map-road" d="M0 120 H360 M0 300 H360 M0 420 H360 M90 0 V560 M250 0 V560"></path>
+            </svg>
+            <div class="map-scrim"></div>
+            <div class="sheet phone-sheet" role="dialog" aria-labelledby="riders-title">
+              <span class="sheet-handle"></span>
+              <div class="sheet-header">
+                <h3 class="text-subtitle" id="riders-title">Riders</h3>
+                <button class="icon-button" type="button" aria-label="Close Riders"><span class="icon icon-x" aria-hidden="true"></span></button>
+              </div>
+              <ul class="list">
+                <li class="list-item">
+                  <span class="avatar avatar-sm" aria-hidden="true">AN</span>
+                  <span class="list-item-body"><span class="list-item-title">ana</span><span class="list-item-meta">Connected</span></span>
+                  <button class="icon-button" type="button" aria-label="Center the map on ana"><span class="icon icon-locate" aria-hidden="true"></span></button>
+                  <button class="icon-button" type="button" aria-label="Remove ana"><span class="icon icon-x" aria-hidden="true"></span></button>
+                </li>
+                <li class="list-item">
+                  <span class="avatar avatar-sm" aria-hidden="true">BE</span>
+                  <span class="list-item-body"><span class="list-item-title">ben</span><span class="list-item-meta">Invited</span></span>
+                  <button class="icon-button" type="button" aria-label="Remove ben"><span class="icon icon-x" aria-hidden="true"></span></button>
+                </li>
+              </ul>
+              <button class="button button-outline button-block" type="button"><span class="icon icon-plus" aria-hidden="true"></span>Invite a rider</button>
+            </div>
+          </div>
+        </div>
+        <figcaption class="phone-caption">Riders: a modal sheet with every other rider. Connected ones have a locate button (it closes the sheet and moves the map to them); invited or quiet ones only say so. The leader alone also sees the X on each row, which asks before removing, and Invite a rider under the list; others get the plain list. With nobody else the sheet shows the empty state &ldquo;Nobody else is here&rdquo;</figcaption>
       </figure>
 
       <figure>

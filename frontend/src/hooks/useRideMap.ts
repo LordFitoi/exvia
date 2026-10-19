@@ -35,6 +35,8 @@ interface RideMapHandle {
   containerRef: RefObject<HTMLDivElement | null>
   hasLoadFailed: boolean
   recenter: () => void
+  /** Moves the camera to a position, to find another rider. */
+  focusOn: (position: Coordinates) => void
 }
 
 const getRouteBearing = (path: readonly Coordinates[]): number =>
@@ -83,7 +85,7 @@ export const useRideMap = ({ accessToken, path, lines, rider, riders }: RideMapO
   useRiderMarkers(mounted, riders)
 
   const heading = useRiderHeading(rider)
-  const recenter = useRiderFollow({ mounted, rider, heading, fallback: path[0], recenterZoom: RIDE_ZOOM })
+  const { recenter, focusOn } = useRiderFollow({ mounted, rider, heading, fallback: path[0], recenterZoom: RIDE_ZOOM })
 
-  return { containerRef, hasLoadFailed, recenter }
+  return { containerRef, hasLoadFailed, recenter, focusOn }
 }

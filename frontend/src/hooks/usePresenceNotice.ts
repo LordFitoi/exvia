@@ -16,6 +16,8 @@ interface PresenceNoticeHandle {
   /** The latest rider to join or leave, until it is dismissed. */
   readonly notice: PresenceNotice | null
   readonly dismiss: () => void
+  /** Shows a message of the ride itself, such as the rider losing their place. */
+  readonly announce: (message: string) => void
   readonly handlePresence: PresenceHandler
 }
 
@@ -24,16 +26,19 @@ export const usePresenceNotice = (participants: readonly GroupParticipant[]): Pr
   const [notice, setNotice] = useState<PresenceNotice | null>(null)
   const nextId = useRef(0)
 
+  const announce = useCallback((message: string) => {
+    nextId.current += 1
+    setNotice({ id: nextId.current, message })
+  }, [])
+
   const handlePresence = useCallback<PresenceHandler>(
     (userId, status) => {
       const message = describePresence(participants, userId, status)
-      if (!message) return
-      nextId.current += 1
-      setNotice({ id: nextId.current, message })
+      if (message) announce(message)
     },
-    [participants],
+    [participants, announce],
   )
   const dismiss = useCallback(() => setNotice(null), [])
 
-  return { notice, dismiss, handlePresence }
+  return { notice, dismiss, announce, handlePresence }
 }

@@ -36,11 +36,19 @@ const createMarker = ({ mapboxgl, map }: BaseMap, position: Coordinates): Marker
     .setLngLat(toLngLat(position))
     .addTo(map)
 
+/** What the map buttons do to the camera. */
+interface RiderCamera {
+  /** Resumes following the rider, back at the ride zoom. */
+  readonly recenter: () => void
+  /** Moves the camera to another rider's position, at the ride zoom, and stops following the rider. */
+  readonly focusOn: (position: Coordinates) => void
+}
+
 /**
  * Shows the rider on the map and keeps the camera on them, turned to face their heading. Each new
  * fix glides the marker and the camera there (position and bearing together); the first one jumps.
  * Dragging the map stops the following until the returned `recenter` is called, which also
- * brings the camera back to `recenterZoom`.
+ * brings the camera back to `recenterZoom`. `focusOn` stops it too, to look at another rider.
  */
 export const useRiderFollow = ({
   mounted,
@@ -48,7 +56,7 @@ export const useRiderFollow = ({
   heading,
   fallback,
   recenterZoom,
-}: RiderFollowOptions): (() => void) => {
+}: RiderFollowOptions): RiderCamera => {
   const markerRef = useRef<Marker | null>(null)
   const viewRef = useRef<RiderView | null>(null)
   const isFollowingRef = useRef(true)
@@ -87,7 +95,7 @@ export const useRiderFollow = ({
     return runAnimation(GLIDE_DURATION_MS, showFrame)
   }, [mounted, rider, heading])
 
-  return () => {
+  const recenter = () => {
     isFollowingRef.current = true
     const view = viewRef.current
     mounted?.map.easeTo({
@@ -97,4 +105,11 @@ export const useRiderFollow = ({
       duration: RECENTER_DURATION_MS,
     })
   }
+
+  const focusOn = (position: Coordinates) => {
+    isFollowingRef.current = false
+    mounted?.map.easeTo({ center: toLngLat(position), zoom: recenterZoom, duration: RECENTER_DURATION_MS })
+  }
+
+  return { recenter, focusOn }
 }

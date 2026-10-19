@@ -12,6 +12,8 @@ interface ConfirmDeleteDialogProps {
   description: string
   isPending: boolean
   error: string | null
+  /** The destructive button; "Delete" unless the action has a better word, such as "Remove". */
+  confirmLabel?: string
   onCancel: () => void
   onConfirm: () => void
 }
@@ -23,6 +25,7 @@ export default function ConfirmDeleteDialog({
   description,
   isPending,
   error,
+  confirmLabel = 'Delete',
   onCancel,
   onConfirm,
 }: ConfirmDeleteDialogProps) {
@@ -62,7 +65,7 @@ export default function ConfirmDeleteDialog({
           aria-busy={isPending}
           onClick={onConfirm}
         >
-          Delete
+          {confirmLabel}
         </button>
       </div>
     </dialog>

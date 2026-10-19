@@ -85,6 +85,8 @@ All endpoints need a JWT, like the rest of `/api/routes/`.
 | `GET /api/routes/groups/<uuid>/` | Reads a group the caller is in or was invited to |
 | `POST /api/routes/groups/<uuid>/accept/` | Accepts the caller's invitation; answers the group |
 | `POST /api/routes/groups/<uuid>/reject/` | Rejects it and leaves the group; `204` |
+| `POST /api/routes/groups/<uuid>/invite/` | The leader invites one more rider to a group that is rolling; answers the group (see [Inviting and removing](#inviting-and-removing)) |
+| `POST /api/routes/groups/<uuid>/remove/` | The leader takes a rider out of the group; answers the group |
 | `POST /api/routes/groups/<uuid>/leave/` | Takes a rider who accepted out of the group; `204` (see [Leaving](#leaving)) |
 | `GET /api/routes/groups/active/` | The newest group the caller can join back (see [Active group](#active-group)); `204` when there is none |
 
@@ -132,6 +134,27 @@ Also new, in the users app: `GET /api/auth/users/lookup/?username=<name>` return
 `{"id", "username", "avatar"}` for an active user with exactly that username, `404` otherwise.
 The invite dialog uses it to reject an unknown name before **Ride** is pressed. It tells a
 signed-in caller whether a username exists, as the clan invitation already does.
+
+## Inviting and removing
+
+The leader can change who is in a group while it rides (`invite_rider`, `remove_rider` in
+[group_service.py](../../apps/routes/group_service.py), `GroupInviteView`, `GroupRemoveView`). Both lock the
+group row like the answers do, and both need the caller to be the **author**: a rider of the group who
+is not the leader gets `403` (`Only the rider who leads the group can do this.`), a stranger `404`. Both
+answer the updated group, with the body of a read.
+
+- **Invite** takes `{"username": "ben"}`. It adds the rider as `invited` and notifies them with a
+  `NotificationEvent` of their own (the one the create call made covered only the first invitees).
+  Errors are on `username`: no active user with that name (`No rider with this username.`), already
+  invited or riding in the group, or a full group (`MAX_GROUP_PARTICIPANTS`). A rider who rejected
+  earlier can be invited again; the new invitation replaces their `rejected` entry.
+- **Remove** takes `{"user": 7}`. It forgets the rider's entry in `meta_json` and takes them out of
+  `participants`, so the group is `404` for them afterwards and the invitation they may still hold is
+  no longer listed. It works on an invited rider and on one who is riding. Errors are on `user`: not a
+  participant of the group, or the leader themselves (use [leave](#leaving) to go).
+- **The removed rider's channel** is not cut at once: their next position finds no place in the
+  group, `save_position` says so and the consumer closes the socket with `4403`, which the others hear
+  as "left". That takes at most one reporting interval (5 s).
 
 ## Leaving
 
@@ -225,6 +248,8 @@ opens the sheet from the Home bell and **Accept** goes to `/ride/<group id>`; bo
   knows its riders ([notifications.md](notifications.md)).
 - **The author is a participant** with status `accepted`, so they share their position like
   everyone else and take one of the `MAX_GROUP_PARTICIPANTS` places.
+- **Only the leader manages riders**: the author is the one who invites at the start, so the same rider
+  invites and removes later; anyone else leaving goes through `leave`.
 - **Rules in a service, not in the view**: `create_group` and `answer_invitation` are plain
   functions over models; the views only translate HTTP and the `400`/`404` answers.
 - **Constant queries**: reading a group is 2 queries and the notification list is 1, however

@@ -12,14 +12,12 @@ import { useRideElapsed } from '@/hooks/useRideElapsed'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { Coordinates, GeolocationState } from '@/types/geolocation'
-import type { RouteGroup } from '@/types/routeGroup'
 import MapStatusView from '@/views/map/MapStatusView'
 import FinishFreeRideDialog from '@/views/ride/FinishFreeRideDialog'
+import RidersControl from '@/views/ride/RidersControl'
 import RideStatsPanel from '@/views/ride/RideStatsPanel'
 
 interface FreeRideSessionViewProps {
-  /** The group riding together; its other riders are shown on the map. */
-  group: RouteGroup
   /** The latest GPS reading, whose fixes make up the recorded track. */
   location: GeolocationState
   /** Where to show the rider: the street position when there is one, else the raw fix. */
@@ -29,12 +27,12 @@ interface FreeRideSessionViewProps {
 }
 
 /** A ride with no route: nothing of it is drawn or recorded, only the rider and the group are on the map. */
-export default function FreeRideSessionView({ group, location, rider, onLeave }: FreeRideSessionViewProps) {
+export default function FreeRideSessionView({ location, rider, onLeave }: FreeRideSessionViewProps) {
   const [startedAt] = useState(() => Date.now())
   const elapsedSeconds = useRideElapsed(startedAt, null)
-  const { riders, notice, dismissNotice } = useGroupRide({ group, rider, location })
+  const { riders, notice, dismissNotice } = useGroupRide({ rider, location })
   const [isFinishOpen, setIsFinishOpen] = useState(false)
-  const { containerRef, hasLoadFailed, recenter } = useFreeRideMap({
+  const { containerRef, hasLoadFailed, recenter, focusOn } = useFreeRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     rider,
     riders,
@@ -75,6 +73,7 @@ export default function FreeRideSessionView({ group, location, rider, onLeave }:
             >
               <span className="icon icon-flag-checkered" aria-hidden="true"></span>
             </button>
+            <RidersControl riders={riders} onFocus={focusOn} />
           </div>
         </div>
         <button

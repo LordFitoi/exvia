@@ -1,5 +1,6 @@
 'use client'
 
+import LiveGroupProvider from '@/context/LiveGroupProvider'
 import { useLeaveGroupOnExit } from '@/hooks/useLeaveGroupOnExit'
 import type { RouteGroup } from '@/types/routeGroup'
 import FreeRideView from '@/views/ride/FreeRideView'
@@ -17,6 +18,13 @@ interface GroupRideViewProps {
 export default function GroupRideView({ group, onLeave, onFinish }: GroupRideViewProps) {
   const exit = useLeaveGroupOnExit({ groupId: group.id, onLeave, onFinish })
 
-  if (group.route) return <RideModeView route={group.route} group={group} onQuit={exit.leave} onFinish={exit.finish} />
-  return <FreeRideView group={group} onLeave={exit.leave} />
+  return (
+    <LiveGroupProvider key={group.id} initialGroup={group}>
+      {group.route ? (
+        <RideModeView route={group.route} onQuit={exit.leave} onFinish={exit.finish} />
+      ) : (
+        <FreeRideView onLeave={exit.leave} />
+      )}
+    </LiveGroupProvider>
+  )
 }

@@ -44,8 +44,10 @@ one.
 | Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start and finish markers, framed in view |
 | Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines, the start and finish markers and the other riders |
 | Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts`, `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 5 s and collects the others'; see [Group ride](#group-ride) |
+| Riders | `views/ride/RidersControl.tsx`, `views/ride/RidersSheet.tsx`, `hooks/useRiderRemoval.ts`, `views/ride/InviteRiderDialog.tsx` | The users button under the X and its sheet listing the riders of the ride: locate for the connected ones, invite and remove for the leader; see [Group ride](#group-ride) |
+| Live group | `context/LiveGroupProvider.tsx`, `hooks/useLiveGroup.ts` | The group of the ride, kept up to date while it goes on (riders invited, removed, joined); read by `useGroupRide` and `RidersControl` |
 | Rider markers | `hooks/useRiderMarkers.ts`, `services/riderBubbleMarker.ts`, `services/riderMarkers.ts` | One bubble marker per other rider, moved as they move and removed when they go quiet |
-| Rider | `hooks/useRiderFollow.ts`, `services/riderMotion.ts` | The "You" marker and the camera that follows it, gliding between fixes, with `recenter` |
+| Rider | `hooks/useRiderFollow.ts`, `services/riderMotion.ts` | The "You" marker and the camera that follows it, gliding between fixes, with `recenter` and `focusOn` (look at another rider) |
 | Heading | `hooks/useRiderHeading.ts` | The direction the rider is moving in, from their last positions |
 | Progress | `hooks/useRideProgress.ts` | Where the rider is on the track (the last spot reached) |
 | Ride lines | `hooks/useRideLines.ts` | The lines to draw from that progress |
@@ -323,6 +325,36 @@ Ride mode and the free ride share the group's live channel
   from the group (`GET /api/routes/groups/<id>/`), positions from the channel; one marker per
   rider is created, moved on every position (it jumps every 5 s, no glide yet) and removed
   when the rider goes quiet.
+- **Riders.** The **users** button (`RidersControl`, "Riders") sits under the X (or the flag in a
+  free ride) in the same top-right control block, and opens `RidersSheet`, a modal sheet with
+  every other rider of the group: picture or initials, name and a line under it. The riders on the
+  map now say "Connected" and have a **locate** button ("Center the map on ana"); the rest say
+  "Invited" or "Not connected" (accepted but quiet) and have none, since there is no position to
+  go to. Pressing locate closes the sheet and eases the camera to that rider's position at the ride
+  zoom over 800 ms (`focusOn` of `useRiderFollow`), which also stops the camera following you, as
+  dragging the map does; the locate button at the bottom brings it back to you. It is a one-off
+  move: the camera does not keep following the other rider. The camera keeps the current heading
+  and pitch. With nobody else in the group the sheet says "Nobody else is here".
+- **Inviting and removing.** Only the **leader** (the group's author) sees the controls; the
+  others get the plain list. **Invite a rider** (an outline button under the list, replaced by a
+  note once the group has 10 riders) opens the same `InviteRiderDialog` as the setup, with the
+  hint "They get the invitation at once.": the username is checked with the lookup, then
+  `POST /api/routes/groups/<id>/invite/` ([route-groups.md](route-groups.md#inviting-and-removing)) notifies the rider
+  and the dialog closes; a refusal (already in the group, group full) shows under the field. Each
+  row has an **X** (`Remove ana`) that asks first, with the confirm dialog "Remove ana?" (**Cancel**
+  first, **Remove** in the error color): the rider is taken out of the group, whether they had
+  accepted or were still invited, and can be invited again. A failure keeps the question open with a
+  message.
+- **Live group** (`LiveGroupProvider`, `useLiveGroup`). The group is read once when the ride opens
+  but its riders change during it, so `GroupRideView` keeps it in a context for the ride screen.
+  It is replaced by the group the invite and remove calls answer, and read again
+  (`GET /api/routes/groups/<id>/`) whenever the channel announces a rider joining or leaving, so
+  everyone's list learns about riders invited or removed meanwhile. A rider invited after the
+  others opened the ride therefore shows on their map from the moment they connect (the "joined"
+  toast is skipped for that first time, as the name is not known yet).
+- **Removed riders.** The removed rider's channel is closed (`4403`) at their next position, and the
+  others hear "left". Their screen shows the toast "You are no longer in this ride"; the ride stays
+  open, as a solo ride that shares nothing, until they leave it.
 - **Joins and leaves.** The channel tells the others when a rider signs in or drops
   (`presence`, [route-groups.md](route-groups.md#live-channel)). `usePresenceNotice` turns it
   into a toast at the top of the ride screen (`toast-region`, the `Toast` with the `users`
@@ -348,6 +380,5 @@ Distance left, off-route detection and a way back to the track after leaving
 it (only the way to the start is drawn), voice guidance, and terrain elevation.
 Neither a route ride nor a free ride records the rider's track, and a free ride is never saved. A free ride does not
 pause, and a reload loses it. For group rides: changing
-the route of a group while it rides, a trail or history of the other riders, a rider list or
-connection indicator on the ride screen, and leaving a group in the middle of a ride (a rider
-who quits just stops reporting).
+the route of a group while it rides, a trail or history of the other riders, a connection indicator on the ride screen, a camera that keeps following another rider, riders other than the leader inviting or removing, and leaving a group in the middle of
+a ride (a rider who quits just stops reporting).

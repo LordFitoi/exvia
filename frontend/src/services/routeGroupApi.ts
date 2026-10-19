@@ -45,6 +45,18 @@ export const leaveRouteGroup = async (groupId: string): Promise<void> => {
   await requestJsonAuthorized(`${GROUPS_PATH}${groupId}/leave/`, { method: 'POST' })
 }
 
+/** The leader invites a rider by username to a group that is already rolling; answers the updated group. */
+export const inviteRider = async (groupId: string, username: string): Promise<RouteGroup> =>
+  expectGroup(
+    await requestJsonAuthorized(`${GROUPS_PATH}${groupId}/invite/`, { method: 'POST', body: { username } }),
+  )
+
+/** The leader takes a rider, invited or riding, out of the group; answers the updated group. */
+export const removeRider = async (groupId: string, userId: number): Promise<RouteGroup> =>
+  expectGroup(
+    await requestJsonAuthorized(`${GROUPS_PATH}${groupId}/remove/`, { method: 'POST', body: { user: userId } }),
+  )
+
 /** The rider with exactly this username; an unknown name is an `ApiError` with status 404. */
 export const lookupRider = async (username: string): Promise<RiderProfile> => {
   const rider = await requestJsonAuthorized(`${LOOKUP_PATH}?username=${encodeURIComponent(username)}`)
