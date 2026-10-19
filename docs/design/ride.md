@@ -36,9 +36,8 @@ one.
 | Rows | `components/route/RouteItemBody.tsx`, `components/route/FreeModeItemBody.tsx`, `components/rider/RiderAvatar.tsx` | The inside of a route row, of the free mode row, and a rider's picture or initials |
 | List | `components/route/RouteChoiceList.tsx` | Skeleton, error, empty and ready states of the routes (used by the route list screen) |
 | Ride mode | `views/ride/RideModeView.tsx` | Full-bleed 3D map with the quit and recenter buttons |
-| Free ride | `views/ride/FreeRideView.tsx`, `FreeRideWaitingView.tsx`, `FreeRideSessionView.tsx`, `FinishFreeRideDialog.tsx` | Ride with no route: waits for the first fix, then records the track; see [Free ride](#free-ride) |
-| Free ride logic | `hooks/useTrackRecorder.ts`, `hooks/useFinishFreeRide.ts`, `hooks/useFreeRideMap.ts` | Records the fixes, saves the route and the ride, and draws the map |
-| Track maths | `services/trackRecorder.ts`, `services/trackOptimizer.ts` | Which fixes enter the track, and how the track is shrunk before it is saved |
+| Free ride | `views/ride/FreeRideView.tsx`, `FreeRideWaitingView.tsx`, `FreeRideSessionView.tsx`, `FinishFreeRideDialog.tsx` | Ride with no route: waits for the first fix, then shows the rider and the group, recording nothing; see [Free ride](#free-ride) |
+| Free ride map | `hooks/useFreeRideMap.ts` | The pitched map that follows the rider; draws no path |
 | Quit | `views/ride/ConfirmQuitRideDialog.tsx`, `hooks/useQuitRide.ts` | "Quit this ride?" dialog opened by the X, and saving the unfinished ride before leaving |
 | Routes | `hooks/useMyRoutes.ts` | `GET /api/routes/`, with `reload` |
 | Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<uuid>/` for the selected route, with `retry` |
@@ -255,45 +254,24 @@ style guide's [Group rides](../ui-ux/group.html) page.
 ## Free ride
 
 A ride in **free mode** (chosen as a row of the route dialog, see [Picker](#picker); there is
-no Free ride button any more) has no route to follow: the rider's own track is
-recorded, and on finishing it is saved as a new route and then as a ride of that route.
-It is a group of its own like any ride, so riders invited to it see each other on the map.
+no Free ride button any more) has no route to follow, and **nothing of it is drawn or recorded**:
+no path is shown on the map and the rider's positions are not collected into a track, so there is
+no route and no ride summary to save. It is a group of its own like any ride, so riders invited to
+it see each other on the map.
 
 - **Start** (`FreeRideView`): a free ride cannot start without a position, so until the first
   GPS fix arrives `FreeRideWaitingView` shows the status ("Finding your location", "Location
   is turned off", "Location unavailable") with an X back to the picker. The fix (snapped to a
-  street when possible, as in ride mode) then opens `FreeRideSessionView`, so `start_at` is the
-  time the session opened.
+  street when possible, as in ride mode) then opens `FreeRideSessionView`.
 - **Screen** (`FreeRideSessionView`): the same layout as ride mode: pitched 3D map that follows
   the rider (`useFreeRideMap`, which reuses `useRiderFollow`/`useRiderHeading`), the stats strip
-  (time and speed), the locate button, no tab bar, screen kept on. The recorded track is
-  drawn live as the route line (`addRouteLine`). The top-right button is a checkered flag,
-  **Finish ride**, not an X: there is no destination, so the rider ends it whenever they want.
-- **Recording** (`useTrackRecorder`, `services/trackRecorder.ts`): each new GPS fix (once per
-  `timestamp`) is added to the track unless its `accuracy` is over 30 m (a guess that would
-  draw a spike; a missing accuracy counts as good) or it is within 5 m of the last point kept
-  (standing still, or GPS noise, adds nothing). The raw fix is recorded, not the street-snapped
-  one, so paths off the road network (bike paths, parks) are kept. `useGeolocation` now passes
-  `coords.accuracy` on for this.
-- **Optimizing** (`services/trackOptimizer.ts`), run once when the ride is saved: coordinates are
-  rounded to 6 decimals (about 0.1 m); consecutive repeated points are removed; then
-  Douglas-Peucker (`simplifyPath`) drops every point a straight line can replace within 5 m,
-  keeping the first and last. The longitude is stretched by the cosine of the mean latitude
-  before simplifying, so the 5 m tolerance is the same in every direction. A track of
-  hundreds of fixes along a street becomes a handful of points; a corner stays.
-- **Finish ride** opens `FinishFreeRideDialog` ("Finish this ride?", **Keep riding** first). Confirming
-  (`useFinishFreeRide`) saves, in order: the route with `POST /api/routes/`
-  (name "Free ride 18 Oct, 14:32" from the start time, empty description, the optimized track
-  as `points`, no `waypoints`; the server calculates its distance and time), then the ride with
-  `POST /api/routes/<uuid>/summaries/` using that route, `is_finished: true`, the start and
-  now as the times, and the speeds. On success the rider lands on the Map tab, as after **Done**
-  in ride mode. The temporary name is changed from the route list like any route.
-- **Failure**: the dialog stays open with the error and the button reads **Leave without
-  saving**; **Keep riding** clears the error and recording goes on, so finishing again
-  is the retry. If the route was saved but the ride was not, the retry reuses that route
-  instead of making another.
-- **Nothing to save**: with fewer than two points recorded (the rider has not moved) the dialog
-  says so and the button reads **Leave**, which goes back to the picker with nothing saved.
+  (time and speed), the locate button, no tab bar, screen kept on. Only the rider and the other
+  riders show on the map. The top-right button is a checkered flag, **Finish ride**, not an X:
+  there is no destination, so the rider ends it whenever they want.
+- **Finish ride** opens `FinishFreeRideDialog` ("Finish this ride?", **Keep riding** first, and
+  "A free ride is not recorded, so nothing is saved"). Confirming goes back to the picker and
+  takes the rider out of the group like any exit (see [Group ride](#group-ride)). Nothing is
+  sent to the server, so there is no failure to retry.
 
 ## Key decisions
 
@@ -301,7 +279,7 @@ It is a group of its own like any ride, so riders invited to it see each other o
   quitting is instant and the selection and invitations survive. A reload while riding goes
   back to the picker, since the ride is not stored; the exception is `/ride/<group id>`,
   where a rider who accepted an invitation rides, and a reload there reopens the ride of
-  that group (the timer and recorded track start again).
+  that group (the timer starts again).
 - **A ride is always a group**: even alone, **Ride** creates a `RouteGroup`, so there is one
   path for solo and shared rides. Quitting and riding again creates a new group (and
   notifies the invitees again); the earlier one stays on the server.
@@ -356,8 +334,8 @@ Ride mode and the free ride share the group's live channel
 
 Distance left, off-route detection and a way back to the track after leaving
 it (only the way to the start is drawn), voice guidance, and terrain elevation.
-Riding a route records nothing; only a free ride records its track. A free ride does not
-snap its track to the roads, does not pause, and a reload loses it. For group rides: changing
+Neither a route ride nor a free ride records the rider's track, and a free ride is never saved. A free ride does not
+pause, and a reload loses it. For group rides: changing
 the route of a group while it rides, a trail or history of the other riders, a rider list or
 connection indicator on the ride screen, and leaving a group in the middle of a ride (a rider
 who quits just stops reporting).

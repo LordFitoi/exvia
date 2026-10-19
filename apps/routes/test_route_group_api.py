@@ -159,6 +159,40 @@ class GroupAnswerTests(GroupApiTestCase):
         self.assertEqual(self._answer(self.ben, 'accept').status_code, status.HTTP_404_NOT_FOUND)
 
 
+class GroupLeaveTests(GroupApiTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.group_id = self._create_group(route=str(self.route.id), invitees=['ana', 'ben'])['id']
+        self._client_for(self.ana).post(reverse('routes:group_accept', args=[self.group_id]))
+
+    def _leave(self, user: User):
+        return self._client_for(user).post(reverse('routes:group_leave', args=[self.group_id]))
+
+    def test_an_accepted_rider_leaves_and_frees_the_place(self) -> None:
+        self.assertEqual(self._leave(self.ana).status_code, status.HTTP_204_NO_CONTENT)
+        group = RouteGroup.objects.get(pk=self.group_id)
+        self.assertNotIn(self.ana, group.participants.all())
+        self.assertIsNone(group_meta.get_status(group.meta_json, self.ana.pk))
+
+    def test_the_group_is_gone_for_the_rider_who_left(self) -> None:
+        self._leave(self.ana)
+        self.assertEqual(self._leave(self.ana).status_code, status.HTTP_404_NOT_FOUND)
+        response = self._client_for(self.ana).get(reverse('routes:group_detail', args=[self.group_id]))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_the_others_stay_in_the_group(self) -> None:
+        self._leave(self.ana)
+        response = self._client_for(self.owner).get(reverse('routes:group_detail', args=[self.group_id]))
+        self.assertEqual({rider['username'] for rider in response.data['participants']}, {'owner', 'ben'})
+
+    def test_a_pending_invitation_is_answered_not_left(self) -> None:
+        self.assertEqual(self._leave(self.ben).status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_strangers_get_404(self) -> None:
+        stranger = User.objects.create_user('stranger')
+        self.assertEqual(self._leave(stranger).status_code, status.HTTP_404_NOT_FOUND)
+
+
 class GroupRideSummaryTests(GroupApiTestCase):
     def _save_summary(self, user: User):
         payload = {

@@ -63,6 +63,11 @@ flag yet: an answered invitation stays in the list with its status.
 A notification reaches a phone that has the app closed through the browser's push service
 (FCM, Mozilla, Apple, Windows), using the Web Push protocol with VAPID keys.
 
+**Currently disabled in the frontend.** `IS_PUSH_ENABLED` in `hooks/usePushNotifications.ts` is
+`false` until push is configured properly: the app no longer asks for permission, subscribes or shows
+the **Turn on** row. Logout still removes an existing subscription. Browsers that subscribed earlier
+keep their subscription on the server until it is removed there.
+
 **Configuration.** Three settings, read from the environment, all optional: `VAPID_PUBLIC_KEY`,
 `VAPID_PRIVATE_KEY` and `VAPID_CONTACT_EMAIL` (an address the push services may write to). Without
 all three **no push is sent** and the key endpoint answers `null`, so the app runs without it.

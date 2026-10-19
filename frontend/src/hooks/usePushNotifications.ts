@@ -4,6 +4,9 @@ import { useCallback, useEffect, useState } from 'react'
 
 import { hasPushRegistration, isPushSupported, syncPushSubscription } from '@/services/webPush'
 
+/** Push is switched off until the server side is configured properly; set to true to bring it back. */
+const IS_PUSH_ENABLED = false
+
 /** `off` can be turned on from the app; `blocked` only from the browser's settings. */
 export type PushStatus = 'checking' | 'unsupported' | 'blocked' | 'off' | 'on'
 
@@ -24,7 +27,7 @@ const permissionToStatus = (permission: NotificationPermission): PushStatus => {
  * registered again silently on mount, which also hands a shared phone to whoever is signed in now.
  */
 export const usePushNotifications = (): PushNotifications => {
-  const [status, setStatus] = useState<PushStatus>('checking')
+  const [status, setStatus] = useState<PushStatus>(IS_PUSH_ENABLED ? 'checking' : 'unsupported')
   const [isPending, setIsPending] = useState(false)
 
   const subscribe = useCallback(async () => {
@@ -37,6 +40,7 @@ export const usePushNotifications = (): PushNotifications => {
   }, [])
 
   useEffect(() => {
+    if (!IS_PUSH_ENABLED) return
     let isCancelled = false
     const start = async () => {
       if (!isPushSupported() || !(await hasPushRegistration())) {

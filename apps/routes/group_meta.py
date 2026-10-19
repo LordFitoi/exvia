@@ -92,6 +92,11 @@ def set_status(meta: dict[str, Any], user_id: int, status: ParticipantStatus) ->
     participants.setdefault(str(user_id), {'position': None})['status'] = status.value
 
 
+def remove_participant(meta: dict[str, Any], user_id: int) -> None:
+    """Forgets a user, with their status and last position; a user the meta does not know is ignored."""
+    meta.get('participants', {}).pop(str(user_id), None)
+
+
 def get_status(meta: dict[str, Any], user_id: int) -> ParticipantStatus | None:
     entry = meta.get('participants', {}).get(str(user_id))
     return ParticipantStatus(entry['status']) if entry else None

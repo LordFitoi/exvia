@@ -18,6 +18,10 @@ class InvitationAlreadyAnswered(ValueError):
     """The user has already accepted or rejected the invitation, or was never invited."""
 
 
+class NotRidingInGroup(ValueError):
+    """The user has not accepted the group, so there is nothing to leave."""
+
+
 @transaction.atomic
 def create_group(author: User, route: Route | None, invitees: list[User]) -> RouteGroup:
     """A group led by `author` (already in, accepted) with the invitees waiting for their answer.
@@ -42,6 +46,16 @@ def answer_invitation(group: RouteGroup, user: User, answer: ParticipantStatus) 
     group.save(update_fields=['meta_json', 'updated_at'])
     if answer == ParticipantStatus.REJECTED:
         group.participants.remove(user)
+
+
+def leave_group(group: RouteGroup, user: User) -> None:
+    """Takes a rider who accepted out of the group, which frees their place and ends their ride in it.
+    Call it inside a transaction that holds a lock on `group`."""
+    if group_meta.get_status(group.meta_json, user.pk) != ParticipantStatus.ACCEPTED:
+        raise NotRidingInGroup(f'User {user.pk} is not riding in group {group.pk}.')
+    group_meta.remove_participant(group.meta_json, user.pk)
+    group.save(update_fields=['meta_json', 'updated_at'])
+    group.participants.remove(user)
 
 
 def load_positions(group_id: object, user_id: int) -> dict[str, dict[str, Any]] | None:

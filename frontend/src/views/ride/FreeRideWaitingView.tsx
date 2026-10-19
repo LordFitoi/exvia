@@ -20,7 +20,7 @@ const WAITING_MESSAGES: Record<GeolocationStatus, WaitingMessage> = {
   denied: {
     title: 'Location is turned off',
     description:
-      'A free ride records where you go. Allow location access for Exvia in your browser or phone settings, then try again.',
+      'A free ride needs your position. Allow location access for Exvia in your browser or phone settings, then try again.',
   },
   unavailable: {
     title: 'Location unavailable',

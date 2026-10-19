@@ -10,14 +10,12 @@ import FreeRideWaitingView from '@/views/ride/FreeRideWaitingView'
 interface FreeRideViewProps {
   /** The group riding together; its other riders are shown on the map. */
   group: RouteGroup
-  /** Leaves the free ride without saving, back to the picker. */
+  /** Leaves the free ride, back to the picker. */
   onLeave: () => void
-  /** Leaves for good, after the track and the ride were saved. */
-  onSaved: () => void
 }
 
 /** Starts a free ride once the rider's position is known; until then it waits on a status screen. */
-export default function FreeRideView({ group, onLeave, onSaved }: FreeRideViewProps) {
+export default function FreeRideView({ group, onLeave }: FreeRideViewProps) {
   const location = useGeolocation()
   const street = useStreetPosition({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -28,6 +26,6 @@ export default function FreeRideView({ group, onLeave, onSaved }: FreeRideViewPr
 
   if (!rider) return <FreeRideWaitingView status={location.status} onClose={onLeave} />
   return (
-    <FreeRideSessionView group={group} location={location} rider={rider} onLeave={onLeave} onSaved={onSaved} />
+    <FreeRideSessionView group={group} location={location} rider={rider} onLeave={onLeave} />
   )
 }

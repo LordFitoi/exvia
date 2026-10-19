@@ -4,13 +4,10 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 
 import { useState } from 'react'
 
-import { useFinishFreeRide } from '@/hooks/useFinishFreeRide'
 import { useFreeRideMap } from '@/hooks/useFreeRideMap'
 import { useGroupRide } from '@/hooks/useGroupRide'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useRideElapsed } from '@/hooks/useRideElapsed'
-import { useRideSpeeds } from '@/hooks/useRideSpeeds'
-import { useTrackRecorder } from '@/hooks/useTrackRecorder'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { Coordinates, GeolocationState } from '@/types/geolocation'
@@ -26,38 +23,23 @@ interface FreeRideSessionViewProps {
   location: GeolocationState
   /** Where to show the rider: the street position when there is one, else the raw fix. */
   rider: Coordinates
-  /** Leaves the free ride without saving, back to the picker. */
+  /** Leaves the free ride, back to the picker. */
   onLeave: () => void
-  /** Leaves for good, after the track and the ride were saved. */
-  onSaved: () => void
 }
 
-/** A ride with no route: the rider's own track is recorded, and saved as a new route when they finish. */
-export default function FreeRideSessionView({
-  group,
-  location,
-  rider,
-  onLeave,
-  onSaved,
-}: FreeRideSessionViewProps) {
+/** A ride with no route: nothing of it is drawn or recorded, only the rider and the group are on the map. */
+export default function FreeRideSessionView({ group, location, rider, onLeave }: FreeRideSessionViewProps) {
   const [startedAt] = useState(() => Date.now())
   const elapsedSeconds = useRideElapsed(startedAt, null)
-  const track = useTrackRecorder(location)
   const riders = useGroupRide({ group, rider, location })
-  const speeds = useRideSpeeds({ speed: location.speed, fixTime: location.timestamp, isRiding: true })
   const [isFinishOpen, setIsFinishOpen] = useState(false)
-  const finish = useFinishFreeRide({ track, startedAt, speeds, onSaved, onLeave })
   const { containerRef, hasLoadFailed, recenter } = useFreeRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
-    track,
     rider,
     riders,
   })
 
-  const handleKeepRiding = () => {
-    finish.reset()
-    setIsFinishOpen(false)
-  }
+  const handleKeepRiding = () => setIsFinishOpen(false)
 
   // The load-failure screen has no way out of its own, so it keeps the tab bar.
   useHideTabBar(!hasLoadFailed)
@@ -101,11 +83,8 @@ export default function FreeRideSessionView({
       <RideStatsPanel elapsedSeconds={elapsedSeconds} speed={location.speed} />
       <FinishFreeRideDialog
         isOpen={isFinishOpen}
-        canSave={finish.canSave}
-        isPending={finish.isPending}
-        error={finish.error}
         onKeepRiding={handleKeepRiding}
-        onFinish={finish.confirm}
+        onFinish={onLeave}
       />
     </main>
   )

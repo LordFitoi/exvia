@@ -12,10 +12,18 @@ from rest_framework.views import APIView
 
 from apps.routes.group_meta import ParticipantStatus
 from apps.routes.group_serializers import GroupCreateSerializer, GroupSerializer
-from apps.routes.group_service import InvitationAlreadyAnswered, answer_invitation, create_group, find_active_group
+from apps.routes.group_service import (
+    InvitationAlreadyAnswered,
+    NotRidingInGroup,
+    answer_invitation,
+    create_group,
+    find_active_group,
+    leave_group,
+)
 from apps.routes.models import RouteGroup
 
 ALREADY_ANSWERED_MESSAGE = 'You have already answered this invitation.'
+NOT_RIDING_MESSAGE = 'You are not riding in this group.'
 
 
 def group_queryset() -> QuerySet[RouteGroup]:
@@ -84,3 +92,17 @@ class GroupRejectView(GroupAnswerView):
     """Rejects the invitation and leaves the group."""
 
     answer = ParticipantStatus.REJECTED
+
+
+class GroupLeaveView(APIView):
+    """Takes the caller, who accepted the group, out of it, so it is no longer offered to them."""
+
+    @transaction.atomic
+    def post(self, request: Request, pk: str) -> Response:
+        locked = RouteGroup.objects.select_for_update(of=('self',)).filter(participants=request.user)
+        group = get_object_or_404(locked, pk=pk)
+        try:
+            leave_group(group, request.user)
+        except NotRidingInGroup as error:
+            raise ValidationError({'detail': NOT_RIDING_MESSAGE}) from error
+        return Response(status=status.HTTP_204_NO_CONTENT)

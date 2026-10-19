@@ -40,6 +40,11 @@ export const rejectRouteInvitation = async (groupId: string): Promise<void> => {
   await requestJsonAuthorized(`${GROUPS_PATH}${groupId}/reject/`, { method: 'POST' })
 }
 
+/** Takes the caller, who accepted the group, out of it; it is then no longer offered to them. */
+export const leaveRouteGroup = async (groupId: string): Promise<void> => {
+  await requestJsonAuthorized(`${GROUPS_PATH}${groupId}/leave/`, { method: 'POST' })
+}
+
 /** The rider with exactly this username; an unknown name is an `ApiError` with status 404. */
 export const lookupRider = async (username: string): Promise<RiderProfile> => {
   const rider = await requestJsonAuthorized(`${LOOKUP_PATH}?username=${encodeURIComponent(username)}`)

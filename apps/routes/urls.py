@@ -1,6 +1,13 @@
 from django.urls import path
 
-from apps.routes.group_views import GroupAcceptView, GroupActiveView, GroupCreateView, GroupDetailView, GroupRejectView
+from apps.routes.group_views import (
+    GroupAcceptView,
+    GroupActiveView,
+    GroupCreateView,
+    GroupDetailView,
+    GroupLeaveView,
+    GroupRejectView,
+)
 from apps.routes.views import (
     RideSummaryCreateView,
     RideSummaryDetailView,
@@ -19,6 +26,7 @@ urlpatterns = [
     path('groups/<uuid:pk>/', GroupDetailView.as_view(), name='group_detail'),
     path('groups/<uuid:pk>/accept/', GroupAcceptView.as_view(), name='group_accept'),
     path('groups/<uuid:pk>/reject/', GroupRejectView.as_view(), name='group_reject'),
+    path('groups/<uuid:pk>/leave/', GroupLeaveView.as_view(), name='group_leave'),
     path('summaries/', RideSummaryListView.as_view(), name='ride_summary_list'),
     path('summaries/<int:pk>/', RideSummaryDetailView.as_view(), name='ride_summary_detail'),
     path('<uuid:pk>/', RouteDetailView.as_view(), name='route_detail'),

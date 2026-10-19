@@ -16,7 +16,7 @@ All in [apps/routes/](../../apps/routes/):
 | [group_meta.py](../../apps/routes/group_meta.py) | Shape, validator and helpers of `meta_json` |
 | [group_service.py](../../apps/routes/group_service.py) | `create_group`, `answer_invitation`, `find_active_group`: the rules, no HTTP |
 | [group_serializers.py](../../apps/routes/group_serializers.py) | `GroupCreateSerializer`, `GroupSerializer` |
-| [group_views.py](../../apps/routes/group_views.py) | The five group endpoints |
+| [group_views.py](../../apps/routes/group_views.py) | The group endpoints |
 | [consumers.py](../../apps/routes/consumers.py), [routing.py](../../apps/routes/routing.py) | `RouteGroupConsumer`, the live channel; its route is added to `apps/core/routing.py` |
 | [signals.py](../../apps/routes/signals.py) | The participant limit, on the many-to-many |
 
@@ -85,6 +85,7 @@ All endpoints need a JWT, like the rest of `/api/routes/`.
 | `GET /api/routes/groups/<uuid>/` | Reads a group the caller is in or was invited to |
 | `POST /api/routes/groups/<uuid>/accept/` | Accepts the caller's invitation; answers the group |
 | `POST /api/routes/groups/<uuid>/reject/` | Rejects it and leaves the group; `204` |
+| `POST /api/routes/groups/<uuid>/leave/` | Takes a rider who accepted out of the group; `204` (see [Leaving](#leaving)) |
 | `GET /api/routes/groups/active/` | The newest group the caller can join back (see [Active group](#active-group)); `204` when there is none |
 
 **Create** takes `{"route": "<uuid>" | null, "invitees": ["ana", "ben"]}`; both are optional
@@ -131,6 +132,16 @@ Also new, in the users app: `GET /api/auth/users/lookup/?username=<name>` return
 `{"id", "username", "avatar"}` for an active user with exactly that username, `404` otherwise.
 The invite dialog uses it to reject an unknown name before **Ride** is pressed. It tells a
 signed-in caller whether a username exists, as the clan invitation already does.
+
+## Leaving
+
+A rider who ends their ride (quits, finishes, or leaves a free ride) is taken out of the group by
+`POST /api/routes/groups/<uuid>/leave/` (`leave_group`): their entry is removed from `meta_json`
+and from `participants`, which frees the place, hides the group from them (`404` afterwards) and
+stops it being offered back through [Active group](#active-group) while the others still ride.
+Only a rider who **accepted** can leave; a pending invitation is answered with accept/reject
+instead (`400`). The client saves the ride first, then leaves, and ignores a failed request so a
+bad connection never keeps the rider on the ride screen.
 
 ## Active group
 
