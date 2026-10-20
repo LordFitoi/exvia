@@ -64,7 +64,7 @@ shows pending invitations (Decline / Join), the caller's clans and a "New
 clan" sheet. Opening a clan shows `ClanView`: description plus a Notices tab
 (read, "New notice" sheet) and a Members tab (list, "Invite a rider" sheet,
 which takes a username). Home lists the feed under "From your clans" with the
-same `NoticeList` and `NoticeCard`. The three sheets share `FormSheet`, which
+same `NoticeList` and `NoticeCard`. The three sheets share `FormSheet` (a floating modal sheet; drag its header down to close it), which
 is mounted to open and unmounted to close so each opening starts empty. List
 loading shares `useRemoteList`.
 

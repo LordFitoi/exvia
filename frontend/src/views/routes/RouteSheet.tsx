@@ -43,25 +43,29 @@ export default function RouteSheet({ title, statusLabel, notice, children }: Rou
   return (
     <div
       ref={sheetRef}
-      className="sheet sheet-collapsible map-sheet"
+      className="sheet map-sheet"
       role="region"
       aria-label="Route points"
       style={isCollapsed ? { transform: `translateY(${collapseOffset}px)` } : undefined}
     >
       <div className="sheet-grab" {...grabProps}>
-        <button
-          className="sheet-handle"
-          type="button"
-          aria-label={isCollapsed ? 'Show route points' : 'Hide route points'}
-          aria-expanded={!isCollapsed}
-          aria-controls={bodyId}
-          onClick={handleToggleClick}
-        ></button>
         <div className="sheet-header">
           <h2 className="text-subtitle">{title}</h2>
-          <span className="badge badge-primary" aria-live="polite">
-            {statusLabel}
-          </span>
+          <div className="sheet-header-end">
+            <span className="badge badge-primary" aria-live="polite">
+              {statusLabel}
+            </span>
+            <button
+              className="icon-button"
+              type="button"
+              aria-label={isCollapsed ? 'Show route points' : 'Hide route points'}
+              aria-expanded={!isCollapsed}
+              aria-controls={bodyId}
+              onClick={handleToggleClick}
+            >
+              <span className="icon icon-chevron-down" aria-hidden="true"></span>
+            </button>
+          </div>
         </div>
       </div>
       {notice}

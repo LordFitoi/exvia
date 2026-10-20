@@ -1,5 +1,6 @@
 'use client'
 
+import SheetHeader from '@/components/layout/SheetHeader'
 import { useModalDialog } from '@/hooks/useModalDialog'
 import { formatAverageSpeed, formatClock, formatDistance, formatDuration } from '@/services/formatRoute'
 import type { SaveRideStatus } from '@/hooks/useSaveRideSummary'
@@ -40,15 +41,13 @@ export default function RideSummarySheet({
       aria-labelledby="ride-summary-title"
       onClose={onClose}
     >
-      <span className="sheet-handle"></span>
-      <div className="sheet-header">
-        <h2 className="text-subtitle" id="ride-summary-title">
-          You’ve arrived!
-        </h2>
-        <button className="icon-button" type="button" aria-label="Close summary" onClick={onClose}>
-          <span className="icon icon-x" aria-hidden="true"></span>
-        </button>
-      </div>
+      <SheetHeader
+        titleId="ride-summary-title"
+        title="You’ve arrived!"
+        closeLabel="Close summary"
+        sheetRef={dialogRef}
+        onClose={onClose}
+      />
       <p className="text-small text-muted">You finished “{route.name}”.</p>
       <div className="route-stats">
         <div className="route-stat">

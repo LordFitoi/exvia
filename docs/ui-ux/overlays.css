@@ -3,8 +3,9 @@
    within the thumb's reach: never touching the screen edges, with a
    --space-4 gap on both sides and below (lifted by the safe area), all four
    corners rounded, the dialog's solid surface and shadow, and no handle bar.
-   The centered dialog is only for confirmations, so people are not pulled out
-   of their task (Flow). */
+   The centered dialog is for confirmations, and its panel form for the lists and
+   short forms that are chosen from and then left. Both keep people in their
+   task (Flow). */
 
 .sheet {
   position: relative;
@@ -53,6 +54,8 @@
   gap: var(--space-2);
 }
 
+.sheet-header .icon-button[aria-expanded="false"] .icon { transform: rotate(180deg); }
+
 .sheet-header-end {
   display: flex;
   align-items: center;
@@ -69,14 +72,16 @@
    classes on a div draw it inside a screen mockup. Its bottom edge is the
    bottom of the app's 100dvh box, the same edge the tab bar and the ride
    strip sit on, not `bottom: 0` of the window: on Android that edge reaches
-   behind the system navigation bar and hides the end of the sheet */
+   behind the system navigation bar and hides the end of the sheet. The width
+   is the app column minus the --space-4 gap on each side, so on a wide screen
+   the card still floats inside the column instead of touching its edges */
 dialog.sheet-modal:not([open]) { display: none; }
 
 dialog.sheet-modal {
   position: fixed;
   inset: 100dvh 0 auto;
   translate: 0 calc(-100% - var(--space-4) - var(--safe-bottom));
-  inline-size: min(calc(100% - var(--space-8)), var(--app-max-width));
+  inline-size: calc(min(100%, var(--app-max-width)) - var(--space-8));
   max-inline-size: none;
   max-block-size: calc(90dvh - var(--safe-bottom));
   margin: 0 auto;
@@ -127,6 +132,10 @@ dialog.sheet-modal::backdrop { background: var(--color-scrim); }
 }
 
 .menu-item .icon { color: var(--color-text-muted); }
+
+/* The one destructive item of a menu: error color, so it reads as the risky choice */
+.menu-item-danger,
+.menu-item-danger .icon { color: var(--color-error-text); }
 .menu-item:active { background: var(--color-surface-sunken); }
 
 @media (hover: hover) {
@@ -155,6 +164,21 @@ dialog.sheet-modal::backdrop { background: var(--color-scrim); }
 }
 
 .dialog::backdrop { background: var(--color-scrim); }
+
+/* Panel dialog: the centered dialog for a list or a short form that is chosen
+   from and then left, like the riders of a ride or the route to ride. The
+   header is the sheet's (`sheet-header`: title left, X right) and the content
+   sits under it. It is a little wider than the confirmation dialog, still
+   inside the app column with the same --space-4 gap, and scrolls inside
+   itself when the content is taller than the screen */
+.dialog-panel {
+  inline-size: min(calc(100% - var(--space-8)), calc(var(--app-max-width) - var(--space-8)));
+  max-block-size: 80dvh;
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.dialog-panel:where(:not(dialog), [open]) { gap: var(--space-4); }
 
 .dialog-actions {
   display: flex;

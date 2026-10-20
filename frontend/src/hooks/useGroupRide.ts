@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo } from 'react'
 
+import { useAuth } from '@/hooks/useAuth'
 import { useGroupChannel } from '@/hooks/useGroupChannel'
 import type { PresenceHandler } from '@/hooks/useGroupChannel'
 import { useLiveGroup } from '@/hooks/useLiveGroup'
@@ -28,13 +29,17 @@ export interface GroupRide {
 
 const LOST_PLACE_MESSAGE = 'You are no longer in this ride'
 const describeRouteChange = (leaderName: string): string => `${leaderName} changed the route`
+const describeLeaderChange = (leaderName: string | null, isYou: boolean): string =>
+  isYou ? 'You lead the ride now' : `${leaderName ?? 'Another rider'} leads the ride now`
 
 /**
  * Shares the rider's position with their group and returns where the other riders are, and who came or went.
  * Whenever a rider joins or leaves the group is read again, so riders invited or removed meanwhile show up;
- * so it is when the leader changes the route, which the ride screen then follows.
+ * so it is when the leader changes the route, which the ride screen then follows, or hands the group to
+ * another rider, whose controls then show.
  */
 export const useGroupRide = ({ rider, location }: GroupRideOptions): GroupRide => {
+  const { user } = useAuth()
   const { group, reloadGroup } = useLiveGroup()
   const presence = usePresenceNotice(group.participants)
   const { handlePresence: announcePresence, announce } = presence
@@ -50,9 +55,19 @@ export const useGroupRide = ({ rider, location }: GroupRideOptions): GroupRide =
     announce(describeRouteChange(leaderName))
     reloadGroup()
   }, [announce, leaderName, reloadGroup])
+  const { participants } = group
+  const userId = user?.id
+  const handleLeaderChange = useCallback(
+    (leaderId: number) => {
+      const leaderName = participants.find(({ id }) => id === leaderId)?.username ?? null
+      announce(describeLeaderChange(leaderName, leaderId === userId))
+      reloadGroup()
+    },
+    [announce, participants, userId, reloadGroup],
+  )
   const channelHandlers = useMemo(
-    () => ({ onPresence: handlePresence, onRouteChange: handleRouteChange }),
-    [handlePresence, handleRouteChange],
+    () => ({ onPresence: handlePresence, onRouteChange: handleRouteChange, onLeaderChange: handleLeaderChange }),
+    [handlePresence, handleRouteChange, handleLeaderChange],
   )
   const { status, positions, send } = useGroupChannel(group.id, channelHandlers)
   useEffect(() => {

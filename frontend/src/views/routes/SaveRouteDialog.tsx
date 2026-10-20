@@ -4,6 +4,7 @@ import FormAlert from '@/components/form/FormAlert'
 import SubmitButton from '@/components/form/SubmitButton'
 import TextAreaField from '@/components/form/TextAreaField'
 import TextField from '@/components/form/TextField'
+import SheetHeader from '@/components/layout/SheetHeader'
 import { useFormSubmission } from '@/hooks/useFormSubmission'
 import { useModalDialog } from '@/hooks/useModalDialog'
 import type { NewRoute, RouteGeometry, SavedRoute } from '@/types/route'
@@ -53,15 +54,13 @@ export default function SaveRouteDialog({
       aria-labelledby="save-route-title"
       onClose={onClose}
     >
-      <span className="sheet-handle"></span>
-      <div className="sheet-header">
-        <h2 className="text-subtitle" id="save-route-title">
-          {title}
-        </h2>
-        <button className="icon-button" type="button" aria-label={closeLabel} onClick={onClose}>
-          <span className="icon icon-x" aria-hidden="true"></span>
-        </button>
-      </div>
+      <SheetHeader
+        titleId="save-route-title"
+        title={title}
+        closeLabel={closeLabel}
+        sheetRef={dialogRef}
+        onClose={onClose}
+      />
       <form className="stack-lg" onSubmit={handleSubmit}>
         <FormAlert message={formError} />
         <div className="stack">

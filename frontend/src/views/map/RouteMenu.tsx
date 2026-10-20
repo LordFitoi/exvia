@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useId, useRef, useState } from 'react'
-import type { KeyboardEvent } from 'react'
+import { useMenuPopover } from '@/hooks/useMenuPopover'
 
 interface RouteMenuProps {
   onCreate: () => void
@@ -9,44 +8,13 @@ interface RouteMenuProps {
   onHistory: () => void
 }
 
-const MENU_ITEM_SELECTOR = '[role="menuitem"]'
-const KEY_STEPS: Readonly<Record<string, number>> = { ArrowDown: 1, ArrowUp: -1 }
-
 /** The route button of the map controls: opens a menu to create a route, browse the saved ones or see the ride history. */
 export default function RouteMenu({ onCreate, onPreview, onHistory }: RouteMenuProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const panelId = useId()
-
-  useEffect(() => {
-    if (!isOpen) return
-    rootRef.current?.querySelector<HTMLElement>(MENU_ITEM_SELECTOR)?.focus()
-    const closeOnOutsidePress = (event: PointerEvent) => {
-      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setIsOpen(false)
-    }
-    document.addEventListener('pointerdown', closeOnOutsidePress)
-    return () => document.removeEventListener('pointerdown', closeOnOutsidePress)
-  }, [isOpen])
+  const { isOpen, panelId, rootRef, triggerRef, toggle, close, handleKeyDown } = useMenuPopover()
 
   const handleChoose = (action: () => void) => {
-    setIsOpen(false)
+    close()
     action()
-  }
-
-  // Escape closes and returns focus to the button; the arrow keys move between the items.
-  const handleKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
-    if (event.key === 'Escape') {
-      setIsOpen(false)
-      triggerRef.current?.focus()
-      return
-    }
-    const step = KEY_STEPS[event.key]
-    if (step === undefined) return
-    event.preventDefault()
-    const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(MENU_ITEM_SELECTOR))
-    const current = items.findIndex((item) => item === document.activeElement)
-    items[(current + step + items.length) % items.length]?.focus()
   }
 
   return (
@@ -59,7 +27,7 @@ export default function RouteMenu({ onCreate, onPreview, onHistory }: RouteMenuP
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={isOpen ? panelId : undefined}
-        onClick={() => setIsOpen((previous) => !previous)}
+        onClick={toggle}
       >
         <span className="icon icon-route" aria-hidden="true"></span>
       </button>

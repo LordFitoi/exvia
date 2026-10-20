@@ -217,7 +217,6 @@ button.link-action {
 .segmented-option::before,
 .link-action::before,
 .profile-avatar-edit::before,
-.sheet-handle::before,
 .marker::before {
   content: "";
   position: absolute;

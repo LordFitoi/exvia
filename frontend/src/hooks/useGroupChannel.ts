@@ -13,6 +13,8 @@ export interface GroupChannelHandlers {
   readonly onPresence: PresenceHandler
   /** Hears the leader change the route. */
   readonly onRouteChange: () => void
+  /** Hears the leader hand the group to another rider, who is named by id. */
+  readonly onLeaderChange: (leaderId: number) => void
 }
 
 interface GroupChannel {
@@ -46,6 +48,7 @@ export const useGroupChannel = (groupId: string, handlers: GroupChannelHandlers)
       if (message.type === 'error') console.error(`The ride channel refused a message: ${message.detail}`)
       if (message.type === 'presence') handlersRef.current.onPresence(message.userId, message.status)
       if (message.type === 'route_changed') handlersRef.current.onRouteChange()
+      if (message.type === 'leader_changed') handlersRef.current.onLeaderChange(message.userId)
       if (message.type !== 'position') return
       const live = { position: message.position, seenAt: Date.now() }
       setPositions((previous) => new Map(previous).set(message.position.userId, live))

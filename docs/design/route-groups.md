@@ -88,6 +88,7 @@ All endpoints need a JWT, like the rest of `/api/routes/`.
 | `POST /api/routes/groups/<uuid>/reject/` | Rejects it and leaves the group; `204` |
 | `POST /api/routes/groups/<uuid>/invite/` | The leader invites one more rider to a group that is rolling; answers the group (see [Inviting and removing](#inviting-and-removing)) |
 | `POST /api/routes/groups/<uuid>/remove/` | The leader takes a rider out of the group; answers the group |
+| `POST /api/routes/groups/<uuid>/leader/` | The leader hands the group to a rider who is riding in it; answers the group (see [Changing the leader](#changing-the-leader)) |
 | `POST /api/routes/groups/<uuid>/route/` | The leader changes the route of a group that is rolling, or switches it to free mode; answers the group (see [Changing the route](#changing-the-route)) |
 | `POST /api/routes/groups/<uuid>/leave/` | Takes a rider who accepted out of the group; `204` (see [Leaving](#leaving)) |
 | `GET /api/routes/groups/active/` | The newest group the caller accepted, has not left and that saw activity in the last 2 h (see [Active group](#active-group)); `204` when there is none |
@@ -157,6 +158,21 @@ answer the updated group, with the body of a read.
 - **The removed rider's channel** is not cut at once: their next position finds no place in the
   group, `save_position` says so and the consumer closes the socket with `4403`, which the others hear
   as "left". That takes at most one reporting interval (5 s).
+
+## Changing the leader
+
+The leader can hand the group to another rider (`promote_rider` in
+[group_service.py](../../apps/routes/group_service.py), `GroupLeaderView`). It locks the group row and needs the
+**author** (another rider `403`, a stranger `404`). It takes `{"user": <id>}`, and errors are on `user`: the
+rider is the leader already, is not in the group, or has not accepted (only a rider who is riding can lead). The
+author becomes that rider and bumps `updated_at`; the former leader stays in the group, still accepted, as a
+rider, and loses the leader's controls (invite, remove, route, promote). The leader is only ever the `author`, so
+every check that needs the leader follows the hand-over. It answers the updated group.
+
+Once committed, `broadcast_leader_change` ([live.py](../../apps/routes/live.py)) sends `group.leader` to the
+channel group, and every connected rider **except the former leader** gets
+`{"type": "leader_changed", "user_id": <new leader>}`; each client reads the group again, as for a route change.
+Best effort: a rider who is not connected learns the new leader when they read the group.
 
 ## Changing the route
 
@@ -238,6 +254,7 @@ on every position instead.
 | server -> others | `{"type": "position", "user_id": 5, "lng": ..., "lat": ..., "heading": ..., "speed": ..., "accuracy": ..., "recorded_at": "..."}`; not echoed back to the sender |
 | server -> others | `{"type": "presence", "user_id": 5, "status": "joined" \| "left"}` when a rider signs in (after their `ready`) or their socket drops; not sent to that rider, and not for a socket that never got past sign-in |
 | server -> others | `{"type": "route_changed"}` when the leader changes the route ([Changing the route](#changing-the-route)); not sent to the leader |
+| server -> others | `{"type": "leader_changed", "user_id": 7}` with the new leader when the leader hands the group over ([Changing the leader](#changing-the-leader)); not sent to the former leader |
 | server -> rider | `{"type": "error", "detail": "..."}` for a bad position, an unknown type or a non-object; the socket stays open |
 
 Riders send their position every 5 s (the client's job, see [ride.md](ride.md)). Each

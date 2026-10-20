@@ -84,8 +84,8 @@ class GroupInviteSerializer(serializers.Serializer):
         return user
 
 
-class GroupRemoveSerializer(serializers.Serializer):
-    """The id of the rider to take out of a group."""
+class GroupRiderSerializer(serializers.Serializer):
+    """The id of the rider a leader acts on: to take out of the group, or to hand the leadership to."""
 
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), error_messages={
         'does_not_exist': NOT_IN_GROUP_MESSAGE, 'incorrect_type': NOT_IN_GROUP_MESSAGE,

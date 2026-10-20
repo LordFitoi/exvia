@@ -60,7 +60,7 @@ were added to the guide for it.
 
 ## Delete
 
-**Delete** opens the guide's confirm dialog (`components/feedback/ConfirmDeleteDialog`, shared with the [ride history](ride-history.md#delete): a native
+**Delete** opens the guide's confirm dialog (`components/feedback/ConfirmDialog`, shared with the [ride history](ride-history.md#delete): a native
 `<dialog class="dialog" role="alertdialog">`, "Delete this route?", the route
 name, Cancel first and the solid error Delete last). It is the one place the
 guide allows a solid error button.

@@ -38,6 +38,10 @@ class CannotRemoveLeader(ValueError):
     """The leader of a group cannot be removed from it."""
 
 
+class AlreadyLeader(ValueError):
+    """The rider already leads the group."""
+
+
 @transaction.atomic
 def create_group(author: User, route: Route | None, invitees: list[User]) -> RouteGroup:
     """A group led by `author` (already in, accepted) with the invitees waiting for their answer.
@@ -99,6 +103,19 @@ def remove_rider(group: RouteGroup, rider: User) -> None:
     group_meta.remove_participant(group.meta_json, rider.pk)
     group.save(update_fields=['meta_json', 'updated_at'])
     group.participants.remove(rider)
+
+
+def promote_rider(group: RouteGroup, rider: User) -> None:
+    """Hands the leadership of the group to a rider who is riding in it. The previous leader stays in the
+    group as a rider. Call it inside a transaction that holds a lock on `group`."""
+    if rider.pk == group.author_id:
+        raise AlreadyLeader(f'User {rider.pk} already leads group {group.pk}.')
+    if not group.participants.filter(pk=rider.pk).exists():
+        raise NotInGroup(f'User {rider.pk} is not in group {group.pk}.')
+    if group_meta.get_status(group.meta_json, rider.pk) != ParticipantStatus.ACCEPTED:
+        raise NotRidingInGroup(f'User {rider.pk} is not riding in group {group.pk}.')
+    group.author = rider
+    group.save(update_fields=['author', 'updated_at'])
 
 
 def change_route(group: RouteGroup, route: Route | None) -> None:

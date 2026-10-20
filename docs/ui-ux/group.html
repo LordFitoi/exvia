@@ -64,12 +64,12 @@
                 <li class="list-item">
                   <span class="avatar avatar-sm" aria-hidden="true">AN</span>
                   <span class="list-item-body"><span class="list-item-title">ana</span></span>
-                  <button class="icon-button" type="button" aria-label="Remove ana"><span class="icon icon-x" aria-hidden="true"></span></button>
+                  <button class="icon-button" type="button" aria-label="Remove ana"><span class="icon icon-trash" aria-hidden="true"></span></button>
                 </li>
                 <li class="list-item">
                   <span class="avatar avatar-sm" aria-hidden="true">BE</span>
                   <span class="list-item-body"><span class="list-item-title">ben</span></span>
-                  <button class="icon-button" type="button" aria-label="Remove ben"><span class="icon icon-x" aria-hidden="true"></span></button>
+                  <button class="icon-button" type="button" aria-label="Remove ben"><span class="icon icon-trash" aria-hidden="true"></span></button>
                 </li>
               </ul>
             </section>
@@ -128,12 +128,10 @@
             <div class="route-preview" aria-hidden="true"></div>
           </div>
           <div class="map-scrim"></div>
-          <div class="sheet sheet-modal phone-sheet" role="dialog" aria-labelledby="choose-route-title">
-            <div class="sheet-grab">
-              <div class="sheet-header">
-                <h3 class="text-subtitle" id="choose-route-title">Choose a route</h3>
-                <button class="icon-button" type="button" aria-label="Close Choose a route"><span class="icon icon-x" aria-hidden="true"></span></button>
-              </div>
+          <div class="dialog dialog-panel phone-dialog" role="dialog" aria-labelledby="choose-route-title">
+            <div class="sheet-header">
+              <h3 class="text-subtitle" id="choose-route-title">Choose a route</h3>
+              <button class="icon-button" type="button" aria-label="Close Choose a route"><span class="icon icon-x" aria-hidden="true"></span></button>
             </div>
             <ul class="list">
               <li>
@@ -159,7 +157,7 @@
             <button class="button button-primary button-lg button-block" type="button">Save</button>
           </div>
         </div>
-        <figcaption class="phone-caption">Choose a route: a floating modal sheet over a scrim (drag the header down to close), Free mode first, the chosen row is tinted and checked; Save applies it, the X leaves the choice as it was</figcaption>
+        <figcaption class="phone-caption">Choose a route: a centered panel dialog over a scrim, Free mode first, the chosen row is tinted and checked; Save applies it, the X leaves the choice as it was</figcaption>
       </figure>
     </div>
 
@@ -206,31 +204,38 @@
               <path class="map-road" d="M0 120 H360 M0 300 H360 M0 420 H360 M90 0 V560 M250 0 V560"></path>
             </svg>
             <div class="map-scrim"></div>
-            <div class="sheet sheet-modal phone-sheet" role="dialog" aria-labelledby="riders-title">
-              <div class="sheet-grab">
-                <div class="sheet-header">
-                  <h3 class="text-subtitle" id="riders-title">Riders</h3>
-                  <button class="icon-button" type="button" aria-label="Close Riders"><span class="icon icon-x" aria-hidden="true"></span></button>
-                </div>
+            <div class="dialog dialog-panel phone-dialog" role="dialog" aria-labelledby="riders-title">
+              <div class="sheet-header">
+                <h3 class="text-subtitle" id="riders-title">Riders</h3>
+                <button class="icon-button" type="button" aria-label="Close Riders"><span class="icon icon-x" aria-hidden="true"></span></button>
               </div>
-              <ul class="list">
-                <li class="list-item">
-                  <span class="avatar avatar-sm" aria-hidden="true">AN</span>
-                  <span class="list-item-body"><span class="list-item-title">ana</span><span class="list-item-meta">Connected</span></span>
-                  <button class="icon-button" type="button" aria-label="Center the map on ana"><span class="icon icon-locate" aria-hidden="true"></span></button>
-                  <button class="icon-button" type="button" aria-label="Remove ana"><span class="icon icon-x" aria-hidden="true"></span></button>
+              <ul class="list list-flat">
+                <li class="list-item list-item-split">
+                  <button class="list-item-main" type="button" aria-pressed="true">
+                    <span class="avatar avatar-sm" aria-hidden="true">AN</span>
+                    <span class="list-item-body"><span class="list-item-title">ana</span><span class="list-item-meta">Connected</span></span>
+                  </button>
+                  <div class="menu">
+                    <button class="icon-button" type="button" aria-label="More options for ana" aria-haspopup="menu" aria-expanded="true"><span class="icon icon-more" aria-hidden="true"></span></button>
+                    <ul class="menu-panel" role="menu" aria-label="ana">
+                      <li role="none"><button class="menu-item" type="button" role="menuitem"><span class="icon icon-locate" aria-hidden="true"></span>Center the map on ana</button></li>
+                      <li role="none"><button class="menu-item" type="button" role="menuitem"><span class="icon icon-crown" aria-hidden="true"></span>Promote to leader</button></li>
+                      <li role="none"><button class="menu-item menu-item-danger" type="button" role="menuitem"><span class="icon icon-trash" aria-hidden="true"></span>Remove ana</button></li>
+                    </ul>
+                  </div>
                 </li>
-                <li class="list-item">
-                  <span class="avatar avatar-sm" aria-hidden="true">BE</span>
-                  <span class="list-item-body"><span class="list-item-title">ben</span><span class="list-item-meta">Invited</span></span>
-                  <button class="icon-button" type="button" aria-label="Remove ben"><span class="icon icon-x" aria-hidden="true"></span></button>
+                <li class="list-item list-item-split">
+                  <button class="list-item-main" type="button" aria-pressed="false">
+                    <span class="avatar avatar-sm" aria-hidden="true">BE</span>
+                    <span class="list-item-body"><span class="list-item-title">ben</span><span class="list-item-meta">Invited</span></span>
+                  </button>
                 </li>
               </ul>
               <button class="button button-outline button-block" type="button"><span class="icon icon-plus" aria-hidden="true"></span>Invite a rider</button>
             </div>
           </div>
         </div>
-        <figcaption class="phone-caption">Riders: a modal sheet with every other rider. Connected ones have a locate button (it closes the sheet and moves the map to them); invited or quiet ones only say so. The leader alone also sees the X on each row, which asks before removing, and Invite a rider under the list; others get the plain list. With nobody else the sheet shows the empty state &ldquo;Nobody else is here&rdquo;</figcaption>
+        <figcaption class="phone-caption">Riders: a centered panel dialog with every other rider in a flat list (dividers only, no card). A row with something to do is selectable: tapping it tints it and shows a more-options button, which opens a menu with Center the map on the rider (connected riders only; it closes the dialog and moves the map to them) and, for the leader alone, Promote to leader (riders who are riding only; it asks first) and Remove (in the error color; it asks before removing). Invited or quiet riders only say so, and Invite a rider sits under the list for the leader. With nobody else the dialog shows the empty state &ldquo;Nobody else is here&rdquo;</figcaption>
       </figure>
 
       <figure>

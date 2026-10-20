@@ -26,7 +26,8 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
     "user_id", "positions", "server_time"}` (the server's clock, to age the saved positions), a rider sends `{"type": "position", "lng", "lat", ...}` and everyone
     else gets `{"type": "position", "user_id", ...position}`. Everyone else also hears
     `{"type": "presence", "user_id", "status": "joined" | "left"}` when a rider signs in or drops, and
-    `{"type": "route_changed"}` when the leader changes the route (read the group again for the new one).
+    `{"type": "route_changed"}` when the leader changes the route (read the group again for the new one),
+    and `{"type": "leader_changed", "user_id"}` with the new leader when the leader hands the group over.
     """
 
     user_id: int | None = None
@@ -69,6 +70,11 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
         """Tells the group the leader changed its route, except the leader, who has the answer already."""
         if event['user_id'] != self.user_id:
             await self.send_json({'type': 'route_changed'})
+
+    async def group_leader(self, event: dict[str, Any]) -> None:
+        """Tells the group who leads it now, except the former leader, who has the answer already."""
+        if event['user_id'] != self.user_id:
+            await self.send_json({'type': 'leader_changed', 'user_id': event['leader_id']})
 
     async def _announce_presence(self, status: str) -> None:
         await self.channel_layer.group_send(

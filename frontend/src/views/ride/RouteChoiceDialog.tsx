@@ -20,7 +20,7 @@ interface RouteChoiceDialogProps {
   onClose: () => void
 }
 
-/** A modal sheet to pick the route to ride, or free mode. Closing it leaves the choice as it was. */
+/** A centered dialog to pick the route to ride, or free mode. Closing it leaves the choice as it was. */
 export default function RouteChoiceDialog({
   myRoutes,
   selection,
@@ -43,6 +43,7 @@ export default function RouteChoiceDialog({
       submitLabel="Save"
       isPending={isPending}
       formError={formError}
+      isCentered
       onSubmit={handleSubmit}
       onClose={onClose}
     >

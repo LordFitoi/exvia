@@ -1,6 +1,6 @@
 'use client'
 
-import ConfirmDeleteDialog from '@/components/feedback/ConfirmDeleteDialog'
+import ConfirmDialog from '@/components/feedback/ConfirmDialog'
 import StateView from '@/components/feedback/StateView'
 import RoutePreview from '@/components/route/RoutePreview'
 import { useRideSummaryDeletion } from '@/hooks/useRideSummaryDeletion'
@@ -101,7 +101,7 @@ export default function RideSummaryView({ summaryId, onClose, onDeleted }: RideS
           Delete ride
         </button>
       )}
-      <ConfirmDeleteDialog
+      <ConfirmDialog
         isOpen={deletion.isConfirming}
         title="Delete this ride?"
         description="It will be removed from your ride history for good, and for anyone who rode with you. This cannot be undone."

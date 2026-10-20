@@ -32,7 +32,7 @@ one.
 | Starting | `hooks/useStartGroupRide.ts`, `services/routeGroupApi.ts` | `POST /api/routes/groups/`; errors of `invitees` and `route` become the message under the button |
 | Picker | `views/ride/RoutePickerView.tsx` | "Ride" heading, preview, the Route and Invitations sections, the Ride button |
 | Sections | `views/ride/RideRouteSection.tsx`, `views/ride/InvitationsSection.tsx` | The chosen route (or free mode) with **Change**; the invited riders with **Add** and a remove X each |
-| Dialogs | `views/ride/RouteChoiceDialog.tsx`, `views/ride/RideChoiceList.tsx`, `views/ride/InviteRiderDialog.tsx` | Modal sheets: choose the route (Free mode first) with **Save**; add a rider by username |
+| Dialogs | `views/ride/RouteChoiceDialog.tsx`, `views/ride/RideChoiceList.tsx`, `views/ride/InviteRiderDialog.tsx` | Choose the route (Free mode first) with **Save**; add a rider by username; both are centered panel dialogs |
 | Preview | `components/route/RoutePreview.tsx` | Placeholder (or free mode), loading and failure states, or the preview map |
 | Rows | `components/route/RouteItemBody.tsx`, `components/route/FreeModeItemBody.tsx`, `components/rider/RiderAvatar.tsx` | The inside of a route row, of the free mode row, and a rider's picture or initials |
 | List | `components/route/RouteChoiceList.tsx` | Skeleton, error, empty and ready states of the routes (used by the route list screen) |
@@ -45,7 +45,7 @@ one.
 | Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start and finish markers, framed in view |
 | Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines, the start and finish markers and the other riders |
 | Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts` (over the shared `services/socketConnection.ts`), `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 5 s and collects the others'; see [Group ride](#group-ride) |
-| Riders | `views/ride/RidersControl.tsx`, `views/ride/RidersSheet.tsx`, `hooks/useRiderRemoval.ts`, `views/ride/InviteRiderDialog.tsx` | The users button under the X and its sheet listing the riders of the ride: locate for the connected ones, invite and remove for the leader; see [Group ride](#group-ride) |
+| Riders | `views/ride/RidersControl.tsx`, `views/ride/RidersDialog.tsx`, `views/ride/RiderRow.tsx`, `hooks/useMenuPopover.ts`, `hooks/useRiderRemoval.ts`, `views/ride/InviteRiderDialog.tsx` | The users button under the X and its dialog listing the riders of the ride: locate for the connected ones, invite and remove for the leader; see [Group ride](#group-ride) |
 | Live group | `context/LiveGroupProvider.tsx`, `hooks/useLiveGroup.ts` | The group of the ride, kept up to date while it goes on (riders invited, removed, joined); read by `useGroupRide` and `RidersControl` |
 | Rider markers | `hooks/useRiderMarkers.ts`, `services/riderBubbleMarker.ts`, `services/riderMarkers.ts` | One bubble marker per other rider, glided as they move and removed when they go quiet |
 | Rider | `hooks/useRiderFollow.ts`, `services/riderMotion.ts` | The "You" marker and the camera that follows it, gliding between fixes, with `recenter` and `focusOn` (look at another rider) |
@@ -88,7 +88,7 @@ style guide's [Group rides](../ui-ux/group.html) page.
   or **Free mode** (primary icon tile, "No route, ride wherever you want"), with **Change**
   on the heading's right. The default is the **newest route**; a rider with no routes starts
   in free mode. While the routes load the row is a skeleton and Ride is disabled.
-- **Change** opens `RouteChoiceDialog`, a modal sheet ("Choose a route"): **Free mode first,
+- **Change** opens `RouteChoiceDialog`, a centered panel dialog ("Choose a route"): **Free mode first,
   then the routes**, newest first, in a box exactly four rows tall that scrolls. The chosen
   row has `aria-pressed` and a check, as before. **Save** applies the choice and closes the
   sheet; the X or Esc closes it and leaves the choice as it was. Free mode is **not a button
@@ -101,11 +101,11 @@ style guide's [Group rides](../ui-ux/group.html) page.
   Ride is enabled when free mode is chosen, or the **chosen** route has loaded (not a
   previous one).
 - **Invitations section.** Empty: "Riding solo. Add riders by username to ride together."
-  **Add** opens `InviteRiderDialog` (the guide's modal sheet form, label above the field):
+  **Add** opens `InviteRiderDialog` (the guide's centered panel dialog with a form, label above the field):
   the username is checked against `GET /api/auth/users/lookup/`, so an unknown name is
   refused **in the dialog** ("No rider with this username."), not when Ride is pressed; so
   is your own name ("You lead this ride already.") and a name already added. Each invited
-  rider is a row with their picture or initials, their name and an X (`Remove <name>`).
+  rider is a row with their picture or initials, their name and a trash button (`Remove <name>`), not an X, so it is not mistaken for closing the screen.
   At nine invitees (`MAX_INVITEES`, ten riders with you) **Add** goes away and a line says
   the group is full. Nobody is notified yet: that happens when Ride is pressed.
 - **Ride** creates the group (`POST /api/routes/groups/`, see
@@ -345,22 +345,35 @@ Ride mode and the free ride share the group's live channel
 - **Change route.** The leader also has the **route** button (`ChangeRouteControl`) under the users
   button; see [Changing the route](#changing-the-route).
 - **Riders.** The **users** button (`RidersControl`, "Riders") sits under the X (or the flag in a
-  free ride) in the same top-right control block, and opens `RidersSheet`, a modal sheet with
+  free ride) in the same top-right control block, and opens `RidersDialog`, a centered panel dialog with
   every other rider of the group: picture or initials, name and a line under it. The riders on the
-  map now say "Connected" and have a **locate** button ("Center the map on ana"); the rest say
-  "Invited" or "Not connected" (accepted but quiet) and have none, since there is no position to
-  go to. Pressing locate closes the sheet and eases the camera to that rider's position at the ride
+  map now say "Connected" and offer **Center the map on ana** in their more-options menu (see
+  below); the rest say "Invited" or "Not connected" (accepted but quiet) and have no such option,
+  since there is no position to go to. Choosing it closes the dialog and eases the camera to that rider's position at the ride
   zoom over 800 ms (`focusOn` of `useRiderFollow`), which also stops the camera following you, as
   dragging the map does; the locate button at the bottom brings it back to you. It is a one-off
   move: the camera does not keep following the other rider. The camera keeps the current heading
-  and pitch. With nobody else in the group the sheet says "Nobody else is here".
+  and pitch. With nobody else in the group the dialog says "Nobody else is here".
+- **Promoting.** **Promote to leader** asks first with the confirm dialog "Make ana the leader?" (**Cancel**
+  first, **Make leader** in the primary color, since it is not destructive: "They will be able to change the
+  route and to invite and remove riders. You stay in the ride as a rider."). Confirming calls
+  `POST /api/routes/groups/<id>/leader/` (`useRiderPromotion`, [route-groups.md](route-groups.md#changing-the-leader));
+  the group answered replaces the shown one, so the leader's controls (route button, invite, remove, promote)
+  move at once to the new leader, and the former one keeps the plain list. The other riders hear
+  `leader_changed` and read the group again; `useGroupRide` shows the notice "ana leads the ride now" (or
+  "You lead the ride now" to the new leader).
 - **Inviting and removing.** Only the **leader** (the group's author) sees the controls; the
   others get the plain list. **Invite a rider** (an outline button under the list, replaced by a
   note once the group has 10 riders) opens the same `InviteRiderDialog` as the setup, with the
-  hint "They get the invitation at once.": the username is checked with the lookup, then
+  hint "They get the invitation at once." It takes the place of the riders list while it is open (the list is unmounted, never stacked under it) and the list comes back when the form closes, whether by the X, by Esc or after inviting: the username is checked with the lookup, then
   `POST /api/routes/groups/<id>/invite/` ([route-groups.md](route-groups.md#inviting-and-removing)) notifies the rider
-  and the dialog closes; a refusal (already in the group, group full) shows under the field. Each
-  row has an **X** (`Remove ana`) that asks first, with the confirm dialog "Remove ana?" (**Cancel**
+  and the dialog closes; a refusal (already in the group, group full) shows under the field. Every
+  row with something to do is selectable (`RiderRow`, a `list-item-main` button with `aria-pressed`): a tap tints
+  the row and shows a more-options button (`icon-more`, `More options for ana`) on it, and only one
+  row is selected at a time; the button opens an action menu (`useMenuPopover`: arrow keys, Escape
+  closes only the menu) with **Center the map on ana** (connected riders, for everyone) and, for the
+  leader, **Promote to leader** (crown icon, riders who are riding only) and **Remove ana** with the trash icon in the error color, which asks
+  first, with the confirm dialog "Remove ana?" (**Cancel**
   first, **Remove** in the error color): the rider is taken out of the group, whether they had
   accepted or were still invited, and can be invited again. A failure keeps the question open with a
   message.
@@ -400,7 +413,7 @@ a free ride. The **route** button (`icon-route`, "Change route") is the last of 
 block; riders who are not the leader do not see it, since the route is the group's and
 [only the leader manages the group](route-groups.md#key-decisions).
 
-- **Dialog.** It opens `RouteChoiceDialog`, the same "Choose a route" sheet as the picker (Free
+- **Dialog.** It opens `RouteChoiceDialog`, the same centered "Choose a route" dialog as the picker (Free
   mode first, then the leader's routes, with the current choice ticked), through `ChangeRouteDialog`,
   which loads the routes only when it opens. **Save** with the current choice just closes. Otherwise it
   calls `POST /api/routes/groups/<id>/route/` (`useGroupRouteChange`): the button shows the loading

@@ -59,6 +59,7 @@ export default function InviteRiderDialog({
       submitLabel="Add rider"
       isPending={isPending}
       formError={formError}
+      isCentered
       onSubmit={handleSubmit}
       onClose={onClose}
     >

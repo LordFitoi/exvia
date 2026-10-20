@@ -15,12 +15,13 @@ from apps.routes.group_serializers import (
     NOT_IN_GROUP_MESSAGE,
     GroupCreateSerializer,
     GroupInviteSerializer,
-    GroupRemoveSerializer,
+    GroupRiderSerializer,
     GroupRouteChoiceSerializer,
     GroupSerializer,
 )
 from apps.routes.group_service import (
     AlreadyInGroup,
+    AlreadyLeader,
     CannotRemoveLeader,
     GroupFull,
     InvitationAlreadyAnswered,
@@ -32,9 +33,10 @@ from apps.routes.group_service import (
     find_active_group,
     invite_rider,
     leave_group,
+    promote_rider,
     remove_rider,
 )
-from apps.routes.live import broadcast_route_change
+from apps.routes.live import broadcast_leader_change, broadcast_route_change
 from apps.routes.models import MAX_GROUP_PARTICIPANTS, RouteGroup
 
 ALREADY_ANSWERED_MESSAGE = 'You have already answered this invitation.'
@@ -43,6 +45,8 @@ NOT_LEADER_MESSAGE = 'Only the rider who leads the group can do this.'
 ALREADY_IN_GROUP_MESSAGE = 'This rider is already in the group.'
 GROUP_FULL_MESSAGE = f'A group has at most {MAX_GROUP_PARTICIPANTS} riders, you included.'
 CANNOT_REMOVE_LEADER_MESSAGE = 'You lead this group, so you cannot remove yourself.'
+ALREADY_LEADER_MESSAGE = 'You lead this group already.'
+NOT_RIDING_RIDER_MESSAGE = 'Only a rider who is riding in the group can lead it.'
 
 
 def group_queryset() -> QuerySet[RouteGroup]:
@@ -159,7 +163,7 @@ class GroupRemoveView(APIView):
     @transaction.atomic
     def post(self, request: Request, pk: str) -> Response:
         group = lock_group_led_by(request.user, pk)
-        serializer = GroupRemoveSerializer(data=request.data)
+        serializer = GroupRiderSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
             remove_rider(group, serializer.validated_data['user'])
@@ -167,6 +171,27 @@ class GroupRemoveView(APIView):
             raise ValidationError({'user': CANNOT_REMOVE_LEADER_MESSAGE}) from error
         except NotInGroup as error:
             raise ValidationError({'user': NOT_IN_GROUP_MESSAGE}) from error
+        return Response(GroupSerializer(group_queryset().get(pk=group.pk)).data)
+
+
+class GroupLeaderView(APIView):
+    """The leader hands the group over to a rider who is riding in it and stops leading; answers the group."""
+
+    @transaction.atomic
+    def post(self, request: Request, pk: str) -> Response:
+        group = lock_group_led_by(request.user, pk)
+        serializer = GroupRiderSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        leader = serializer.validated_data['user']
+        try:
+            promote_rider(group, leader)
+        except AlreadyLeader as error:
+            raise ValidationError({'user': ALREADY_LEADER_MESSAGE}) from error
+        except NotInGroup as error:
+            raise ValidationError({'user': NOT_IN_GROUP_MESSAGE}) from error
+        except NotRidingInGroup as error:
+            raise ValidationError({'user': NOT_RIDING_RIDER_MESSAGE}) from error
+        transaction.on_commit(lambda: broadcast_leader_change(group.pk, request.user.pk, leader.pk))
         return Response(GroupSerializer(group_queryset().get(pk=group.pk)).data)
 
 

@@ -36,6 +36,50 @@
 
 .list > * + * { border-block-start: 1px dashed var(--color-border); }
 
+/* Flat list: only the dashed dividers, no card. For a list inside a dialog or
+   sheet, which is already a card, so the rows do not float on a second shadow.
+   The rows line up with the dialog's own edges */
+.list-flat {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.list-flat > .list-item { padding-inline: 0; }
+
+/* Selectable row with actions: tapping the row selects it, and only the
+   selected row shows its more-options button (a menu with the destructive
+   action), so a delete is never one tap from a list. The main button holds the
+   avatar and text; the buttons after it are siblings, not nested. The list
+   lets the tint reach 8px past the text on each side */
+.list-flat { overflow: visible; }
+
+.list-item-split { gap: var(--space-1); }
+
+.list-flat > .list-item-split {
+  margin-inline: calc(var(--space-2) * -1);
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.list-item-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  min-block-size: var(--tap-target);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+.list-item-split:has(> .list-item-main[aria-pressed="true"]) { background: var(--color-primary-soft); }
+.list-item-main[aria-pressed="true"] .list-item-title { color: var(--color-primary-text); }
+
 a.list-item:active,
 button.list-item:active { background: var(--color-surface-sunken); }
 

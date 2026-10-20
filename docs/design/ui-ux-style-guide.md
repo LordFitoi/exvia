@@ -135,8 +135,37 @@ Exvia changes the following on purpose:
   `100dvh` box (`inset: 100dvh 0 auto` and `translate`), the edge the tab bar
   and the ride strip sit on, not `bottom: 0` of the window, which on Android
   reaches behind the system navigation bar. The same classes on a `div` draw
-  the card in the guide's mockups. A sheet without `sheet-modal` is a plain
+  the card in the guide's mockups. In the app, `SheetHeader` and
+  `useSheetDragClose` implement the drag: past 96px it closes, otherwise it
+  springs back. A sheet without `sheet-modal` is a plain
   card over a map, with no scrim.
+- **One meaning per icon.** The X only closes or leaves a screen. Removing a
+  row from a list, such as a rider, uses the trash icon, so the row's button
+  and the dialog's X cannot be mistaken for each other.
+- **Selectable row with actions.** `list-item-split` holds a `list-item-main`
+  button (avatar and text, `aria-pressed`) and, after it, the row's own
+  buttons. Tapping the row selects it (primary tint and title) and only then
+  shows its more-options button (`icon-more`), which opens a `menu` whose
+  destructive item is `menu-item-danger` (error color). A delete is therefore
+  never one tap from the list, and the more-options button appears only where
+  it can act. Rows the person cannot act on stay plain `list-item`s.
+- **Flat list.** `list list-flat` drops the card (shadow, background, rounded
+  corners) and the rows' side padding and keeps only the dashed dividers, for a
+  list inside a dialog or sheet, which is already a card (the Riders dialog).
+- **Confirm with a primary button.** The confirm dialog's second button is the
+  error color only when the action is destructive (Delete, Remove). An action
+  that is serious but not destructive, such as handing the lead of a ride to
+  another rider, confirms with the primary button (`ConfirmDialog`,
+  `isDestructive={false}`).
+- **Panel dialog.** A list to choose from, or a short form that is chosen from
+  and then left (the riders of a ride, the route to ride, the username of a rider to invite), is a centered
+  `dialog dialog-panel` instead of a sheet: the confirmation dialog's card with
+  the sheet's header (`sheet-header`: title left, X right) and its content
+  under it. It is as wide as the app column minus the `--space-4` gap on each
+  side, scrolls inside itself above 80dvh, and closes with the X or Esc (no
+  drag). In the app, `FormSheet` takes `isCentered` and `RidersDialog` uses the
+  same classes; both use `ModalHeader`. Sheets stay for flows that start from
+  the thumb (naming a route, the ride summary, notifications).
 - **Center action in the tab bar.** `tab-bar-action` raises one destination
   (Ride) as a round, filled primary button 1.5rem above the bar, with its label
   level with the others. Only one per bar: Von Restorff only works if it is

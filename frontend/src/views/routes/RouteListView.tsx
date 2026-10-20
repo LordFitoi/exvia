@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-import ConfirmDeleteDialog from '@/components/feedback/ConfirmDeleteDialog'
+import ConfirmDialog from '@/components/feedback/ConfirmDialog'
 import Toast from '@/components/feedback/Toast'
 import FormAlert from '@/components/form/FormAlert'
 import RouteChoiceList from '@/components/route/RouteChoiceList'
@@ -111,7 +111,7 @@ export default function RouteListView({ onClose, onCreateRoute }: RouteListViewP
           <Toast message={LINK_COPIED_MESSAGE} onDismiss={sharing.dismissCopied} />
         </div>
       )}
-      <ConfirmDeleteDialog
+      <ConfirmDialog
         isOpen={deletion.isConfirming}
         title="Delete this route?"
         description={`“${selectedName}” will be deleted for good. This cannot be undone.`}

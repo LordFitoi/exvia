@@ -38,7 +38,7 @@ export default function InvitationsSection({ invitees, canAdd, onAdd, onRemove }
                 aria-label={`Remove ${rider.username}`}
                 onClick={() => onRemove(rider.id)}
               >
-                <span className="icon icon-x" aria-hidden="true"></span>
+                <span className="icon icon-trash" aria-hidden="true"></span>
               </button>
             </li>
           ))}

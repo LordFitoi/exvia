@@ -5,6 +5,7 @@ import { useId } from 'react'
 import LoadFailedState from '@/components/feedback/LoadFailedState'
 import StateView from '@/components/feedback/StateView'
 import RiderAvatar from '@/components/rider/RiderAvatar'
+import SheetHeader from '@/components/layout/SheetHeader'
 import { useModalDialog } from '@/hooks/useModalDialog'
 import type { usePushNotifications } from '@/hooks/usePushNotifications'
 import type { useRouteInvitationAnswer } from '@/hooks/useRouteInvitationAnswer'
@@ -81,15 +82,13 @@ export default function NotificationsSheet({ invitations, answer, push, onClose 
 
   return (
     <dialog ref={dialogRef} className="sheet sheet-modal" aria-labelledby={titleId} onClose={onClose}>
-      <span className="sheet-handle"></span>
-      <div className="sheet-header">
-        <h2 className="text-subtitle" id={titleId}>
-          Notifications
-        </h2>
-        <button className="icon-button" type="button" aria-label="Close Notifications" onClick={onClose}>
-          <span className="icon icon-x" aria-hidden="true"></span>
-        </button>
-      </div>
+      <SheetHeader
+        titleId={titleId}
+        title="Notifications"
+        closeLabel="Close Notifications"
+        sheetRef={dialogRef}
+        onClose={onClose}
+      />
       <PushNotificationsRow push={push} />
       {answer.error && (
         <p className="field-error" role="alert">

@@ -81,7 +81,7 @@ full height and the cancel button is the way out.
 | List | `views/routes/RoutePointList.tsx` | Numbered points with coordinates and a remove button each; a hint while empty |
 | Modal | `views/routes/SaveRouteDialog.tsx` | Name (required, 100) and description (optional, 255), then saves through the `saveRoute` it is given: `POST /api/routes/` here, `PUT` when editing |
 | Points | `hooks/useRouteDraft.ts` | The ordered points; snaps each tap to a street, routes each leg, and adds, removes and moves points |
-| Sheet | `views/routes/RouteSheet.tsx`, `hooks/useSheetGrab.ts` | The bottom sheet and its collapse gesture |
+| Sheet | `views/routes/RouteSheet.tsx`, `hooks/useSheetGrab.ts` | The floating sheet and its collapse gesture |
 | Reorder | `hooks/useDragReorder.ts` | Press-and-hold drag gesture (and Alt+Arrow keys) for the point list |
 | Map | `hooks/useRouteMap.ts` | Map lifecycle, tap and marker-tap handlers, keeps line and markers in sync with the points |
 | Layers | `services/routeMapLayers.ts` | The route line (GeoJSON source plus casing and line layer) and the numbered markers |
@@ -110,16 +110,16 @@ Behavior:
   one new leg joining its neighbours (or none, for the first). If that request
   fails the point stays and an alert explains it, so a straight shortcut never
   appears.
-- **Collapsing the sheet**: the handle and the header form the grab area.
+- **Collapsing the sheet**: the header is the grab area (there is no handle bar).
   Dragging it down more than 32 px slides the sheet down by the height of its
-  body (plus the gap above it), leaving only the handle and the header (and an
+  body (plus the gap above it), leaving only the header (and an
   error alert, if one is showing) at the bottom edge, so more map shows;
   dragging up slides it back. The change starts as soon as the finger has gone
   far enough, once per press, and animates `transform` for 300 ms. The offset
   comes from a `ResizeObserver` on the body, so it stays right while points are
   added or removed during the collapse. The body is `inert` while collapsed, so
-  its hidden buttons cannot be focused. The handle is also a button
-  (`aria-expanded`): a tap or the keyboard does the same. The grab area has
+  its hidden buttons cannot be focused. A chevron button in the
+  header (`aria-expanded`, turned over while collapsed): a tap or the keyboard does the same. The grab area has
   `touch-action: none` so the drag does not scroll the page; the list below
   keeps its own scrolling. Error alerts stay visible while collapsed, because a
   tap on the map can still fail with a message. The state is local to the sheet

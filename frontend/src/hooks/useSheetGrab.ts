@@ -19,9 +19,9 @@ interface GrabProps {
 }
 
 interface SheetGrab {
-  /** Spread on the sheet's top area (handle and header). */
+  /** Spread on the sheet's header area. */
   grabProps: GrabProps
-  /** Click handler of the handle button, for taps and keyboards. */
+  /** Click handler of the chevron button in the header, for taps and keyboards. */
   handleToggleClick: () => void
 }
 
@@ -34,7 +34,7 @@ interface Press {
 /**
  * Dragging the top of a sheet down collapses it and dragging up expands it. The change happens
  * as soon as the finger has moved far enough, once per press. A press that never moves is a tap
- * and is left to the handle button's click.
+ * and is left to the chevron button's click.
  */
 export const useSheetGrab = ({ isCollapsed, onCollapsedChange }: SheetGrabOptions): SheetGrab => {
   const pressRef = useRef<Press | null>(null)
@@ -53,7 +53,7 @@ export const useSheetGrab = ({ isCollapsed, onCollapsedChange }: SheetGrabOption
     if (!press.isDragging && Math.abs(deltaY) > DRAG_SLOP_PX) {
       press.isDragging = true
       didDragRef.current = true
-      // Capturing only now keeps a plain tap's click on the handle button.
+      // Capturing only now keeps a plain tap's click on the chevron button.
       event.currentTarget.setPointerCapture(event.pointerId)
     }
     const shouldCollapse = deltaY > DRAG_COMMIT_PX && !isCollapsed

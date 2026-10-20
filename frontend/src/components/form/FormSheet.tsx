@@ -5,6 +5,8 @@ import type { FormEvent, ReactNode } from 'react'
 
 import FormAlert from '@/components/form/FormAlert'
 import SubmitButton from '@/components/form/SubmitButton'
+import ModalHeader from '@/components/layout/ModalHeader'
+import SheetHeader from '@/components/layout/SheetHeader'
 import { useModalDialog } from '@/hooks/useModalDialog'
 
 interface FormSheetProps {
@@ -12,36 +14,47 @@ interface FormSheetProps {
   submitLabel: string
   isPending: boolean
   formError: string | null
+  /** A centered dialog instead of a bottom sheet, for forms that are a choice from a list. */
+  isCentered?: boolean
   /** The fields of the form. */
   children: ReactNode
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   onClose: () => void
 }
 
-/** A modal bottom sheet holding one form. Mount it to open it and unmount it to close it, so every opening starts empty. */
+/** A modal bottom sheet (or centered dialog) holding one form. Mount it to open it and unmount it to close it, so every opening starts empty. */
 export default function FormSheet({
   title,
   submitLabel,
   isPending,
   formError,
+  isCentered = false,
   children,
   onSubmit,
   onClose,
 }: FormSheetProps) {
   const dialogRef = useModalDialog(true)
   const titleId = useId()
+  const closeLabel = `Close ${title}`
 
   return (
-    <dialog ref={dialogRef} className="sheet sheet-modal" aria-labelledby={titleId} onClose={onClose}>
-      <span className="sheet-handle"></span>
-      <div className="sheet-header">
-        <h2 className="text-subtitle" id={titleId}>
-          {title}
-        </h2>
-        <button className="icon-button" type="button" aria-label={`Close ${title}`} onClick={onClose}>
-          <span className="icon icon-x" aria-hidden="true"></span>
-        </button>
-      </div>
+    <dialog
+      ref={dialogRef}
+      className={isCentered ? 'dialog dialog-panel' : 'sheet sheet-modal'}
+      aria-labelledby={titleId}
+      onClose={onClose}
+    >
+      {isCentered ? (
+        <ModalHeader titleId={titleId} title={title} closeLabel={closeLabel} onClose={onClose} />
+      ) : (
+        <SheetHeader
+          titleId={titleId}
+          title={title}
+          closeLabel={closeLabel}
+          sheetRef={dialogRef}
+          onClose={onClose}
+        />
+      )}
       <form className="stack-lg" onSubmit={onSubmit}>
         <FormAlert message={formError} />
         <div className="stack">{children}</div>

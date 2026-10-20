@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 
-import ConfirmDeleteDialog from '@/components/feedback/ConfirmDeleteDialog'
+import ConfirmDialog from '@/components/feedback/ConfirmDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useLiveGroup } from '@/hooks/useLiveGroup'
+import { useRiderPromotion } from '@/hooks/useRiderPromotion'
 import { useRiderRemoval } from '@/hooks/useRiderRemoval'
 import { MAX_GROUP_RIDERS } from '@/services/groupRules'
 import { inviteRider } from '@/services/routeGroupApi'
@@ -12,7 +13,7 @@ import type { RiderMarkerData } from '@/services/riderMarkers'
 import type { Coordinates } from '@/types/geolocation'
 import type { RiderProfile } from '@/types/routeGroup'
 import InviteRiderDialog from '@/views/ride/InviteRiderDialog'
-import RidersSheet from '@/views/ride/RidersSheet'
+import RidersDialog from '@/views/ride/RidersDialog'
 
 const INVITE_HINT = 'They get the invitation at once.'
 
@@ -25,7 +26,8 @@ interface RidersControlProps {
 
 /**
  * The map button that lists the riders of the ride. Picking a connected one closes the list and centers
- * the map on them; the leader can also invite riders and remove them.
+ * the map on them; the leader can also invite riders and remove them. The invite form takes the place of
+ * the list while it is open, and the list comes back when the form closes.
  */
 export default function RidersControl({ riders, onFocus }: RidersControlProps) {
   const { user } = useAuth()
@@ -33,6 +35,7 @@ export default function RidersControl({ riders, onFocus }: RidersControlProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isInviting, setIsInviting] = useState(false)
   const removal = useRiderRemoval(group.id, replaceGroup)
+  const promotion = useRiderPromotion(group.id, replaceGroup)
 
   const connectedIds = new Set(riders.map(({ id }) => id))
   const absent = group.participants.filter(({ id }) => id !== user?.id && !connectedIds.has(id))
@@ -53,14 +56,15 @@ export default function RidersControl({ riders, onFocus }: RidersControlProps) {
       <button className="icon-button" type="button" aria-label="Riders" onClick={() => setIsOpen(true)}>
         <span className="icon icon-users" aria-hidden="true"></span>
       </button>
-      {isOpen && (
-        <RidersSheet
+      {isOpen && !isInviting && (
+        <RidersDialog
           connected={riders}
           absent={absent}
           canManage={isLeader}
           canInvite={group.participants.length < MAX_GROUP_RIDERS}
           onFocusRider={handleFocusRider}
           onInvite={() => setIsInviting(true)}
+          onPromoteRider={promotion.ask}
           onRemoveRider={removal.ask}
           onClose={() => setIsOpen(false)}
         />
@@ -74,7 +78,18 @@ export default function RidersControl({ riders, onFocus }: RidersControlProps) {
           onAdded={handleInvited}
         />
       )}
-      <ConfirmDeleteDialog
+      <ConfirmDialog
+        isOpen={promotion.isConfirming}
+        title={`Make ${promotion.target?.username ?? 'this rider'} the leader?`}
+        description="They will be able to change the route and to invite and remove riders. You stay in the ride as a rider."
+        isPending={promotion.isPending}
+        error={promotion.error}
+        confirmLabel="Make leader"
+        isDestructive={false}
+        onCancel={promotion.cancel}
+        onConfirm={promotion.confirm}
+      />
+      <ConfirmDialog
         isOpen={removal.isConfirming}
         title={`Remove ${removal.target?.username ?? 'this rider'}?`}
         description="They are taken out of the ride and stop sharing their position. You can invite them again."
