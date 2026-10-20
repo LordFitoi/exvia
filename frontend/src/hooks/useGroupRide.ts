@@ -18,7 +18,7 @@ interface GroupRideOptions {
   location: GeolocationState
 }
 
-interface GroupRide {
+export interface GroupRide {
   /** The other riders who reported recently, to draw on the map. */
   readonly riders: readonly RiderMarkerData[]
   /** The latest rider to join or leave the group, until dismissed. */
@@ -27,10 +27,12 @@ interface GroupRide {
 }
 
 const LOST_PLACE_MESSAGE = 'You are no longer in this ride'
+const describeRouteChange = (leaderName: string): string => `${leaderName} changed the route`
 
 /**
  * Shares the rider's position with their group and returns where the other riders are, and who came or went.
- * Whenever a rider joins or leaves the group is read again, so riders invited or removed meanwhile show up.
+ * Whenever a rider joins or leaves the group is read again, so riders invited or removed meanwhile show up;
+ * so it is when the leader changes the route, which the ride screen then follows.
  */
 export const useGroupRide = ({ rider, location }: GroupRideOptions): GroupRide => {
   const { group, reloadGroup } = useLiveGroup()
@@ -43,7 +45,16 @@ export const useGroupRide = ({ rider, location }: GroupRideOptions): GroupRide =
     },
     [announcePresence, reloadGroup],
   )
-  const { status, positions, send } = useGroupChannel(group.id, handlePresence)
+  const leaderName = group.author.username
+  const handleRouteChange = useCallback(() => {
+    announce(describeRouteChange(leaderName))
+    reloadGroup()
+  }, [announce, leaderName, reloadGroup])
+  const channelHandlers = useMemo(
+    () => ({ onPresence: handlePresence, onRouteChange: handleRouteChange }),
+    [handlePresence, handleRouteChange],
+  )
+  const { status, positions, send } = useGroupChannel(group.id, channelHandlers)
   useEffect(() => {
     if (status === 'denied') announce(LOST_PLACE_MESSAGE)
   }, [status, announce])

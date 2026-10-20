@@ -25,7 +25,8 @@ one.
 | Page of a joined ride | `app/(app)/ride/[groupId]/page.tsx` | Where accepting an invitation lands; renders `JoinedRideView` |
 | Screen | `views/ride/RideOverview.tsx` | Shows the picker; the group that **Ride** creates is ridden at `/ride/<id>` (it replaces `/ride`) |
 | Joined ride | `views/ride/JoinedRideView.tsx`, `hooks/useRouteGroup.ts` | Loads the group of `/ride/<id>` and rides in it at once, whether the rider created the group, accepted an invitation or joined back; quitting, leaving or finishing replaces the page with the Map tab (`/map`) |
-| Group ride | `views/ride/GroupRideView.tsx` | Ride mode on the group's route, or a free ride when it has none |
+| Group ride | `views/ride/GroupRideView.tsx`, `views/ride/GroupRideSession.tsx` | Ride mode on the group's route, or a free ride when it has none; the session owns the GPS and the live channel, so they outlive a change of route |
+| Change route | `views/ride/ChangeRouteControl.tsx`, `views/ride/ChangeRouteDialog.tsx`, `hooks/useGroupRouteChange.ts` | The leader's route button on the ride map and the picker it opens; see [Changing the route](#changing-the-route) |
 | Setup state | `hooks/useRideSetup.ts` | The routes, what is selected (default: the newest route, or free mode with no routes) and the invitees |
 | Join back | `hooks/useActiveGroupPrompt.ts`, `views/ride/ActiveGroupDialog.tsx` | Before **Ride** creates a group, asks whether to join the group that is still rolling; see [Join back](#join-back) |
 | Starting | `hooks/useStartGroupRide.ts`, `services/routeGroupApi.ts` | `POST /api/routes/groups/`; errors of `invitees` and `route` become the message under the button |
@@ -36,7 +37,7 @@ one.
 | Rows | `components/route/RouteItemBody.tsx`, `components/route/FreeModeItemBody.tsx`, `components/rider/RiderAvatar.tsx` | The inside of a route row, of the free mode row, and a rider's picture or initials |
 | List | `components/route/RouteChoiceList.tsx` | Skeleton, error, empty and ready states of the routes (used by the route list screen) |
 | Ride mode | `views/ride/RideModeView.tsx` | Full-bleed 3D map with the quit and recenter buttons |
-| Free ride | `views/ride/FreeRideView.tsx`, `FreeRideWaitingView.tsx`, `FreeRideSessionView.tsx`, `FinishFreeRideDialog.tsx` | Ride with no route: waits for the first fix, then shows the rider and the group, recording nothing; see [Free ride](#free-ride) |
+| Free ride | `views/ride/FreeRideWaitingView.tsx`, `FreeRideSessionView.tsx`, `FinishFreeRideDialog.tsx` | Ride with no route: waits for the first fix, then shows the rider and the group, recording nothing; see [Free ride](#free-ride) |
 | Free ride map | `hooks/useFreeRideMap.ts` | The pitched map that follows the rider; draws no path |
 | Quit | `views/ride/ConfirmQuitRideDialog.tsx`, `hooks/useQuitRide.ts` | "Quit this ride?" dialog opened by the X, and saving the unfinished ride before leaving |
 | Routes | `hooks/useMyRoutes.ts` | `GET /api/routes/`, with `reload` |
@@ -266,7 +267,7 @@ no path is shown on the map and the rider's positions are not collected into a t
 no route and no ride summary to save. It is a group of its own like any ride, so riders invited to
 it see each other on the map.
 
-- **Start** (`FreeRideView`): a free ride cannot start without a position, so until the first
+- **Start** (`GroupRideSession`): a free ride cannot start without a position, so until the first
   GPS fix arrives `FreeRideWaitingView` shows the status ("Finding your location", "Location
   is turned off", "Location unavailable") with an X back to the picker. The fix (snapped to a
   street when possible, as in ride mode) then opens `FreeRideSessionView`.
@@ -341,6 +342,8 @@ Ride mode and the free ride share the group's live channel
   drawn now, so a report that lands mid-glide continues from the point reached with no jump. The
   marker lags the rider by up to one report, which is what keeps it moving without pauses. A
   repeated, unchanged position does not restart the glide.
+- **Change route.** The leader also has the **route** button (`ChangeRouteControl`) under the users
+  button; see [Changing the route](#changing-the-route).
 - **Riders.** The **users** button (`RidersControl`, "Riders") sits under the X (or the flag in a
   free ride) in the same top-right control block, and opens `RidersSheet`, a modal sheet with
   every other rider of the group: picture or initials, name and a line under it. The riders on the
@@ -389,6 +392,31 @@ Ride mode and the free ride share the group's live channel
 - **Finishing.** An accepted rider saves their own summary of the group's route
   (`POST /api/routes/<uuid>/summaries/`, which accepts routes of accepted groups); the
   summary lists only them as participant, there is no shared ride record yet.
+
+## Changing the route
+
+The leader can change the route of the ride, or go to free mode, at any moment, in ride mode and in
+a free ride. The **route** button (`icon-route`, "Change route") is the last of the top-right control
+block; riders who are not the leader do not see it, since the route is the group's and
+[only the leader manages the group](route-groups.md#key-decisions).
+
+- **Dialog.** It opens `RouteChoiceDialog`, the same "Choose a route" sheet as the picker (Free
+  mode first, then the leader's routes, with the current choice ticked), through `ChangeRouteDialog`,
+  which loads the routes only when it opens. **Save** with the current choice just closes. Otherwise it
+  calls `POST /api/routes/groups/<id>/route/` (`useGroupRouteChange`): the button shows the loading
+  state, a failure keeps the sheet open with the message, and success replaces the group shown
+  (`replaceGroup`) and closes it.
+- **The ride follows the group.** `GroupRideSession` renders ride mode from `group.route` and keys it by
+  the route id, so a new route starts a **new ride**: the clock, the speeds, the progress and the map
+  start over, and the ride on the old route is **not saved** (it is neither finished nor quit). Going
+  to or from free mode swaps the free-ride screen for ride mode the same way.
+- **The channel is kept.** The GPS and `useGroupRide` live in `GroupRideSession`, above the route
+  screens, so changing route does not reconnect the socket. Otherwise every rider would hear the
+  leader "leave" and "join" at each change.
+- **The others.** The channel sends them `route_changed` ([route-groups.md](route-groups.md#live-channel));
+  `useGroupRide` shows the toast "ana changed the route" and reads the group again, and their screens
+  switch like the leader's. A rider whose socket was down when it happened keeps the old route until
+  the group is read again (a rider joining or leaving does that).
 
 ## Not included
 

@@ -27,6 +27,8 @@ export type GroupMessage =
     }
   | { readonly type: 'position'; readonly position: RiderPosition }
   | { readonly type: 'presence'; readonly userId: number; readonly status: PresenceStatus }
+  /** The leader changed the route (or went to free mode); the group has to be read again for the new one. */
+  | { readonly type: 'route_changed' }
   | { readonly type: 'error'; readonly detail: string }
 
 const parseRiderPosition = (userId: number, value: unknown): RiderPosition | null => {
@@ -67,6 +69,7 @@ export const parseGroupMessage = (raw: unknown): GroupMessage | null => {
     return { type: 'error', detail: message.detail }
   }
   if (message.type === 'presence') return parsePresence(message)
+  if (message.type === 'route_changed') return { type: 'route_changed' }
   if (message.type !== 'position' || typeof message.user_id !== 'number') return null
   const position = parseRiderPosition(message.user_id, message)
   return position ? { type: 'position', position } : null

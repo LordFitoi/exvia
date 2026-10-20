@@ -16,6 +16,7 @@ from apps.routes.group_serializers import (
     GroupCreateSerializer,
     GroupInviteSerializer,
     GroupRemoveSerializer,
+    GroupRouteChoiceSerializer,
     GroupSerializer,
 )
 from apps.routes.group_service import (
@@ -26,12 +27,14 @@ from apps.routes.group_service import (
     NotInGroup,
     NotRidingInGroup,
     answer_invitation,
+    change_route,
     create_group,
     find_active_group,
     invite_rider,
     leave_group,
     remove_rider,
 )
+from apps.routes.live import broadcast_route_change
 from apps.routes.models import MAX_GROUP_PARTICIPANTS, RouteGroup
 
 ALREADY_ANSWERED_MESSAGE = 'You have already answered this invitation.'
@@ -164,4 +167,17 @@ class GroupRemoveView(APIView):
             raise ValidationError({'user': CANNOT_REMOVE_LEADER_MESSAGE}) from error
         except NotInGroup as error:
             raise ValidationError({'user': NOT_IN_GROUP_MESSAGE}) from error
+        return Response(GroupSerializer(group_queryset().get(pk=group.pk)).data)
+
+
+class GroupRouteView(APIView):
+    """The leader changes the route of a group that is rolling, or switches it to free mode; answers the group."""
+
+    @transaction.atomic
+    def post(self, request: Request, pk: str) -> Response:
+        group = lock_group_led_by(request.user, pk)
+        serializer = GroupRouteChoiceSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        change_route(group, serializer.validated_data['route'])
+        transaction.on_commit(lambda: broadcast_route_change(group.pk, request.user.pk))
         return Response(GroupSerializer(group_queryset().get(pk=group.pk)).data)

@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from apps.core.websocket_auth import AUTH_TIMEOUT_SECONDS, CLOSE_UNAUTHORIZED, read_user_id
 from apps.routes import group_meta, group_service
+from apps.routes.live import group_channel_name
 
 MIN_POSITION_INTERVAL_SECONDS = 1
 CLOSE_FORBIDDEN = 4403
@@ -24,7 +25,8 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
     bad or late token, 4403 for a user who has not accepted the group. After `{"type": "ready",
     "user_id", "positions", "server_time"}` (the server's clock, to age the saved positions), a rider sends `{"type": "position", "lng", "lat", ...}` and everyone
     else gets `{"type": "position", "user_id", ...position}`. Everyone else also hears
-    `{"type": "presence", "user_id", "status": "joined" | "left"}` when a rider signs in or drops.
+    `{"type": "presence", "user_id", "status": "joined" | "left"}` when a rider signs in or drops, and
+    `{"type": "route_changed"}` when the leader changes the route (read the group again for the new one).
     """
 
     user_id: int | None = None
@@ -32,7 +34,7 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
 
     @property
     def channel_group(self) -> str:
-        return f'route_group_{self.scope["url_route"]["kwargs"]["group_id"]}'
+        return group_channel_name(self.scope['url_route']['kwargs']['group_id'])
 
     async def connect(self) -> None:
         await self.accept()
@@ -62,6 +64,11 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
         """Delivers a rider's arrival or departure to the group, except to that rider."""
         if event['user_id'] != self.user_id:
             await self.send_json({'type': 'presence', 'user_id': event['user_id'], 'status': event['status']})
+
+    async def group_route(self, event: dict[str, Any]) -> None:
+        """Tells the group the leader changed its route, except the leader, who has the answer already."""
+        if event['user_id'] != self.user_id:
+            await self.send_json({'type': 'route_changed'})
 
     async def _announce_presence(self, status: str) -> None:
         await self.channel_layer.group_send(

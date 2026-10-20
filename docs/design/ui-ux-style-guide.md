@@ -19,7 +19,7 @@ or `open` (macOS).
 | `foundations.html` | Color palettes and roles, type scale, spacing, radius, elevation, icons |
 | `components.html` | Controls: buttons, checkbox, radio, switch, slider, segmented control, chips |
 | `forms.html` | Fields, select and dropdown, form sections, disclosure, step indicator |
-| `content.html` | Feedback and states, lists, avatars, cards, app bar, tabs, tab bar, bottom sheet, modal sheet form, dialog |
+| `content.html` | Feedback and states, lists, avatars, cards, app bar, tabs, tab bar, floating sheet, modal sheet form, dialog |
 | `patterns.html` | Full mobile screens in phone frames: sign in, home feed, map, route creator, ride mode, ride summary, profile |
 | `group.html` | Group rides: ride setup (route and invitations), free mode, the choose-a-route sheet, the group map with rider bubbles, Home notifications, the Riding now row and the join-back dialog |
 | `exvia-ui.css` | Product design system entry point; only `@import`s the files below |
@@ -115,15 +115,28 @@ Exvia changes the following on purpose:
   and alerts, new list rows and the modal backdrop fade in. Entrances
   only: nothing animates out, because an exit needs the element to stay
   mounted.
-- **Modal sheet for short forms.** A form that needs full attention, such as
-  naming a route, uses `<dialog class="sheet sheet-modal">` opened with
-  `showModal()`: a bottom sheet over a scrim, with the native dialog's focus
-  trap and Esc. The sheet's bottom edge is the bottom of the app's `100dvh`
-  box (`inset: 100dvh 0 auto` and `translate: 0 -100%`), the edge the tab bar
+- **Floating sheet.** Every sheet is the dialog's card moved to the thumb:
+  pinned to the bottom but never touching the screen edges, with a `--space-4`
+  gap on both sides and below (lifted by the safe area), all four corners
+  rounded with `--radius-lg`, the dialog's solid surface and `--shadow-dialog`,
+  and no handle bar. The header (`sheet-header`: title left, X or actions
+  right) sits in `sheet-grab`, the drag area. The centered `dialog` stays for
+  confirmations only; it sets `margin: auto` itself because the Tailwind
+  preflight zeroes the native centering margin, and keeps the same gap from
+  the screen edges.
+- **Modal sheet.** A flow that needs full attention, such as naming a route
+  or picking a route, uses `<dialog class="sheet sheet-modal">` opened with
+  `showModal()`, over the scrim, with the native dialog's focus trap and Esc.
+  Dragging the header down slides the card away and closes it; letting go
+  early springs it back. The drag is an inline `transform` (only transform
+  animates) and the card carries `data-dragging` while the finger is down so
+  the spring does not fight it. The X stays as the visible way out, since a
+  drag is pointer-only. The card's bottom edge is the bottom of the app's
+  `100dvh` box (`inset: 100dvh 0 auto` and `translate`), the edge the tab bar
   and the ride strip sit on, not `bottom: 0` of the window, which on Android
-  reaches behind the system navigation bar. The centered `dialog` stays for confirmations only; it sets
-  `margin: auto` itself because the Tailwind preflight zeroes the native
-  centering margin, and keeps a `--space-4` gap from the screen edges.
+  reaches behind the system navigation bar. The same classes on a `div` draw
+  the card in the guide's mockups. A sheet without `sheet-modal` is a plain
+  card over a map, with no scrim.
 - **Center action in the tab bar.** `tab-bar-action` raises one destination
   (Ride) as a round, filled primary button 1.5rem above the bar, with its label
   level with the others. Only one per bar: Von Restorff only works if it is
@@ -158,12 +171,13 @@ Exvia changes the following on purpose:
   notification whose title needs the width); `.avatar > img` (a picture fills the disc);
   `button.link-action` (the link without the button box); and `section-heading` also styles
   an `h2`.
-- **Collapsible sheet.** `sheet-grab` (handle and header) slides the sheet
-  down by the height of `sheet-body` when dragged down and back when dragged
-  up, so the content behind a sheet can be seen. The offset is an inline
-  `transform`, which keeps the animation to `transform` only. The handle is a `button` with
-  `aria-expanded`, which covers taps and keyboards; its 44px hit area comes
-  from the shared pseudo-element rule in `base.css`.
+- **Collapsible sheet.** Dragging the `sheet-grab` header down slides the
+  sheet down by the height of `sheet-body`, and dragging up brings it back, so
+  the content behind a sheet can be seen. The offset is an inline `transform`,
+  which keeps the animation to `transform` only. With no handle bar, a
+  chevron `icon-button` in the header (`sheet-header-end`, beside any badge)
+  carries `aria-expanded` and covers taps and keyboards; the body is `inert`
+  while collapsed.
 - **Press-and-hold reorder.** `route-point` rows can be dragged after a
   400 ms hold (`useDragReorder` in the frontend): the hold keeps normal
   scrolling working, the dragged row floats with `--shadow-z16` and its

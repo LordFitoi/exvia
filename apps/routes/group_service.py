@@ -101,6 +101,13 @@ def remove_rider(group: RouteGroup, rider: User) -> None:
     group.participants.remove(rider)
 
 
+def change_route(group: RouteGroup, route: Route | None) -> None:
+    """Sets the route the group rides, or free mode when it is None. Every rider follows it: they
+    read the group again when told. Call it inside a transaction that holds a lock on `group`."""
+    group.route = route
+    group.save(update_fields=['route', 'updated_at'])
+
+
 def load_positions(group_id: object, user_id: int) -> dict[str, dict[str, Any]] | None:
     """The latest position of every rider of the group, or None when the user may not ride in it
     (no such group, or they have not accepted)."""

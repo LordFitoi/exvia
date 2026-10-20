@@ -5,8 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { useState } from 'react'
 
 import Toast from '@/components/feedback/Toast'
-import { useGeolocation } from '@/hooks/useGeolocation'
-import { useGroupRide } from '@/hooks/useGroupRide'
+import type { GroupRide } from '@/hooks/useGroupRide'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useQuitRide } from '@/hooks/useQuitRide'
 import { useRideArrival } from '@/hooks/useRideArrival'
@@ -16,7 +15,6 @@ import { useRideMap } from '@/hooks/useRideMap'
 import { useRideProgress } from '@/hooks/useRideProgress'
 import { useRideSpeeds } from '@/hooks/useRideSpeeds'
 import { useSaveRideSummary } from '@/hooks/useSaveRideSummary'
-import { useStreetPosition } from '@/hooks/useStreetPosition'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import MapStatusView from '@/views/map/MapStatusView'
@@ -24,25 +22,26 @@ import ConfirmQuitRideDialog from '@/views/ride/ConfirmQuitRideDialog'
 import RideStatsPanel from '@/views/ride/RideStatsPanel'
 import RidersControl from '@/views/ride/RidersControl'
 import RideSummarySheet from '@/views/ride/RideSummarySheet'
+import type { Coordinates, GeolocationState } from '@/types/geolocation'
 import type { RideRoute } from '@/types/route'
+import ChangeRouteControl from '@/views/ride/ChangeRouteControl'
 
 interface RideModeViewProps {
   route: RideRoute
+  /** The latest GPS reading, whose speed and fix time make up the ride's stats. */
+  location: GeolocationState
+  /** Where to show the rider: the street position when there is one, else the raw fix. */
+  rider: Coordinates | null
+  /** The group channel: the other riders and the notice of who came or went. */
+  groupRide: GroupRide
   /** Leaves ride mode for the picker, with the route still selected. */
   onQuit: () => void
   /** Leaves ride mode for good, after the summary of a finished ride. */
   onFinish: () => void
 }
 
-export default function RideModeView({ route, onQuit, onFinish }: RideModeViewProps) {
-  const location = useGeolocation()
-  const street = useStreetPosition({
-    accessToken: MAPBOX_ACCESS_TOKEN,
-    coordinates: location.coordinates,
-  })
-  // A fix that cannot be snapped to a street (or not yet) still shows where the rider is.
-  const rider = street.coordinates ?? location.coordinates
-  const { riders, notice, dismissNotice } = useGroupRide({ rider, location })
+export default function RideModeView({ route, location, rider, groupRide, onQuit, onFinish }: RideModeViewProps) {
+  const { riders, notice, dismissNotice } = groupRide
   const progress = useRideProgress({ path: route.points, rider })
   const lines = useRideLines({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -107,6 +106,7 @@ export default function RideModeView({ route, onQuit, onFinish }: RideModeViewPr
               <span className="icon icon-x" aria-hidden="true"></span>
             </button>
             <RidersControl riders={riders} onFocus={focusOn} />
+            <ChangeRouteControl />
           </div>
         </div>
         <button

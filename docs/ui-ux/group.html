@@ -128,11 +128,12 @@
             <div class="route-preview" aria-hidden="true"></div>
           </div>
           <div class="map-scrim"></div>
-          <div class="sheet phone-sheet" role="dialog" aria-labelledby="choose-route-title">
-            <span class="sheet-handle"></span>
-            <div class="sheet-header">
-              <h3 class="text-subtitle" id="choose-route-title">Choose a route</h3>
-              <button class="icon-button" type="button" aria-label="Close Choose a route"><span class="icon icon-x" aria-hidden="true"></span></button>
+          <div class="sheet sheet-modal phone-sheet" role="dialog" aria-labelledby="choose-route-title">
+            <div class="sheet-grab">
+              <div class="sheet-header">
+                <h3 class="text-subtitle" id="choose-route-title">Choose a route</h3>
+                <button class="icon-button" type="button" aria-label="Close Choose a route"><span class="icon icon-x" aria-hidden="true"></span></button>
+              </div>
             </div>
             <ul class="list">
               <li>
@@ -158,7 +159,7 @@
             <button class="button button-primary button-lg button-block" type="button">Save</button>
           </div>
         </div>
-        <figcaption class="phone-caption">Choose a route: a modal sheet over a scrim, Free mode first, the chosen row is tinted and checked; Save applies it, the X leaves the choice as it was</figcaption>
+        <figcaption class="phone-caption">Choose a route: a floating modal sheet over a scrim (drag the header down to close), Free mode first, the chosen row is tinted and checked; Save applies it, the X leaves the choice as it was</figcaption>
       </figure>
     </div>
 
@@ -178,6 +179,7 @@
               <div class="map-controls">
                 <button class="icon-button" type="button" aria-label="Quit ride"><span class="icon icon-x" aria-hidden="true"></span></button>
                 <button class="icon-button" type="button" aria-label="Riders"><span class="icon icon-users" aria-hidden="true"></span></button>
+                <button class="icon-button" type="button" aria-label="Change route"><span class="icon icon-route" aria-hidden="true"></span></button>
               </div>
             </div>
             <span class="marker marker-start marker-pos-a" role="img" aria-label="Start"><span class="icon icon-sm icon-flag" aria-hidden="true"></span></span>
@@ -192,7 +194,7 @@
             <div class="route-stat"><span class="route-stat-value data">26</span><span class="text-caption">Speed (km/h)</span></div>
           </section>
         </div>
-        <figcaption class="phone-caption">Group ride: each other rider is a bubble (their picture, or initials without one) above a green dot on their exact position; &ldquo;You&rdquo; stays the ink dot with the pulse; the users button under the X lists the riders</figcaption>
+        <figcaption class="phone-caption">Group ride: each other rider is a bubble (their picture, or initials without one) above a green dot on their exact position; &ldquo;You&rdquo; stays the ink dot with the pulse; the users button under the X lists the riders; the leader also has the route button under it, to change the route or go to free mode</figcaption>
       </figure>
 
       <figure>
@@ -204,11 +206,12 @@
               <path class="map-road" d="M0 120 H360 M0 300 H360 M0 420 H360 M90 0 V560 M250 0 V560"></path>
             </svg>
             <div class="map-scrim"></div>
-            <div class="sheet phone-sheet" role="dialog" aria-labelledby="riders-title">
-              <span class="sheet-handle"></span>
-              <div class="sheet-header">
-                <h3 class="text-subtitle" id="riders-title">Riders</h3>
-                <button class="icon-button" type="button" aria-label="Close Riders"><span class="icon icon-x" aria-hidden="true"></span></button>
+            <div class="sheet sheet-modal phone-sheet" role="dialog" aria-labelledby="riders-title">
+              <div class="sheet-grab">
+                <div class="sheet-header">
+                  <h3 class="text-subtitle" id="riders-title">Riders</h3>
+                  <button class="icon-button" type="button" aria-label="Close Riders"><span class="icon icon-x" aria-hidden="true"></span></button>
+                </div>
               </div>
               <ul class="list">
                 <li class="list-item">
@@ -244,11 +247,12 @@
             <p class="text-small text-muted">Welcome back, mario.</p>
           </div>
           <div class="map-scrim"></div>
-          <div class="sheet phone-sheet" role="dialog" aria-labelledby="notifications-title">
-            <span class="sheet-handle"></span>
-            <div class="sheet-header">
-              <h3 class="text-subtitle" id="notifications-title">Notifications</h3>
-              <button class="icon-button" type="button" aria-label="Close Notifications"><span class="icon icon-x" aria-hidden="true"></span></button>
+          <div class="sheet sheet-modal phone-sheet" role="dialog" aria-labelledby="notifications-title">
+            <div class="sheet-grab">
+              <div class="sheet-header">
+                <h3 class="text-subtitle" id="notifications-title">Notifications</h3>
+                <button class="icon-button" type="button" aria-label="Close Notifications"><span class="icon icon-x" aria-hidden="true"></span></button>
+              </div>
             </div>
             <ul class="list">
               <li class="list-item list-item-stacked">

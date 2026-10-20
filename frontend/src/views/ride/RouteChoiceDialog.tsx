@@ -12,12 +12,23 @@ interface RouteChoiceDialogProps {
   myRoutes: ReturnType<typeof useMyRoutes>
   /** What is selected now; the dialog starts from it and only changes it on Save. */
   selection: RideSelection | null
+  /** True while a save is under way. */
+  isPending?: boolean
+  /** Why the last save failed. */
+  formError?: string | null
   onSave: (selection: RideSelection) => void
   onClose: () => void
 }
 
 /** A modal sheet to pick the route to ride, or free mode. Closing it leaves the choice as it was. */
-export default function RouteChoiceDialog({ myRoutes, selection, onSave, onClose }: RouteChoiceDialogProps) {
+export default function RouteChoiceDialog({
+  myRoutes,
+  selection,
+  isPending = false,
+  formError = null,
+  onSave,
+  onClose,
+}: RouteChoiceDialogProps) {
   const [pendingSelection, setPendingSelection] = useState(selection)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -30,8 +41,8 @@ export default function RouteChoiceDialog({ myRoutes, selection, onSave, onClose
     <FormSheet
       title="Choose a route"
       submitLabel="Save"
-      isPending={false}
-      formError={null}
+      isPending={isPending}
+      formError={formError}
       onSubmit={handleSubmit}
       onClose={onClose}
     >

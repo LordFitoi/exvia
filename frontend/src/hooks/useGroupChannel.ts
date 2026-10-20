@@ -8,6 +8,13 @@ import type { GroupMessage, LivePosition, PresenceStatus } from '@/services/grou
 
 export type PresenceHandler = (userId: number, status: PresenceStatus) => void
 
+export interface GroupChannelHandlers {
+  /** Hears the other riders come and go. */
+  readonly onPresence: PresenceHandler
+  /** Hears the leader change the route. */
+  readonly onRouteChange: () => void
+}
+
 interface GroupChannel {
   readonly status: ConnectionStatus
   /** The latest position of every other rider, by user id. */
@@ -22,22 +29,23 @@ const toSnapshot = (message: Extract<GroupMessage, { type: 'ready' }>): Map<numb
   return new Map(others.map((position) => [position.userId, { position, seenAt: position.recordedAt + clockSkew }]))
 }
 
-/** Joins the live channel of a group for as long as the screen is mounted; `onPresence` hears the other riders come and go. */
-export const useGroupChannel = (groupId: string, onPresence: PresenceHandler): GroupChannel => {
+/** Joins the live channel of a group for as long as the screen is mounted. */
+export const useGroupChannel = (groupId: string, handlers: GroupChannelHandlers): GroupChannel => {
   const [status, setStatus] = useState<ConnectionStatus>('connecting')
   const [positions, setPositions] = useState<ReadonlyMap<number, LivePosition>>(new Map())
   const sendRef = useRef<(message: object) => void>(() => undefined)
-  const onPresenceRef = useRef(onPresence)
+  const handlersRef = useRef(handlers)
 
   useEffect(() => {
-    onPresenceRef.current = onPresence
-  }, [onPresence])
+    handlersRef.current = handlers
+  }, [handlers])
 
   useEffect(() => {
     const handleMessage = (message: GroupMessage) => {
       if (message.type === 'ready') setPositions(toSnapshot(message))
       if (message.type === 'error') console.error(`The ride channel refused a message: ${message.detail}`)
-      if (message.type === 'presence') onPresenceRef.current(message.userId, message.status)
+      if (message.type === 'presence') handlersRef.current.onPresence(message.userId, message.status)
+      if (message.type === 'route_changed') handlersRef.current.onRouteChange()
       if (message.type !== 'position') return
       const live = { position: message.position, seenAt: Date.now() }
       setPositions((previous) => new Map(previous).set(message.position.userId, live))

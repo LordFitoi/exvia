@@ -1,6 +1,10 @@
-/* Overlays (Minimals): the bottom sheet is the primary overlay on mobile and
-   carries secondary flows. The centered dialog is only for confirmations,
-   so people are not pulled out of their task (Flow). */
+/* Overlays (Minimals): the sheet is the primary overlay on mobile and carries
+   secondary flows. It is a floating card, like the dialog but at the bottom,
+   within the thumb's reach: never touching the screen edges, with a
+   --space-4 gap on both sides and below (lifted by the safe area), all four
+   corners rounded, the dialog's solid surface and shadow, and no handle bar.
+   The centered dialog is only for confirmations, so people are not pulled out
+   of their task (Flow). */
 
 .sheet {
   position: relative;
@@ -8,47 +12,31 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-2) var(--space-4) calc(var(--space-4) + var(--safe-bottom));
-  border-start-start-radius: var(--radius-xl);
-  border-start-end-radius: var(--radius-xl);
-  background: var(--material-overlay);
-  backdrop-filter: var(--blur-overlay);
-  box-shadow: var(--shadow-sheet);
+  margin: 0 var(--space-4) calc(var(--space-4) + var(--safe-bottom));
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-dialog);
   animation: sheet-in var(--duration-slow) var(--ease-out);
-}
-
-.sheet-handle {
-  position: relative;
-  align-self: center;
-  inline-size: 2.25rem;
-  block-size: 0.25rem;
-  margin-block: var(--space-1);
-  border-radius: var(--radius-full);
-  background: var(--color-text-faint);
-}
-
-/* Collapsible sheet: the handle and header are a grab area. Dragging down
-   slides the sheet down until only the grab area shows, so the content behind
-   it is visible; dragging up brings it back. The offset is the body's height,
-   set inline as a transform, so only transform animates. Make the body
-   `inert` while collapsed. The handle is a button, so a tap or the keyboard
-   does the same (aria-expanded). touch-action stops the drag from scrolling
-   the page */
-.sheet-collapsible {
   transition: transform var(--duration-slow) var(--ease-out);
 }
 
-button.sheet-handle {
-  padding: 0;
-  border: 0;
-  cursor: grab;
-}
+/* Draggable sheet: the header is the grab area. Dragging down slides the card
+   down (a modal sheet closes, a collapsible one hides its body so the content
+   behind it is visible); dragging up brings it back. The offset is an inline
+   `transform`, so only transform animates, and `data-dragging` on the card
+   switches the spring off while the finger is down. touch-action stops the
+   drag from scrolling the page. A drag is pointer-only: the X (modal) or the
+   chevron button (collapsible, `aria-expanded`; make the body `inert` while
+   collapsed) does the same for taps and keyboards */
+.sheet[data-dragging] { transition: none; }
 
 .sheet-grab {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   touch-action: none;
+  cursor: grab;
 }
 
 .sheet-body {
@@ -65,32 +53,39 @@ button.sheet-handle {
   gap: var(--space-2);
 }
 
+.sheet-header-end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 @keyframes sheet-in {
   from { transform: translateY(100%); }
 }
 
-/* Modal sheet: a native <dialog> pinned to the bottom edge, for a secondary
-   flow that needs full attention, like naming a route before saving it. Use
-   it as <dialog class="sheet sheet-modal"> and open it with showModal().
-   Its bottom edge is the bottom of the app's 100dvh box, the same edge the tab
-   bar and the ride strip sit on, not `bottom: 0` of the window: on Android that
-   edge reaches behind the system navigation bar and hides the end of the sheet */
-.sheet-modal:not([open]) { display: none; }
+/* Modal sheet: the same card as a native <dialog> over a scrim, for a flow
+   that needs full attention, like naming a route before saving it. Use it as
+   <dialog class="sheet sheet-modal"> and open it with showModal(); the same
+   classes on a div draw it inside a screen mockup. Its bottom edge is the
+   bottom of the app's 100dvh box, the same edge the tab bar and the ride
+   strip sit on, not `bottom: 0` of the window: on Android that edge reaches
+   behind the system navigation bar and hides the end of the sheet */
+dialog.sheet-modal:not([open]) { display: none; }
 
-.sheet-modal {
+dialog.sheet-modal {
   position: fixed;
   inset: 100dvh 0 auto;
-  translate: 0 -100%;
-  inline-size: min(100%, var(--app-max-width));
+  translate: 0 calc(-100% - var(--space-4) - var(--safe-bottom));
+  inline-size: min(calc(100% - var(--space-8)), var(--app-max-width));
   max-inline-size: none;
-  max-block-size: 90dvh;
+  max-block-size: calc(90dvh - var(--safe-bottom));
   margin: 0 auto;
   border: 0;
   color: var(--color-text);
   overflow-y: auto;
 }
 
-.sheet-modal::backdrop { background: var(--color-scrim); }
+dialog.sheet-modal::backdrop { background: var(--color-scrim); }
 
 /* Action menu: an icon button opens a small popover of actions, aligned to the
    button's right edge so it opens inward from the screen edge. The trigger

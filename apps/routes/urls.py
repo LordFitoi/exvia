@@ -9,6 +9,7 @@ from apps.routes.group_views import (
     GroupLeaveView,
     GroupRejectView,
     GroupRemoveView,
+    GroupRouteView,
 )
 from apps.routes.views import (
     RideSummaryCreateView,
@@ -30,6 +31,7 @@ urlpatterns = [
     path('groups/<uuid:pk>/reject/', GroupRejectView.as_view(), name='group_reject'),
     path('groups/<uuid:pk>/invite/', GroupInviteView.as_view(), name='group_invite'),
     path('groups/<uuid:pk>/remove/', GroupRemoveView.as_view(), name='group_remove'),
+    path('groups/<uuid:pk>/route/', GroupRouteView.as_view(), name='group_route'),
     path('groups/<uuid:pk>/leave/', GroupLeaveView.as_view(), name='group_leave'),
     path('summaries/', RideSummaryListView.as_view(), name='ride_summary_list'),
     path('summaries/<int:pk>/', RideSummaryDetailView.as_view(), name='ride_summary_detail'),

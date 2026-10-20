@@ -51,6 +51,12 @@ export const inviteRider = async (groupId: string, username: string): Promise<Ro
     await requestJsonAuthorized(`${GROUPS_PATH}${groupId}/invite/`, { method: 'POST', body: { username } }),
   )
 
+/** The leader changes the route the group rides, or goes to free mode with null; answers the updated group. */
+export const changeGroupRoute = async (groupId: string, routeId: string | null): Promise<RouteGroup> =>
+  expectGroup(
+    await requestJsonAuthorized(`${GROUPS_PATH}${groupId}/route/`, { method: 'POST', body: { route: routeId } }),
+  )
+
 /** The leader takes a rider, invited or riding, out of the group; answers the updated group. */
 export const removeRider = async (groupId: string, userId: number): Promise<RouteGroup> =>
   expectGroup(

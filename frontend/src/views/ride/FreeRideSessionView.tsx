@@ -6,13 +6,14 @@ import { useState } from 'react'
 
 import Toast from '@/components/feedback/Toast'
 import { useFreeRideMap } from '@/hooks/useFreeRideMap'
-import { useGroupRide } from '@/hooks/useGroupRide'
+import type { GroupRide } from '@/hooks/useGroupRide'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useRideElapsed } from '@/hooks/useRideElapsed'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { Coordinates, GeolocationState } from '@/types/geolocation'
 import MapStatusView from '@/views/map/MapStatusView'
+import ChangeRouteControl from '@/views/ride/ChangeRouteControl'
 import FinishFreeRideDialog from '@/views/ride/FinishFreeRideDialog'
 import RidersControl from '@/views/ride/RidersControl'
 import RideStatsPanel from '@/views/ride/RideStatsPanel'
@@ -22,15 +23,17 @@ interface FreeRideSessionViewProps {
   location: GeolocationState
   /** Where to show the rider: the street position when there is one, else the raw fix. */
   rider: Coordinates
+  /** The group channel: the other riders and the notice of who came or went. */
+  groupRide: GroupRide
   /** Leaves the free ride, back to the picker. */
   onLeave: () => void
 }
 
 /** A ride with no route: nothing of it is drawn or recorded, only the rider and the group are on the map. */
-export default function FreeRideSessionView({ location, rider, onLeave }: FreeRideSessionViewProps) {
+export default function FreeRideSessionView({ location, rider, groupRide, onLeave }: FreeRideSessionViewProps) {
   const [startedAt] = useState(() => Date.now())
   const elapsedSeconds = useRideElapsed(startedAt, null)
-  const { riders, notice, dismissNotice } = useGroupRide({ rider, location })
+  const { riders, notice, dismissNotice } = groupRide
   const [isFinishOpen, setIsFinishOpen] = useState(false)
   const { containerRef, hasLoadFailed, recenter, focusOn } = useFreeRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -74,6 +77,7 @@ export default function FreeRideSessionView({ location, rider, onLeave }: FreeRi
               <span className="icon icon-flag-checkered" aria-hidden="true"></span>
             </button>
             <RidersControl riders={riders} onFocus={focusOn} />
+            <ChangeRouteControl />
           </div>
         </div>
         <button

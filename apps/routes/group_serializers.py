@@ -42,16 +42,22 @@ class GroupSerializer(serializers.ModelSerializer):
         ]
 
 
-class GroupCreateSerializer(serializers.Serializer):
-    """The route (one of the caller's, or none for free mode) and the usernames to invite."""
+class GroupRouteChoiceSerializer(serializers.Serializer):
+    """The route to ride (one of the caller's), or null for free mode."""
 
-    route = serializers.PrimaryKeyRelatedField(queryset=Route.objects.all(), allow_null=True, default=None)
-    invitees = serializers.ListField(child=serializers.CharField(max_length=150), default=list)
+    route = serializers.PrimaryKeyRelatedField(queryset=Route.objects.all(), allow_null=True)
 
     def validate_route(self, route: Route | None) -> Route | None:
         if route is not None and route.author_id != self.context['request'].user.pk:
             raise serializers.ValidationError(UNKNOWN_ROUTE_MESSAGE)
         return route
+
+
+class GroupCreateSerializer(GroupRouteChoiceSerializer):
+    """The route (one of the caller's, or none for free mode) and the usernames to invite."""
+
+    route = serializers.PrimaryKeyRelatedField(queryset=Route.objects.all(), allow_null=True, default=None)
+    invitees = serializers.ListField(child=serializers.CharField(max_length=150), default=list)
 
     def validate_invitees(self, usernames: list[str]) -> list[User]:
         names = list(dict.fromkeys(name.strip() for name in usernames if name.strip()))

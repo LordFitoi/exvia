@@ -198,10 +198,9 @@
           </ul>
         </div>
         <div class="specimen">
-          <span class="specimen-title">Bottom sheet: secondary flows, always with a close</span>
+          <span class="specimen-title">Sheet: a floating card for secondary flows, always with a close</span>
           <div class="sheet-preview">
             <div class="sheet" role="dialog" aria-label="Filters">
-              <span class="sheet-handle"></span>
               <div class="sheet-header">
                 <h3 class="text-subtitle">Filters</h3>
                 <button class="icon-button" type="button" aria-label="Close filters"><span class="icon icon-x" aria-hidden="true"></span></button>
@@ -216,13 +215,14 @@
           </div>
         </div>
         <div class="specimen">
-          <span class="specimen-title">Modal sheet: a short form over the screen (native dialog, showModal)</span>
+          <span class="specimen-title">Modal sheet: the same card over a scrim, drag the header down to close (native dialog, showModal)</span>
           <div class="sheet-preview">
-            <div class="sheet" role="dialog" aria-label="Save route">
-              <span class="sheet-handle"></span>
-              <div class="sheet-header">
-                <h3 class="text-subtitle">Save route</h3>
-                <button class="icon-button" type="button" aria-label="Close save route"><span class="icon icon-x" aria-hidden="true"></span></button>
+            <div class="sheet sheet-modal" role="dialog" aria-label="Save route">
+              <div class="sheet-grab">
+                <div class="sheet-header">
+                  <h3 class="text-subtitle">Save route</h3>
+                  <button class="icon-button" type="button" aria-label="Close save route"><span class="icon icon-x" aria-hidden="true"></span></button>
+                </div>
               </div>
               <div class="field">
                 <label class="field-label" for="route-name">Name</label>

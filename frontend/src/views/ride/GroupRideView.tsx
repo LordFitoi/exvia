@@ -3,8 +3,7 @@
 import LiveGroupProvider from '@/context/LiveGroupProvider'
 import { useLeaveGroupOnExit } from '@/hooks/useLeaveGroupOnExit'
 import type { RouteGroup } from '@/types/routeGroup'
-import FreeRideView from '@/views/ride/FreeRideView'
-import RideModeView from '@/views/ride/RideModeView'
+import GroupRideSession from '@/views/ride/GroupRideSession'
 
 interface GroupRideViewProps {
   group: RouteGroup
@@ -20,11 +19,7 @@ export default function GroupRideView({ group, onLeave, onFinish }: GroupRideVie
 
   return (
     <LiveGroupProvider key={group.id} initialGroup={group}>
-      {group.route ? (
-        <RideModeView route={group.route} onQuit={exit.leave} onFinish={exit.finish} />
-      ) : (
-        <FreeRideView onLeave={exit.leave} />
-      )}
+      <GroupRideSession onLeave={exit.leave} onFinish={exit.finish} />
     </LiveGroupProvider>
   )
 }

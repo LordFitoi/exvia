@@ -8,6 +8,10 @@
   justify-items: center;
 }
 
+/* Every frame has the same width: the figure takes the width itself, because a
+   grid item centered with justify-items shrinks to its caption's text */
+.phone-row > figure { inline-size: min(100%, 25rem); }
+
 .phone {
   --safe-top: 0px;
   --safe-bottom: 1.25rem;
@@ -15,7 +19,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  inline-size: min(100%, 25rem);
+  inline-size: 100%;
   block-size: 54rem;
   border: 0.5rem solid var(--color-device);
   border-radius: 3.25rem;
