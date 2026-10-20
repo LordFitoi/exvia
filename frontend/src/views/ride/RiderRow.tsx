@@ -34,7 +34,7 @@ type RiderMenuProps = Pick<RiderRowProps, 'rider' | 'onFocus' | 'onPromote' | 'o
 
 /** The more-options button of the selected rider: a menu with what can be done to them. */
 function RiderMenu({ rider, onFocus, onPromote, onRemove }: RiderMenuProps) {
-  const { isOpen, panelId, rootRef, triggerRef, toggle, close, handleKeyDown } = useMenuPopover()
+  const { isOpen, rootRef, triggerRef, panelProps, toggle, close } = useMenuPopover({ isInTopLayer: true })
 
   const handleChoose = (action: () => void) => {
     close()
@@ -50,13 +50,13 @@ function RiderMenu({ rider, onFocus, onPromote, onRemove }: RiderMenuProps) {
         aria-label={`More options for ${rider.username}`}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        aria-controls={isOpen ? panelId : undefined}
+        aria-controls={isOpen ? panelProps.id : undefined}
         onClick={toggle}
       >
         <span className="icon icon-more" aria-hidden="true"></span>
       </button>
       {isOpen && (
-        <ul className="menu-panel" id={panelId} role="menu" aria-label={rider.username} onKeyDown={handleKeyDown}>
+        <ul className="menu-panel" aria-label={rider.username} {...panelProps}>
           {onFocus && (
             <li role="none">
               <button className="menu-item" type="button" role="menuitem" onClick={() => handleChoose(onFocus)}>

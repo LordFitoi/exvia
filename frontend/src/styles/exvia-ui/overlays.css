@@ -115,6 +115,22 @@ dialog.sheet-modal::backdrop { background: var(--color-scrim); }
   animation: fade-in var(--duration-fast) var(--ease-out);
 }
 
+/* A menu inside a box that scrolls or clips (a dialog with overflow, a sheet) would be cut off by it.
+   With `popover="manual"` the panel goes to the top layer, which no overflow, transform or blur of an
+   ancestor can clip or move, so it is always fully visible. Its position is fixed, and the app sets
+   `top` and `left` from the trigger's rectangle (below it, right edges aligned, flipped above it when
+   there is no room, and kept inside the screen). It closes on scroll and resize instead of following them */
+.menu-panel[popover] {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  border: 0;
+  overflow: visible;
+  color: var(--color-text);
+}
+
+.menu-panel[popover]:not(:popover-open) { display: none; }
+
 .menu-item {
   display: flex;
   align-items: center;

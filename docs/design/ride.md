@@ -370,8 +370,8 @@ Ride mode and the free ride share the group's live channel
   and the dialog closes; a refusal (already in the group, group full) shows under the field. Every
   row with something to do is selectable (`RiderRow`, a `list-item-main` button with `aria-pressed`): a tap tints
   the row and shows a more-options button (`icon-more`, `More options for ana`) on it, and only one
-  row is selected at a time; the button opens an action menu (`useMenuPopover`: arrow keys, Escape
-  closes only the menu) with **Center the map on ana** (connected riders, for everyone) and, for the
+  row is selected at a time; the button opens an action menu (`useMenuPopover`, in the top layer so the dialog's scrolling cannot cut it off: arrow keys,
+  Escape closes only the menu) with **Center the map on ana** (connected riders, for everyone) and, for the
   leader, **Promote to leader** (crown icon, riders who are riding only) and **Remove ana** with the trash icon in the error color, which asks
   first, with the confirm dialog "Remove ana?" (**Cancel**
   first, **Remove** in the error color): the rider is taken out of the group, whether they had

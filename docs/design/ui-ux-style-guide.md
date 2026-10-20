@@ -152,6 +152,15 @@ Exvia changes the following on purpose:
 - **Flat list.** `list list-flat` drops the card (shadow, background, rounded
   corners) and the rows' side padding and keeps only the dashed dividers, for a
   list inside a dialog or sheet, which is already a card (the Riders dialog).
+- **A menu is never cut off.** A `menu-panel` inside a box that scrolls or clips
+  (the Riders dialog) would be cut by its overflow. With `popover="manual"` the
+  panel goes to the top layer, where no overflow, transform or blur of an
+  ancestor can clip or move it (`menu-panel[popover]`: fixed, with `top` and
+  `left` set from the button's rectangle). `useMenuPopover({ isInTopLayer: true })`
+  and `placeMenuPanel` do it: below the button with the right edges aligned,
+  flipped above when there is no room, kept 8px inside the screen, and closed on
+  scroll and resize because it would no longer sit next to its button. Menus in
+  plain flow, like the map controls, keep the absolute panel.
 - **Confirm with a primary button.** The confirm dialog's second button is the
   error color only when the action is destructive (Delete, Remove). An action
   that is serious but not destructive, such as handing the lead of a ride to

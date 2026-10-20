@@ -10,7 +10,7 @@ interface RouteMenuProps {
 
 /** The route button of the map controls: opens a menu to create a route, browse the saved ones or see the ride history. */
 export default function RouteMenu({ onCreate, onPreview, onHistory }: RouteMenuProps) {
-  const { isOpen, panelId, rootRef, triggerRef, toggle, close, handleKeyDown } = useMenuPopover()
+  const { isOpen, rootRef, triggerRef, panelProps, toggle, close } = useMenuPopover()
 
   const handleChoose = (action: () => void) => {
     close()
@@ -26,13 +26,13 @@ export default function RouteMenu({ onCreate, onPreview, onHistory }: RouteMenuP
         aria-label="Routes"
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        aria-controls={isOpen ? panelId : undefined}
+        aria-controls={isOpen ? panelProps.id : undefined}
         onClick={toggle}
       >
         <span className="icon icon-route" aria-hidden="true"></span>
       </button>
       {isOpen && (
-        <ul className="menu-panel" id={panelId} role="menu" aria-label="Routes" onKeyDown={handleKeyDown}>
+        <ul className="menu-panel" aria-label="Routes" {...panelProps}>
           <li role="none">
             <button className="menu-item" type="button" role="menuitem" onClick={() => handleChoose(onCreate)}>
               <span className="icon icon-plus" aria-hidden="true"></span>
