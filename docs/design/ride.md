@@ -23,8 +23,8 @@ one.
 |-------|------|-----|
 | Page | `app/(app)/ride/page.tsx` | Renders `RideOverview` |
 | Page of a joined ride | `app/(app)/ride/[groupId]/page.tsx` | Where accepting an invitation lands; renders `JoinedRideView` |
-| Screen | `views/ride/RideOverview.tsx` | Shows the picker, or the ride of the group that **Ride** created (`GroupRideView`); leaving a ride goes back to the picker with the choices kept |
-| Joined ride | `views/ride/JoinedRideView.tsx`, `hooks/useRouteGroup.ts` | Loads the group of `/ride/<id>` and rides in it at once; leaving goes to a fresh `/ride` |
+| Screen | `views/ride/RideOverview.tsx` | Shows the picker; the group that **Ride** creates is ridden at `/ride/<id>` (it replaces `/ride`) |
+| Joined ride | `views/ride/JoinedRideView.tsx`, `hooks/useRouteGroup.ts` | Loads the group of `/ride/<id>` and rides in it at once, whether the rider created the group, accepted an invitation or joined back; quitting, leaving or finishing replaces the page with the Map tab (`/map`) |
 | Group ride | `views/ride/GroupRideView.tsx` | Ride mode on the group's route, or a free ride when it has none |
 | Setup state | `hooks/useRideSetup.ts` | The routes, what is selected (default: the newest route, or free mode with no routes) and the invitees |
 | Join back | `hooks/useActiveGroupPrompt.ts`, `views/ride/ActiveGroupDialog.tsx` | Before **Ride** creates a group, asks whether to join the group that is still rolling; see [Join back](#join-back) |
@@ -282,11 +282,11 @@ it see each other on the map.
 
 ## Key decisions
 
-- **Not a separate page for ride mode**: it is state in `RideOverview`, so
-  quitting is instant and the selection and invitations survive. A reload while riding goes
-  back to the picker, since the ride is not stored; the exception is `/ride/<group id>`,
-  where a rider who accepted an invitation rides, and a reload there reopens the ride of
-  that group (the timer starts again).
+- **Every ride has its own page, `/ride/<group id>`**: **Ride** creates the group and replaces
+  `/ride` with that page, so a reload (or the app being closed and opened from Home's **Join
+  back**) reopens the same ride; the timer starts again. The price is that quitting returns to
+  the Map tab (not the picker), so the route and invitations are chosen again for the next ride. The ride stays open for the
+  rider until they quit or finish it ([route-groups.md](route-groups.md#active-group)).
 - **A ride is always a group**: even alone, **Ride** creates a `RouteGroup`, so there is one
   path for solo and shared rides. Quitting and riding again creates a new group (and
   notifies the invitees again); the earlier one stays on the server.
@@ -316,7 +316,19 @@ Ride mode and the free ride share the group's live channel
   [asgi-websockets.md](asgi-websockets.md)). The first message carries the access token, which
   is renewed first when less than a minute is left (`getAccessToken`). A `4401` close renews it
   once and retries; a `4403` (not in the group) or a second `4401` stops for good. Any other
-  drop reconnects after 1, 2, 4, 8, then every 15 seconds, and `ready` resets that.
+  drop reconnects after 1, 2, 4, 8, then every 15 seconds, and `ready` resets that. A pending
+  retry is also tried at once when the app becomes visible again or the browser comes back online,
+  because a phone that was locked may have slept through the timer.
+- <a id="background"></a>**Staying visible.** A web page is only allowed to run while it is shown: when
+  the screen locks or another app takes over, browsers throttle or freeze its timers, its sockets and
+  its GPS watch. The ride therefore keeps the screen on with the wake lock ([Ride mode](#ride-mode),
+  `useWakeLock`) so it does not lock while the rider is on the app, and nothing plays in the
+  background. Leaving the app for another one still pauses the sharing, because the lock is released
+  whenever the page is hidden. When the app becomes visible again the wake lock is requested again,
+  the GPS watch is registered again (`useGeolocation`), a position is sent at once
+  (`useSharePosition`) and the socket reconnects at once. Sharing that continues with the app in the
+  background needs a native app with background location, which this PWA is not. A rider who comes
+  back after being away finds the ride on Home ([Join back](#join-back)).
 - **Others on the map.** Each rider who reported recently is a **bubble above a dot**
   (`rider-marker`, the style guide's [Group rides](../ui-ux/group.html)): their picture, or
   their initials, in a bubble with the dot on their exact position, in the primary green so

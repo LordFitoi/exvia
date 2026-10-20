@@ -107,12 +107,13 @@ Home stays in front.
 
 Above everything else on Home, **Riding now** (`ActiveGroupSection`) shows the group the rider can join
 back: a list row with the route name (or Free mode), "Led by ana · 3 riders" and a **Join back** button
-that goes to `/ride/<group id>`. It is there only while `GET /api/routes/groups/active/` answers a group
-(another rider still connected and not ended, see [route-groups.md](route-groups.md#active-group)); with no
-group, or if loading fails, the section is not rendered. It loads when Home opens, when the app comes
-back to the foreground and **every 10 seconds** while Home is visible (`useActiveGroup`), so a group whose
-riders have all left disappears within about 40 s (the server's 30 s window plus one refresh) without leaving
-Home. A refresh that fails hides the section instead of keeping a group that may have ended.
+that goes to `/ride/<group id>`. It is there while `GET /api/routes/groups/active/` answers a group (one the
+rider accepted and has not left, with activity in the last 2 hours, whether or not anybody is connected right
+now, see [route-groups.md](route-groups.md#active-group)); a rider who minimized or closed the app mid-ride
+finds it here when they open the app again, since the installed app starts on Home. With no group, or if loading
+fails, the section is not rendered. It loads when Home opens, when the app comes back to the foreground and
+**every 10 seconds** while Home is visible (`useActiveGroup`), so a group the rider left elsewhere disappears
+within about 10 s. A refresh that fails hides the section instead of keeping a group that may have ended.
 
 The "Next ride" block on Home still shows the guide's empty `state-view`
 ("No rides planned"): clan rides have no endpoints yet. Clans and the Home

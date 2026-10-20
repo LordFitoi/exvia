@@ -41,12 +41,24 @@ export const useGeolocation = (): GeolocationState => {
 
   useEffect(() => {
     if (!isSupported) return
-    const watchId = navigator.geolocation.watchPosition(
-      (position) => setState(toReadyState(position)),
-      (error) => setState((previous) => toErrorState(error, previous)),
-      WATCH_OPTIONS,
-    )
-    return () => navigator.geolocation.clearWatch(watchId)
+    const startWatch = () =>
+      navigator.geolocation.watchPosition(
+        (position) => setState(toReadyState(position)),
+        (error) => setState((previous) => toErrorState(error, previous)),
+        WATCH_OPTIONS,
+      )
+    let watchId = startWatch()
+    // Browsers may end a watch while the app is hidden, so it is registered again on coming back.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return
+      navigator.geolocation.clearWatch(watchId)
+      watchId = startWatch()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      navigator.geolocation.clearWatch(watchId)
+    }
   }, [isSupported])
 
   return isSupported ? state : UNAVAILABLE_STATE

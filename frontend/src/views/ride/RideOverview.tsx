@@ -1,26 +1,24 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 
 import { useActiveGroupPrompt } from '@/hooks/useActiveGroupPrompt'
 import { useRideSetup } from '@/hooks/useRideSetup'
 import { useStartGroupRide } from '@/hooks/useStartGroupRide'
-import type { RouteGroup } from '@/types/routeGroup'
 import ActiveGroupDialog from '@/views/ride/ActiveGroupDialog'
-import GroupRideView from '@/views/ride/GroupRideView'
 import RoutePickerView from '@/views/ride/RoutePickerView'
 
 const HOME_PATH = '/'
-const MAP_PATH = '/map'
 const RIDE_PATH = '/ride'
 
-/** The Ride screen: the setup (route, invitations), then the ride of the group that Ride creates. */
+/**
+ * The Ride screen: the setup (route, invitations). The group that Ride creates is ridden at `/ride/<id>`,
+ * so that reloading the page reopens the ride instead of dropping back to the setup.
+ */
 export default function RideOverview() {
   const router = useRouter()
   const setup = useRideSetup()
-  const [group, setGroup] = useState<RouteGroup | null>(null)
-  const start = useStartGroupRide(setGroup)
+  const start = useStartGroupRide(({ id }) => router.replace(`${RIDE_PATH}/${id}`))
   const prompt = useActiveGroupPrompt({
     onJoin: ({ id }) => router.push(`${RIDE_PATH}/${id}`),
     onStart: start.start,
@@ -32,11 +30,6 @@ export default function RideOverview() {
     else router.replace(HOME_PATH)
   }
 
-  // Replacing /ride with the map keeps Back from returning to a ride that is over.
-  const handleFinish = () => router.replace(MAP_PATH)
-
-  // Leaving a ride goes back to the setup, with the same route and invitations still chosen.
-  if (group) return <GroupRideView group={group} onLeave={() => setGroup(null)} onFinish={handleFinish} />
   return (
     <>
       <RoutePickerView

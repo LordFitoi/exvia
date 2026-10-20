@@ -71,8 +71,7 @@ class GroupCreateView(APIView):
 
 
 class GroupActiveView(APIView):
-    """The newest group the caller can join back: still not ended, with another rider connected.
-    `204` when there is none."""
+    """The newest group the caller accepted and has not left, with recent activity. `204` when there is none."""
 
     def get(self, request: Request) -> Response:
         group = find_active_group(group_queryset(), request.user, timezone.now())

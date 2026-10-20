@@ -10,8 +10,8 @@ from apps.routes import group_meta
 from apps.routes.group_meta import ParticipantStatus
 from apps.routes.models import MAX_GROUP_PARTICIPANTS, Route, RouteGroup
 
-# A rider who reports nothing for this long is gone; the client hides such a rider after the same time.
-CONNECTED_WINDOW = timedelta(seconds=30)
+# A group with no activity for this long has ended and is no longer offered back to its riders.
+RESUME_WINDOW = timedelta(hours=2)
 
 
 class InvitationAlreadyAnswered(ValueError):
@@ -122,12 +122,12 @@ def save_position(group_id: object, user_id: int, position: dict[str, Any]) -> b
 
 
 def find_active_group(groups: QuerySet[RouteGroup], user: User, now: datetime) -> RouteGroup | None:
-    """The newest group the user has accepted in which another rider is still connected, or None.
-    A group nobody is connected to has ended, so a solo ride is never active for its own rider.
-    `updated_at` moves with every saved position, which narrows the candidates in the database."""
-    since = now - CONNECTED_WINDOW
+    """The newest group the user has accepted and not left, with activity within `RESUME_WINDOW`, or None.
+    A rider who minimizes or closes the app stops reporting without leaving, and must be able to come back,
+    alone or not; leaving, quitting or finishing removes them from the group. `updated_at` moves with every
+    saved position, invitation and answer, so it is the group's last activity."""
+    since = now - RESUME_WINDOW
     for group in groups.filter(participants=user, updated_at__gte=since).order_by('-created_at'):
-        is_accepted = group_meta.get_status(group.meta_json, user.pk) == ParticipantStatus.ACCEPTED
-        if is_accepted and group_meta.has_connected_rider(group.meta_json, user.pk, since):
+        if group_meta.get_status(group.meta_json, user.pk) == ParticipantStatus.ACCEPTED:
             return group
     return None

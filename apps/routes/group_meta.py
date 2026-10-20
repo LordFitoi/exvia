@@ -114,14 +114,3 @@ def get_positions(meta: dict[str, Any]) -> dict[str, dict[str, Any]]:
         for user_id, entry in meta.get('participants', {}).items()
         if entry.get('position') is not None
     }
-
-
-def has_connected_rider(meta: dict[str, Any], excluding_user_id: int, since: datetime) -> bool:
-    """Whether an accepted rider other than `excluding_user_id` reported a position at or after `since`."""
-    return any(
-        user_id != str(excluding_user_id)
-        and entry['status'] == ParticipantStatus.ACCEPTED
-        and entry.get('position') is not None
-        and datetime.fromisoformat(entry['position']['recorded_at']) >= since
-        for user_id, entry in meta.get('participants', {}).items()
-    )

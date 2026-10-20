@@ -42,8 +42,25 @@ export const startGroupConnection = ({ groupId, onStatus, onMessage }: Connectio
 
   const scheduleRetry = () => {
     onStatus('connecting')
-    retryTimer = setTimeout(connect, RETRY_DELAYS_MS[Math.min(failures, RETRY_DELAYS_MS.length - 1)])
+    retryTimer = setTimeout(() => {
+      retryTimer = undefined
+      connect()
+    }, RETRY_DELAYS_MS[Math.min(failures, RETRY_DELAYS_MS.length - 1)])
     failures += 1
+  }
+
+  // A phone that was locked or in another app drops the socket and may have slept through the backoff,
+  // so coming back (or getting the network back) retries at once instead of waiting for the timer.
+  const retryNow = () => {
+    if (retryTimer === undefined) return
+    clearTimeout(retryTimer)
+    retryTimer = undefined
+    failures = 0
+    connect()
+  }
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') retryNow()
   }
 
   const handleClose = (code: number) => {
@@ -91,6 +108,8 @@ export const startGroupConnection = ({ groupId, onStatus, onMessage }: Connectio
   }
 
   connect()
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('online', retryNow)
 
   return {
     send: (message) => {
@@ -99,6 +118,8 @@ export const startGroupConnection = ({ groupId, onStatus, onMessage }: Connectio
     stop: () => {
       isStopped = true
       clearTimeout(retryTimer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('online', retryNow)
       socket?.close()
     },
   }

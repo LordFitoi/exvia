@@ -88,7 +88,7 @@ All endpoints need a JWT, like the rest of `/api/routes/`.
 | `POST /api/routes/groups/<uuid>/invite/` | The leader invites one more rider to a group that is rolling; answers the group (see [Inviting and removing](#inviting-and-removing)) |
 | `POST /api/routes/groups/<uuid>/remove/` | The leader takes a rider out of the group; answers the group |
 | `POST /api/routes/groups/<uuid>/leave/` | Takes a rider who accepted out of the group; `204` (see [Leaving](#leaving)) |
-| `GET /api/routes/groups/active/` | The newest group the caller can join back (see [Active group](#active-group)); `204` when there is none |
+| `GET /api/routes/groups/active/` | The newest group the caller accepted, has not left and that saw activity in the last 2 h (see [Active group](#active-group)); `204` when there is none |
 
 **Create** takes `{"route": "<uuid>" | null, "invitees": ["ana", "ben"]}`; both are optional
 (`null`/empty is free mode with nobody invited). In one transaction it creates the group,
@@ -168,21 +168,21 @@ bad connection never keeps the rider on the ride screen.
 
 ## Active group
 
-A group has no "ended" column: it **has ended when nobody is connected to it**. A rider is
-connected while their latest position in `meta_json` is at most `CONNECTED_WINDOW` (30 s, the same
-time after which the client hides a quiet rider, see [ride.md](ride.md#group-ride)) old.
+A group has no "ended" column: it **has ended when it saw no activity for `RESUME_WINDOW`** (2 h).
+Its `updated_at` is its last activity: it moves with every saved position, invitation and answer.
 `find_active_group(groups, user, now)` answers the **newest** group (by `created_at`) that:
 
-- the caller has **accepted** (an invitation not answered, or rejected, does not count), and
-- has **another** accepted rider connected. The caller's own position is ignored on purpose:
-  a rider who quits would otherwise be offered the ride they have just left, and a solo ride is
-  never "active" for its own rider.
+- the caller has **accepted** (an invitation not answered, or rejected, does not count), and has
+  **not left** (leaving, quitting and finishing remove the rider, see [Leaving](#leaving)), and
+- had activity within `RESUME_WINDOW`.
 
-A new group is therefore the active one as soon as someone but its author reports from it, because
-it is the newest. An older group that is still connected stays the answer while the newer one has
-nobody connected. `save_position` now also writes `updated_at`, so a group's `updated_at` is its
-last activity: the query narrows to groups touched in the window in the database and
-`group_meta.has_connected_rider` does the exact per-rider check on the few that are left.
+Nobody has to be connected, the caller included, and a solo ride counts. A phone that is locked, in
+another app, or closed stops reporting (and loses its socket) without leaving, so judging by who reported
+in the last seconds hid the ride from the very rider who wanted to come back to it, and from the others
+once everybody had put the phone down. The riders on the map still age out after 30 s of silence on the
+client ([ride.md](ride.md#group-ride)); that is about drawing them, not about whether the ride exists. An
+older group stays the answer while the newer one has ended. The cost of a rider whose `leave` request
+failed (it is only logged) is being offered the group until the window passes.
 
 The endpoint answers the same body as the group read, so the client can ride it as it is, or `204`
 with no body. It is the only way to find a group without knowing its id.

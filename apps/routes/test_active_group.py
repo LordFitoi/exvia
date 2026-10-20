@@ -10,15 +10,14 @@ from rest_framework.test import APIClient
 
 from apps.routes import group_meta
 from apps.routes.group_meta import ParticipantStatus
-from apps.routes.group_service import CONNECTED_WINDOW, answer_invitation, create_group, find_active_group
+from apps.routes.group_service import RESUME_WINDOW, answer_invitation, create_group, find_active_group, leave_group
 from apps.routes.models import RouteGroup
 
 
 class ActiveGroupTestCase(TestCase):
     def setUp(self) -> None:
         self.now = timezone.now()
-        self.recent = self.now - CONNECTED_WINDOW / 2
-        self.stale = self.now - CONNECTED_WINDOW * 2
+        self.ended_at = self.now - RESUME_WINDOW * 2
         self.owner = User.objects.create_user('owner', password='pw')
         self.ana = User.objects.create_user('ana', password='pw')
         self.ben = User.objects.create_user('ben', password='pw')
@@ -34,53 +33,54 @@ class ActiveGroupTestCase(TestCase):
         group_meta.set_position(group.meta_json, user.pk, position)
         group.save(update_fields=['meta_json', 'updated_at'])
 
+    def _end(self, group: RouteGroup) -> None:
+        """Ages the group's last activity past the resume window; `update` skips the automatic timestamp."""
+        RouteGroup.objects.filter(pk=group.pk).update(updated_at=self.ended_at)
+
 
 class FindActiveGroupTests(ActiveGroupTestCase):
     def _find(self, user: User) -> RouteGroup | None:
         return find_active_group(RouteGroup.objects.all(), user, self.now)
 
-    def test_group_with_another_rider_connected_is_active(self) -> None:
+    def test_group_the_user_accepted_is_active_for_every_accepted_rider(self) -> None:
         group = self._group_with_accepted(self.ana)
-        self._report(group, self.ana, self.recent)
+        self.assertEqual(self._find(self.owner), group)
+        self.assertEqual(self._find(self.ana), group)
+
+    def test_solo_group_is_active_for_its_leader(self) -> None:
+        group = create_group(self.owner, None, [])
         self.assertEqual(self._find(self.owner), group)
 
-    def test_own_position_does_not_make_a_group_active(self) -> None:
+    def test_group_stays_active_while_every_rider_is_in_the_background(self) -> None:
         group = self._group_with_accepted(self.ana)
-        self._report(group, self.owner, self.recent)
-        self.assertIsNone(self._find(self.owner))
+        self._report(group, self.owner, self.now)
+        self._report(group, self.ana, self.now)
+        self.assertEqual(self._find(self.owner), group)
 
-    def test_group_nobody_reported_in_is_not_active(self) -> None:
-        self._group_with_accepted(self.ana)
-        self.assertIsNone(self._find(self.owner))
-
-    def test_group_whose_riders_went_quiet_has_ended(self) -> None:
+    def test_group_without_recent_activity_has_ended(self) -> None:
         group = self._group_with_accepted(self.ana)
-        self._report(group, self.ana, self.stale)
+        self._end(group)
         self.assertIsNone(self._find(self.owner))
 
-    def test_connected_rider_who_only_has_an_invitation_does_not_count(self) -> None:
-        group = create_group(self.owner, None, [self.ana])
-        self._report(group, self.ana, self.recent)
-        self.assertIsNone(self._find(self.owner))
-
-    def test_user_who_has_not_accepted_gets_no_group(self) -> None:
-        group = create_group(self.owner, None, [self.ana, self.ben])
-        answer_invitation(group, self.ben, ParticipantStatus.ACCEPTED)
-        self._report(group, self.ben, self.recent)
+    def test_user_who_only_has_an_invitation_gets_no_group(self) -> None:
+        create_group(self.owner, None, [self.ana])
         self.assertIsNone(self._find(self.ana))
 
+    def test_user_who_left_gets_no_group_but_the_others_keep_it(self) -> None:
+        group = self._group_with_accepted(self.ana)
+        leave_group(group, self.ana)
+        self.assertIsNone(self._find(self.ana))
+        self.assertEqual(self._find(self.owner), group)
+
     def test_newest_active_group_wins(self) -> None:
-        older = self._group_with_accepted(self.ana)
+        self._group_with_accepted(self.ana)
         newer = self._group_with_accepted(self.ana)
-        for group in (older, newer):
-            self._report(group, self.ana, self.recent)
         self.assertEqual(self._find(self.owner), newer)
 
     def test_newest_group_that_has_ended_does_not_hide_an_older_active_one(self) -> None:
         older = self._group_with_accepted(self.ana)
         newer = self._group_with_accepted(self.ana)
-        self._report(older, self.ana, self.recent)
-        self._report(newer, self.ana, self.stale)
+        self._end(newer)
         self.assertEqual(self._find(self.owner), older)
 
 
@@ -92,19 +92,17 @@ class ActiveGroupApiTests(ActiveGroupTestCase):
 
     def test_answers_the_active_group(self) -> None:
         group = self._group_with_accepted(self.ana)
-        self._report(group, self.ana, self.now)
         response = self._get(self.owner)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['id'], str(group.id))
         self.assertEqual([rider['username'] for rider in response.data['participants']], ['owner', 'ana'])
 
-    def test_answers_no_content_when_no_group_is_active(self) -> None:
-        self._group_with_accepted(self.ana)
+    def test_answers_no_content_when_the_group_has_ended(self) -> None:
+        self._end(self._group_with_accepted(self.ana))
         self.assertEqual(self._get(self.owner).status_code, status.HTTP_204_NO_CONTENT)
 
     def test_a_stranger_gets_no_content(self) -> None:
-        group = self._group_with_accepted(self.ana)
-        self._report(group, self.ana, self.now)
+        self._group_with_accepted(self.ana)
         self.assertEqual(self._get(self.ben).status_code, status.HTTP_204_NO_CONTENT)
 
     def test_needs_a_token(self) -> None:

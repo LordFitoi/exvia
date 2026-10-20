@@ -38,8 +38,16 @@ export const useSharePosition = ({ send, status, rider, location }: SharePositio
         accuracy: reading.accuracy,
       })
     }
+    // Timers run slowly or not at all while the app is hidden, so coming back reports without waiting.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') share()
+    }
     share()
     const timer = setInterval(share, POSITION_INTERVAL_MS)
-    return () => clearInterval(timer)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [status, send])
 }
