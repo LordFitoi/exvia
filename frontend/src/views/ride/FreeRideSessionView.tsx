@@ -77,7 +77,7 @@ export default function FreeRideSessionView({ location, rider, groupRide, onLeav
               <span className="icon icon-flag-checkered" aria-hidden="true"></span>
             </button>
             <RidersControl riders={riders} onFocus={focusOn} />
-            <ChangeRouteControl />
+            <ChangeRouteControl rider={rider} />
           </div>
         </div>
         <button

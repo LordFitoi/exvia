@@ -428,6 +428,14 @@ block; riders who are not the leader do not see it, since the route is the group
   calls `POST /api/routes/groups/<id>/route/` (`useGroupRouteChange`): the button shows the loading
   state, a failure keeps the sheet open with the message, and success replaces the group shown
   (`replaceGroup`) and closes it.
+- **Create a route.** Under the list, **Create a route** (outline button, plus icon) lets the leader draw a
+  route without leaving the ride. `ChangeRouteDialog` swaps the picker for `RouteCreatorView`, the same
+  creator as the map's, drawn from where the leader is, in a `screen-overlay` rendered into the body
+  (`createPortal`) so the ride stays mounted underneath: the position keeps being shared and the
+  socket stays open, so the others see nobody leave. The button is absent until the leader has a
+  position. Saving the route (the usual name sheet) closes the creator, reloads the leader's routes and
+  brings the picker back with the new route **chosen**; it is applied to the group only when the leader
+  presses **Save**, like any other choice. The X of the creator comes back to the picker as it was.
 - **The ride follows the group.** `GroupRideSession` renders ride mode from `group.route` and keys it by
   the route id, so a new route starts a **new ride**: the clock, the speeds, the progress and the map
   start over, and the ride on the old route is **not saved** (it is neither finished nor quit). Going

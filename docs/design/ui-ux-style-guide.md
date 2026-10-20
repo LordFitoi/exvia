@@ -166,6 +166,12 @@ Exvia changes the following on purpose:
   that is serious but not destructive, such as handing the lead of a ride to
   another rider, confirms with the primary button (`ConfirmDialog`,
   `isDestructive={false}`).
+- **Screen overlay.** `screen-overlay` shows a full screen (the route creator)
+  over another one without leaving it, so what runs under it (a ride sharing
+  its position) keeps running. It is fixed over the window at `--z-sheet`, with
+  the page background, and holds the screen in the app's column. Render it into
+  the body (a portal): an ancestor with a blur or a transform, like the map
+  controls, would make `fixed` relative to itself.
 - **Panel dialog.** A list to choose from, or a short form that is chosen from
   and then left (the riders of a ride, the route to ride, the username of a rider to invite), is a centered
   `dialog dialog-panel` instead of a sheet: the confirmation dialog's card with

@@ -106,7 +106,7 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
               <span className="icon icon-x" aria-hidden="true"></span>
             </button>
             <RidersControl riders={riders} onFocus={focusOn} />
-            <ChangeRouteControl />
+            <ChangeRouteControl rider={rider} />
           </div>
         </div>
         <button

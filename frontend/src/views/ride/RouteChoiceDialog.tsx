@@ -17,6 +17,8 @@ interface RouteChoiceDialogProps {
   /** Why the last save failed. */
   formError?: string | null
   onSave: (selection: RideSelection) => void
+  /** When given, a button under the list starts drawing a new route; the dialog is not used to save it. */
+  onCreateRoute?: () => void
   onClose: () => void
 }
 
@@ -27,6 +29,7 @@ export default function RouteChoiceDialog({
   isPending = false,
   formError = null,
   onSave,
+  onCreateRoute,
   onClose,
 }: RouteChoiceDialogProps) {
   const [pendingSelection, setPendingSelection] = useState(selection)
@@ -54,6 +57,11 @@ export default function RouteChoiceDialog({
         onSelect={setPendingSelection}
         onRetry={myRoutes.reload}
       />
+      {onCreateRoute && (
+        <button className="button button-outline button-block" type="button" onClick={onCreateRoute}>
+          <span className="icon icon-plus" aria-hidden="true"></span>Create a route
+        </button>
+      )}
     </FormSheet>
   )
 }

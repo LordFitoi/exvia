@@ -181,6 +181,21 @@ dialog.sheet-modal::backdrop { background: var(--color-scrim); }
 
 .dialog::backdrop { background: var(--color-scrim); }
 
+/* Screen overlay: a full screen opened over another one without leaving it, such as the route creator
+   over a ride that must go on under it (the position keeps being shared). It covers the window
+   above the sheets and below the toasts, in the app's column. Render it at the end of the body (a
+   portal), because an ancestor with a blur or a transform would make "fixed" relative to itself */
+.screen-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  display: flex;
+  justify-content: center;
+  background: var(--color-bg);
+}
+
+.screen-overlay > .map { flex: 0 1 var(--app-max-width); }
+
 /* Panel dialog: the centered dialog for a list or a short form that is chosen
    from and then left, like the riders of a ride or the route to ride. The
    header is the sheet's (`sheet-header`: title left, X right) and the content
