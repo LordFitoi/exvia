@@ -127,16 +127,19 @@ class GroupRejectView(GroupAnswerView):
 
 
 class GroupLeaveView(APIView):
-    """Takes the caller, who accepted the group, out of it, so it is no longer offered to them."""
+    """Takes the caller, who accepted the group, out of it, so it is no longer offered to them. When the caller
+    leads the group, the next rider who is riding leads it from then on."""
 
     @transaction.atomic
     def post(self, request: Request, pk: str) -> Response:
         locked = RouteGroup.objects.select_for_update(of=('self',)).filter(participants=request.user)
         group = get_object_or_404(locked, pk=pk)
         try:
-            leave_group(group, request.user)
+            successor = leave_group(group, request.user)
         except NotRidingInGroup as error:
             raise ValidationError({'detail': NOT_RIDING_MESSAGE}) from error
+        if successor:
+            transaction.on_commit(lambda: broadcast_leader_change(group.pk, request.user.pk, successor.pk))
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

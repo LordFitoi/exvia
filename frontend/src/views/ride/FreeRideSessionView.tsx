@@ -61,7 +61,7 @@ export default function FreeRideSessionView({ location, rider, groupRide, onLeav
       <h1 className="visually-hidden">Free ride</h1>
       {notice && (
         <div className="toast-region">
-          <Toast key={notice.id} message={notice.message} iconClass="icon-users" onDismiss={dismissNotice} />
+          <Toast key={notice.id} message={notice.message} iconClass={notice.iconClass} onDismiss={dismissNotice} />
         </div>
       )}
       <div className="map">

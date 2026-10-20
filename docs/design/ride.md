@@ -361,7 +361,9 @@ Ride mode and the free ride share the group's live channel
   the group answered replaces the shown one, so the leader's controls (route button, invite, remove, promote)
   move at once to the new leader, and the former one keeps the plain list. The other riders hear
   `leader_changed` and read the group again; `useGroupRide` shows the notice "ana leads the ride now" (or
-  "You lead the ride now" to the new leader).
+  "You are the leader of the ride now" to the new leader, with a crown icon). The same happens when the leader leaves or quits the
+  ride: the next rider who is riding becomes the leader automatically
+  ([Leaving](route-groups.md#leaving)).
 - **Inviting and removing.** Only the **leader** (the group's author) sees the controls; the
   others get the plain list. **Invite a rider** (an outline button under the list, replaced by a
   note once the group has 10 riders) opens the same `InviteRiderDialog` as the setup, with the
@@ -377,6 +379,11 @@ Ride mode and the free ride share the group's live channel
   first, **Remove** in the error color): the rider is taken out of the group, whether they had
   accepted or were still invited, and can be invited again. A failure keeps the question open with a
   message.
+- **Coming back to a ride.** Next keeps a screen the rider left, with its state, and shows it again for
+  the same address (`cacheComponents`). A rider who led a group, left it and was invited again lands on
+  `/ride/<id>` again, but the group may have another leader by then. `useRouteGroup` therefore forgets the
+  group it read when the screen is hidden and reads it again when it comes back (the loading screen shows
+  meanwhile), so the leader's controls never outlive the lead.
 - **Live group** (`LiveGroupProvider`, `useLiveGroup`). The group is read once when the ride opens
   but its riders change during it, so `GroupRideView` keeps it in a context for the ride screen.
   It is replaced by the group the invite and remove calls answer, and read again
@@ -391,8 +398,10 @@ Ride mode and the free ride share the group's live channel
   (`presence`, [route-groups.md](route-groups.md#live-channel)). `usePresenceNotice` turns it
   into a toast at the top of the ride screen (`toast-region`, the `Toast` with the `users`
   icon): "ana joined the ride" / "ana left the ride", the name read from the group's
-  participants. One toast at a time: a newer one replaces the one on screen, and each lasts
-  5 seconds. A dropped connection that reconnects shows "left" and then "joined", because the
+  participants. One toast at a time, each lasting 5 seconds: a newer one waits its turn, in the order
+  it came (at most three wait; the oldest waiting one is dropped), so the "You are the leader of the
+  ride now" toast (crown icon) is not lost under the "ana left" of the leader who handed over by
+  leaving. A dropped connection that reconnects shows "left" and then "joined", because the
   server cannot tell it from a rider who really left.
 - **Stale riders.** A rider with no report for **30 seconds** (`STALE_AFTER_MS`, six missed
   reports) is taken off the map: the channel has no leave message, so a closed app would

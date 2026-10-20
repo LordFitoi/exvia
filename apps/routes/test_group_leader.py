@@ -97,6 +97,62 @@ class GroupLeaderTests(TestCase):
         broadcast.assert_not_called()
 
 
+class GroupLeaderLeavesTests(TestCase):
+    def setUp(self) -> None:
+        self.owner = User.objects.create_user('owner', password='pw')
+        self.ana = User.objects.create_user('ana', password='pw')
+        self.ben = User.objects.create_user('ben', password='pw')
+        self.cleo = User.objects.create_user('cleo', password='pw')
+        self.group = create_group(self.owner, None, [self.ana, self.ben, self.cleo])
+        self.url = reverse('routes:group_leave', args=[self.group.pk])
+
+    def _leader(self) -> User:
+        return RouteGroup.objects.get(pk=self.group.pk).author
+
+    def test_the_next_rider_who_is_riding_leads_when_the_leader_leaves(self) -> None:
+        accept(self.group, self.ben)
+        accept(self.group, self.cleo)
+        self.assertEqual(client_for(self.owner).post(self.url).status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(self._leader(), self.ben)
+
+    def test_an_invited_rider_is_skipped(self) -> None:
+        accept(self.group, self.cleo)
+        client_for(self.owner).post(self.url)
+        self.assertEqual(self._leader(), self.cleo)
+
+    def test_the_new_leader_has_the_controls_and_the_former_one_is_out(self) -> None:
+        accept(self.group, self.ana)
+        client_for(self.owner).post(self.url)
+        route_url = reverse('routes:group_route', args=[self.group.pk])
+        self.assertEqual(client_for(self.ana).post(route_url, {'route': None}, format='json').status_code,
+                         status.HTTP_200_OK)
+        detail = client_for(self.owner).get(reverse('routes:group_detail', args=[self.group.pk]))
+        self.assertEqual(detail.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_nobody_else_riding_leaves_the_group_as_it_was(self) -> None:
+        client_for(self.owner).post(self.url)
+        self.assertEqual(self._leader(), self.owner)
+
+    def test_a_rider_who_is_not_the_leader_leaving_keeps_the_leader(self) -> None:
+        accept(self.group, self.ana)
+        client_for(self.ana).post(self.url)
+        self.assertEqual(self._leader(), self.owner)
+
+    def test_the_hand_over_is_broadcast_once_committed(self) -> None:
+        accept(self.group, self.ben)
+        with patch('apps.routes.group_views.broadcast_leader_change') as broadcast:
+            with self.captureOnCommitCallbacks(execute=True):
+                client_for(self.owner).post(self.url)
+        broadcast.assert_called_once_with(self.group.pk, self.owner.pk, self.ben.pk)
+
+    def test_nothing_is_broadcast_when_the_leader_does_not_change(self) -> None:
+        accept(self.group, self.ana)
+        with patch('apps.routes.group_views.broadcast_leader_change') as broadcast:
+            with self.captureOnCommitCallbacks(execute=True):
+                client_for(self.ana).post(self.url)
+        broadcast.assert_not_called()
+
+
 @override_settings(CHANNEL_LAYERS=IN_MEMORY_CHANNELS)
 class GroupLeaderChannelTests(TransactionTestCase):
     def setUp(self) -> None:

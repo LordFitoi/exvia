@@ -29,8 +29,9 @@ export interface GroupRide {
 
 const LOST_PLACE_MESSAGE = 'You are no longer in this ride'
 const describeRouteChange = (leaderName: string): string => `${leaderName} changed the route`
+const LEADER_ICON_CLASS = 'icon-crown'
 const describeLeaderChange = (leaderName: string | null, isYou: boolean): string =>
-  isYou ? 'You lead the ride now' : `${leaderName ?? 'Another rider'} leads the ride now`
+  isYou ? 'You are the leader of the ride now' : `${leaderName ?? 'Another rider'} leads the ride now`
 
 /**
  * Shares the rider's position with their group and returns where the other riders are, and who came or went.
@@ -60,7 +61,7 @@ export const useGroupRide = ({ rider, location }: GroupRideOptions): GroupRide =
   const handleLeaderChange = useCallback(
     (leaderId: number) => {
       const leaderName = participants.find(({ id }) => id === leaderId)?.username ?? null
-      announce(describeLeaderChange(leaderName, leaderId === userId))
+      announce(describeLeaderChange(leaderName, leaderId === userId), LEADER_ICON_CLASS)
       reloadGroup()
     },
     [announce, participants, userId, reloadGroup],

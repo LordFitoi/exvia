@@ -69,14 +69,32 @@ def answer_invitation(group: RouteGroup, user: User, answer: ParticipantStatus) 
         group.participants.remove(user)
 
 
-def leave_group(group: RouteGroup, user: User) -> None:
+def next_leader(group: RouteGroup, leaver: User) -> User | None:
+    """The rider who leads the group after `leaver`: the one who has been in it the longest of those who
+    are riding (accepted), or None when nobody else is riding. Invited riders cannot lead."""
+    memberships = (
+        group.participants.through.objects.filter(routegroup=group)
+        .exclude(user=leaver).select_related('user').order_by('pk')
+    )
+    for membership in memberships:
+        if group_meta.get_status(group.meta_json, membership.user_id) == ParticipantStatus.ACCEPTED:
+            return membership.user
+    return None
+
+
+def leave_group(group: RouteGroup, user: User) -> User | None:
     """Takes a rider who accepted out of the group, which frees their place and ends their ride in it.
-    Call it inside a transaction that holds a lock on `group`."""
+    When the leader leaves, the leadership passes to the next rider (see `next_leader`), who is returned;
+    otherwise the answer is None. Call it inside a transaction that holds a lock on `group`."""
     if group_meta.get_status(group.meta_json, user.pk) != ParticipantStatus.ACCEPTED:
         raise NotRidingInGroup(f'User {user.pk} is not riding in group {group.pk}.')
+    successor = next_leader(group, user) if group.author_id == user.pk else None
     group_meta.remove_participant(group.meta_json, user.pk)
-    group.save(update_fields=['meta_json', 'updated_at'])
+    if successor:
+        group.author = successor
+    group.save(update_fields=['meta_json', 'author', 'updated_at'])
     group.participants.remove(user)
+    return successor
 
 
 def invite_rider(group: RouteGroup, invitee: User) -> None:

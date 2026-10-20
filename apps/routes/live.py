@@ -25,7 +25,7 @@ def broadcast_route_change(group_id: object, user_id: int) -> None:
 
 def broadcast_leader_change(group_id: object, user_id: int, leader_id: int) -> None:
     """Best effort: a rider who is not connected finds the new leader when they read the group again.
-    `user_id` is the former leader who handed the group over; their own channel is not told."""
+    `user_id` is the former leader, who handed the group over or left it; their own channel is not told."""
     try:
         async_to_sync(get_channel_layer().group_send)(
             group_channel_name(group_id), {'type': 'group.leader', 'user_id': user_id, 'leader_id': leader_id},

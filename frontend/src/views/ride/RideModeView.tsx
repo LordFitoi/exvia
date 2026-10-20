@@ -95,7 +95,7 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
       <h1 className="visually-hidden">Riding {route.name}</h1>
       {notice && (
         <div className="toast-region">
-          <Toast key={notice.id} message={notice.message} iconClass="icon-users" onDismiss={dismissNotice} />
+          <Toast key={notice.id} message={notice.message} iconClass={notice.iconClass} onDismiss={dismissNotice} />
         </div>
       )}
       <div className="map">

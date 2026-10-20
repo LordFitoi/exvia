@@ -200,6 +200,13 @@ Only a rider who **accepted** can leave; a pending invitation is answered with a
 instead (`400`). The client saves the ride first, then leaves, and ignores a failed request so a
 bad connection never keeps the rider on the ride screen.
 
+When the **leader** leaves, the group is not left without one: `next_leader` picks the rider who has been
+in the group the longest (the order of the `participants` rows, which is the order they were added) among
+those who are **riding** (accepted); invited riders are skipped. `leave_group` sets them as the `author` in
+the same save and returns them, and once committed the view sends the same `leader_changed` as a
+[hand-over](#changing-the-leader), so the others read the group again and see who leads. If nobody else is
+riding, the author stays as it was (the group has no one left to lead, and it is no longer offered to anyone).
+
 ## Active group
 
 A group has no "ended" column: it **has ended when it saw no activity for `RESUME_WINDOW`** (2 h).

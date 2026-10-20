@@ -18,7 +18,7 @@ interface Outcome {
   readonly group: RouteGroup | null
 }
 
-/** Loads a group the rider was taken into (not one they just created), by its id; idle without an id. */
+/** Loads a group the rider was taken into (or just created), by its id; idle without an id. It is read again whenever the screen comes back. */
 export const useRouteGroup = (groupId: string | undefined): RouteGroupHandle => {
   const [outcome, setOutcome] = useState<Outcome | null>(null)
   const [attempt, setAttempt] = useState(0)
@@ -38,6 +38,9 @@ export const useRouteGroup = (groupId: string | undefined): RouteGroupHandle => 
     load()
     return () => {
       isCancelled = true
+      // Next keeps a screen the rider left, with its state, and shows it again for the same address. The
+      // group read before is old by then (who leads it may have changed), so it must be read again.
+      setOutcome(null)
     }
   }, [groupId, attempt])
 
