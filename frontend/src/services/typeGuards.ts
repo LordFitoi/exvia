@@ -9,7 +9,8 @@ export const isUser = (value: unknown): value is User =>
   isRecord(value) &&
   typeof value.id === 'number' &&
   typeof value.username === 'string' &&
-  typeof value.email === 'string'
+  typeof value.email === 'string' &&
+  typeof value.is_staff === 'boolean'
 
 export const isTokenPair = (value: unknown): value is TokenPair =>
   isRecord(value) && typeof value.access === 'string' && typeof value.refresh === 'string'

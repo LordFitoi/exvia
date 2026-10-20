@@ -8,7 +8,7 @@ import type { AuthContextValue, AuthStatus } from '@/context/AuthContext'
 import { createAccount } from '@/services/authApi'
 import { endSession, restoreSession, startSession } from '@/services/session'
 import { removePushSubscription } from '@/services/webPush'
-import type { LoginCredentials, SignupInput, User } from '@/types/auth'
+import type { LoginCredentials, User } from '@/types/auth'
 
 interface AuthState {
   readonly status: AuthStatus
@@ -61,11 +61,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     setState(toAuthenticated(await startSession(credentials)))
   }, [])
 
-  const signup = useCallback(async (input: SignupInput) => {
-    await createAccount(input)
-    setState(toAuthenticated(await startSession(input)))
-  }, [])
-
   const logout = useCallback(async () => {
     await stopPushNotifications()
     endSession()
@@ -73,8 +68,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ ...state, login, signup, logout }),
-    [state, login, signup, logout],
+    () => ({ ...state, login, signup: createAccount, logout }),
+    [state, login, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

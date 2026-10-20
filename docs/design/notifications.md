@@ -2,8 +2,9 @@
 
 Django app for notifications sent to users. A model, admin and a read endpoint; the
 only event created so far is the route invitation of [route-groups.md](route-groups.md).
-The list is fetched by clients; on top of it, every event is also sent to the phones of its
-destinations as a **Web Push** notification (see [Web Push](#web-push)). The Home bell and sheet that
+The list is fetched by clients; on top of it, every event is also heard at once by the destinations who have the app
+open, as a toast (see [Live channel](#live-channel)), and sent to their phones as a **Web Push** notification
+(see [Web Push](#web-push)). The Home bell and sheet that
 show the list are in [frontend-screens.md](frontend-screens.md).
 
 ## Layout
@@ -19,8 +20,10 @@ in `config/urls.py`.
 | [admin.py](../../apps/notifications/admin.py) | Admin of the models |
 | [services.py](../../apps/notifications/services.py) | `notify_route_invitation` creates events from other apps; `record_invitation_answer` closes one with the answer |
 | [serializers.py](../../apps/notifications/serializers.py), [views.py](../../apps/notifications/views.py), [urls.py](../../apps/notifications/urls.py) | `GET /api/notifications/` |
+| [consumers.py](../../apps/notifications/consumers.py), [routing.py](../../apps/notifications/routing.py) | `NotificationConsumer` at `/ws/notifications/` |
+| [live.py](../../apps/notifications/live.py) | `broadcast_event`: sends an event to the open apps of its destinations |
 | [push.py](../../apps/notifications/push.py) | Payload of an event and its delivery to the subscriptions, in a thread |
-| [signals.py](../../apps/notifications/signals.py) | Starts the delivery when users are added to an event's `destinations` |
+| [signals.py](../../apps/notifications/signals.py) | Starts the live broadcast and the push delivery when users are added to an event's `destinations` |
 | [push_serializers.py](../../apps/notifications/push_serializers.py), [push_views.py](../../apps/notifications/push_views.py) | The two push endpoints |
 | [management/commands/generate_vapid_keys.py](../../apps/notifications/management/commands/generate_vapid_keys.py) | Makes the key pair Web Push needs |
 
@@ -72,6 +75,28 @@ There is no read flag yet: an answered invitation stays in the list with its sta
 
 The list is still **one query**: the caller's answer and "is there a newer event for the same group" are
 annotated as subqueries.
+
+## Live channel
+
+While the app is open (any signed-in screen) it holds a websocket to `/ws/notifications/`, so a new
+notification shows as a **toast** at once instead of waiting for the next time the list is fetched.
+
+- **Protocol.** Like the ride channel ([asgi-websockets.md](asgi-websockets.md)), the first message is
+  `{"type": "auth", "token": <access JWT>}` (a missing, bad or late token closes with `4401`), and the
+  server answers `{"type": "ready"}`. After that it only sends
+  `{"type": "notification", "id", "title", "body"}`, with the same title and text as the push; the client
+  sends nothing else. Token checking is shared with the ride channel in
+  [websocket_auth.py](../../apps/core/websocket_auth.py).
+- **Fan-out.** Each connected user joins the channel-layer group `user_notifications_<id>`, so every open
+  app of the user (phone and laptop) hears it, across replicas, through Redis. The `m2m_changed` receiver
+  that starts the push also calls `broadcast_event` on commit, so a new `event_type` is live with no extra code.
+- **Best effort.** A user with no open app hears nothing here and still has the push and the list. If Redis
+  cannot be reached the failure is logged and the request that created the event is not affected.
+- **Client.** `LiveNotificationProvider` (in the `(app)` layout) opens it with `startNotificationConnection`,
+  which reuses the reconnecting, token-renewing socket of the ride channel (`startSocketConnection`), shows
+  the `body` in a `Toast` with the bell icon, and exposes the latest notification through
+  `useLiveNotifications`. `useRouteInvitations` reloads when a new one arrives, so Home's bell badge and
+  the sheet are current without a refresh.
 
 ## Web Push
 
@@ -152,6 +177,8 @@ the home screen.
 - **Push is a side effect of the destinations, not of each service**: the signal means a new event
   type is pushed with no extra code, only a payload text. The cost is that adding users to an
   existing event also pushes to them.
+- **A socket for "the app is open", push for "it is not"**: both are fed by the same signal, so a user
+  with the app open gets the toast and also a push if subscribed; the push `tag` keeps it to one entry on the phone.
 - **No task queue**: a thread started on commit is enough for a few phones per event. A queue becomes
   worth it with many destinations per event or when lost pushes matter.
 - **Read state is not modelled**: a read flag is decided with the feature that needs it.

@@ -21,7 +21,7 @@ both: it is public and has no layout of its own.
 | `(app)` | `/ride` | Ride, see [ride.md](ride.md) | authenticated only |
 | `(app)` | `/ride/<group uuid>` | The ride of a group the rider accepted, see [ride.md](ride.md#pieces) | authenticated only |
 | `(app)` | `/clans` | Clans, see [clans.md](clans.md#frontend) | authenticated only |
-| `(app)` | `/profile` | Profile, with log out | authenticated only |
+| `(app)` | `/profile` | Profile, with log out and, for staff, a link to the admin site | authenticated only |
 | none | `/routes/<uuid>` | Shared route, see [route-sharing.md](route-sharing.md) | public |
 
 - Logged out: only login and signup are reachable. Any other path redirects
@@ -66,8 +66,11 @@ JSON bodies.
   the refresh also fails with 401, the tokens are cleared. Network errors do
   not clear tokens, so being offline does not log the user out; the app shows
   the login screen and a reload recovers.
-- **Signup** calls `signup/`, then logs in with the same credentials (the
-  endpoint does not return tokens).
+- **Signup** calls `signup/` and starts no session: the account is inactive
+  until an admin approves it ([authentication.md](authentication.md)).
+  `SignupForm` then swaps itself for `SignupPending` ("Request received"
+  with a link back to login). Logging in before approval fails with the
+  generic bad-credentials error.
 - **Logout** clears the tokens and sets `anonymous`; `AuthGuard` then
   redirects to `/login`. There is no server-side revocation yet (see
   "Not included" in [authentication.md](authentication.md)).
@@ -97,7 +100,7 @@ invitations to ride waiting for an answer, and the button's label says it ("Noti
 waiting for an answer"). It opens `NotificationsSheet`, a modal sheet listing the invitations
 (`GET /api/notifications/`, see [notifications.md](notifications.md#api)): who invited you, the
 route (or "Free mode") and how long ago, with **Reject** and **Accept**; an answered one keeps
-its row with an **Accepted** or **Rejected** badge for good, even if the same rider is invited again to that group; an old one never answered shows **Expired**. At the top of the sheet, while phone notifications are off, a **Turn on** row asks for the permission and
+its row with an **Accepted** or **Rejected** badge for good, even if the same rider is invited again to that group; an old one never answered shows **Expired**. A new invitation that arrives while the app is open also appears as a toast and refreshes the list ([live channel](notifications.md#live-channel)). At the top of the sheet, while phone notifications are off, a **Turn on** row asks for the permission and
 subscribes this browser to Web Push ([notifications.md](notifications.md#web-push)); if the browser blocked
 them, a line says to allow them in its settings. **Accept** goes straight to
 `/ride/<group id>`, where the ride starts at once; **Reject** only refreshes the list. The list
@@ -118,7 +121,11 @@ within about 10 s. A refresh that fails hides the section instead of keeping a g
 The "Next ride" block on Home still shows the guide's empty `state-view`
 ("No rides planned"): clan rides have no endpoints yet. Clans and the Home
 feed of notices are real, see [clans.md](clans.md#frontend). Profile shows
-what `me/` returns: username and email.
+what `me/` returns: username and email. When `me/` reports `is_staff`, an
+"Administration" section adds a link row to `/admin/`. It is a plain `<a>`
+(a full page load), because `/admin/` is Django, proxied by
+[next.config.ts](../../frontend/next.config.ts) outside the Next.js router.
+Hiding it is a convenience only: the admin site enforces access itself.
 
 ## Styling
 

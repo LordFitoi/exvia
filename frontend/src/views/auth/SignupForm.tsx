@@ -1,8 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 
 import AuthScreenHeader from '@/views/auth/AuthScreenHeader'
+import SignupPending from '@/views/auth/SignupPending'
 import FormAlert from '@/components/form/FormAlert'
 import SubmitButton from '@/components/form/SubmitButton'
 import TextField from '@/components/form/TextField'
@@ -13,11 +15,16 @@ const FIELD_NAMES = ['username', 'email', 'password'] as const
 
 export default function SignupForm() {
   const { signup } = useAuth()
+  const [isRegistered, setIsRegistered] = useState(false)
   const { isPending, fieldErrors, formError, handleSubmit } = useFormSubmission(
-    ({ username, email, password }) =>
-      signup({ username: username.trim(), email: email.trim(), password }),
+    async ({ username, email, password }) => {
+      await signup({ username: username.trim(), email: email.trim(), password })
+      setIsRegistered(true)
+    },
     FIELD_NAMES,
   )
+
+  if (isRegistered) return <SignupPending />
 
   return (
     <>

@@ -10,7 +10,8 @@ from apps.users.serializers import SignupSerializer, UserBriefSerializer
 
 
 class SignupView(CreateAPIView):
-    """Creates a new user account from a unique username, unique email and password."""
+    """Registers an inactive user account from a unique username, unique email and password;
+    it can log in only once an admin approves it."""
 
     serializer_class = SignupSerializer
     permission_classes = (AllowAny,)
@@ -18,13 +19,14 @@ class SignupView(CreateAPIView):
 
 
 class CurrentUserView(APIView):
-    """Returns the identity of the authenticated JWT caller."""
+    """Returns the identity of the authenticated JWT caller, with whether they can use the admin site."""
 
     def get(self, request: Request) -> Response:
         return Response({
             'id': request.user.id,
             'username': request.user.username,
             'email': request.user.email,
+            'is_staff': request.user.is_staff,
         })
 
 

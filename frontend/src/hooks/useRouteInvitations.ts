@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
+import { useLiveNotifications } from '@/hooks/useLiveNotifications'
 import { fetchRouteInvitations } from '@/services/notificationsApi'
 import type { RouteInvitation } from '@/types/notification'
 
@@ -23,12 +24,13 @@ const FAILED_STATE: InvitationsState = { status: 'failed', invitations: [] }
 
 /**
  * The caller's invitations to ride, loaded when the screen mounts and again whenever the app comes
- * back to the foreground, so one that arrived meanwhile shows up. A refresh that fails keeps the
+ * back to the foreground or a new notification is heard, so one that arrived meanwhile shows up. A refresh that fails keeps the
  * list that is already shown instead of replacing it with an error.
  */
 export const useRouteInvitations = (): RouteInvitations => {
   const [state, setState] = useState<InvitationsState>(LOADING_STATE)
   const [attempt, setAttempt] = useState(0)
+  const latestNotificationId = useLiveNotifications().latest?.id
 
   useEffect(() => {
     let isCancelled = false
@@ -50,7 +52,7 @@ export const useRouteInvitations = (): RouteInvitations => {
       isCancelled = true
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [attempt])
+  }, [attempt, latestNotificationId])
 
   const pendingCount = state.invitations.filter((invitation) => invitation.status === 'invited').length
   const reload = () => setAttempt((previous) => previous + 1)

@@ -6,15 +6,11 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from rest_framework.exceptions import AuthenticationFailed
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import InvalidToken
 
+from apps.core.websocket_auth import AUTH_TIMEOUT_SECONDS, CLOSE_UNAUTHORIZED, read_user_id
 from apps.routes import group_meta, group_service
 
-AUTH_TIMEOUT_SECONDS = 5
 MIN_POSITION_INTERVAL_SECONDS = 1
-CLOSE_UNAUTHORIZED = 4401
 CLOSE_FORBIDDEN = 4403
 PRESENCE_JOINED = 'joined'
 PRESENCE_LEFT = 'left'
@@ -78,7 +74,7 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
             await self.close(code=CLOSE_UNAUTHORIZED)
 
     async def _authenticate(self, content: dict[str, Any]) -> None:
-        user_id = await self._read_user_id(content.get('token')) if content.get('type') == 'auth' else None
+        user_id = await read_user_id(content.get('token')) if content.get('type') == 'auth' else None
         if user_id is None:
             return await self.close(code=CLOSE_UNAUTHORIZED)
         group_id = self.scope['url_route']['kwargs']['group_id']
@@ -91,16 +87,6 @@ class RouteGroupConsumer(AsyncJsonWebsocketConsumer):
             'type': 'ready', 'user_id': user_id, 'positions': positions, 'server_time': timezone.now().isoformat(),
         })
         await self._announce_presence(PRESENCE_JOINED)
-
-    @database_sync_to_async
-    def _read_user_id(self, token: object) -> int | None:
-        if not isinstance(token, str):
-            return None
-        authentication = JWTAuthentication()
-        try:
-            return authentication.get_user(authentication.get_validated_token(token)).pk
-        except (InvalidToken, AuthenticationFailed):
-            return None
 
     async def _share_position(self, content: dict[str, Any]) -> None:
         now = time.monotonic()

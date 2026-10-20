@@ -65,6 +65,16 @@ class CurrentUserViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'bob')
+        self.assertIs(response.data['is_staff'], False)
+
+    def test_staff_user_is_flagged(self) -> None:
+        self.user.is_staff = True
+        self.user.save()
+        self.client.force_authenticate(self.user)
+
+        response = self.client.get(reverse('users:current_user'))
+
+        self.assertIs(response.data['is_staff'], True)
 
 
 class SignupViewTests(APITestCase):
@@ -84,8 +94,24 @@ class SignupViewTests(APITestCase):
         user = User.objects.get(username='carol')
         self.assertTrue(user.check_password(self.VALID_PAYLOAD['password']))
 
-    def test_created_user_can_obtain_token(self) -> None:
+    def test_created_user_awaits_approval(self) -> None:
         self.client.post(reverse('users:signup'), self.VALID_PAYLOAD)
+
+        self.assertFalse(User.objects.get(username='carol').is_active)
+
+    def test_unapproved_user_cannot_obtain_token(self) -> None:
+        self.client.post(reverse('users:signup'), self.VALID_PAYLOAD)
+
+        response = self.client.post(
+            reverse('users:token_obtain_pair'),
+            {'username': 'carol', 'password': self.VALID_PAYLOAD['password']},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_approved_user_can_obtain_token(self) -> None:
+        self.client.post(reverse('users:signup'), self.VALID_PAYLOAD)
+        User.objects.filter(username='carol').update(is_active=True)
 
         response = self.client.post(
             reverse('users:token_obtain_pair'),
@@ -308,6 +334,20 @@ class UserAdminTests(TestCase):
         self.assertContains(change, 'Eve')
         self.assertContains(change, 'MT-07')
         self.assertEqual(add.status_code, status.HTTP_200_OK)
+
+    def test_approve_action_activates_only_selected_pending_accounts(self) -> None:
+        pending = User.objects.create_user(username='pat', password='s3cr3t-pass', is_active=False)
+        other = User.objects.create_user(username='sam', password='s3cr3t-pass', is_active=False)
+
+        self.client.post(reverse('admin:auth_user_changelist'), {
+            'action': 'approve_accounts',
+            '_selected_action': [pending.pk],
+        })
+
+        pending.refresh_from_db()
+        other.refresh_from_db()
+        self.assertTrue(pending.is_active)
+        self.assertFalse(other.is_active)
 
 
 class UserLookupTests(APITestCase):

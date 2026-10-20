@@ -21,8 +21,8 @@ Mounted at `/api/auth/` (see [config/urls.py](../../config/urls.py)):
 | `token/` | `TokenObtainPairView` (simplejwt) | Exchange username/password for an access + refresh token pair |
 | `token/refresh/` | `TokenRefreshView` (simplejwt) | Exchange a refresh token for a new access token |
 | `token/verify/` | `TokenVerifyView` (simplejwt) | Check whether a token is still valid |
-| `signup/` | `apps.users.views.SignupView` | Public self-serve registration; creates a user from `username`, `email`, `password` |
-| `me/` | `apps.users.views.CurrentUserView` | Example protected endpoint; returns the authenticated caller's identity |
+| `signup/` | `apps.users.views.SignupView` | Public self-serve registration; creates an inactive user from `username`, `email`, `password`, pending admin approval |
+| `me/` | `apps.users.views.CurrentUserView` | Example protected endpoint; returns the authenticated caller's `id`, `username`, `email` and `is_staff` |
 | `users/lookup/?username=` | `apps.users.views.UserLookupView` | `{id, username, avatar}` of the active user with exactly that username, `404` otherwise |
 
 ## Configuration
@@ -46,8 +46,17 @@ In [config/settings.py](../../config/settings.py):
 required) creates a `django.contrib.auth.models.User` via
 `SignupSerializer` ([serializers.py](../../apps/users/serializers.py)) and
 returns `201` with `id`, `username`, `email`. The password is write-only
-and hashed through `create_user`. It does not log the user in; the client
-calls `token/` afterwards.
+and hashed through `create_user`. It does not log the user in.
+
+- **Admin approval**: the account is created with `is_active=False`. Django's
+  `ModelBackend` and simplejwt's `JWTAuthentication` both reject inactive
+  users, so `token/` answers `401` until an admin approves the account. In
+  the Django admin, the Users list shows `is_active` (filterable) and the
+  "Approve selected accounts" action sets it to `True` for the selected
+  pending users ([admin.py](../../apps/users/admin.py)). Inactive users are
+  also hidden from `users/lookup/` and group invitations. Unchecking
+  `is_active` in the admin remains the way to suspend an account, so a
+  suspended account is indistinguishable from a pending one.
 
 - **Public**: the view sets `AllowAny` and empty `authentication_classes`,
   so an expired or invalid `Authorization` header cannot cause a 401 on
@@ -102,5 +111,7 @@ function appended to the `SEEDS` tuple in that file.
 
 - No token blacklist/logout endpoint (`rest_framework_simplejwt.token_blacklist`)
   — add it if revocation before natural expiry becomes a requirement.
+- No email or push notice to admins about new requests, nor to the user on
+  approval; admins review the inactive users in the admin.
 - No email verification, rate limiting or CAPTCHA on signup — add them if
   the public endpoint is abused.

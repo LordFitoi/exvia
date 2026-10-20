@@ -2,6 +2,7 @@ export interface User {
   readonly id: number
   readonly username: string
   readonly email: string
+  readonly is_staff: boolean
 }
 
 export interface TokenPair {

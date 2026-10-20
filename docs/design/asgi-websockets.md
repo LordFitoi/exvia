@@ -1,7 +1,8 @@
 # ASGI and WebSockets
 
 The backend runs as an ASGI app so it can serve WebSockets next to HTTP.
-The one consumer is the live channel of a route group ([route-groups.md](route-groups.md#live-channel)).
+There are two consumers: the live channel of a route group ([route-groups.md](route-groups.md#live-channel)) and
+the live notifications of a user ([notifications.md](notifications.md#live-channel)).
 
 ## Architecture
 

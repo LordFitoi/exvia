@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 
 class SignupSerializer(serializers.ModelSerializer):
-    """Validates signup input and creates a new user account."""
+    """Validates signup input and creates an inactive user account that an admin must approve."""
 
     class Meta:
         model = User
@@ -31,7 +31,7 @@ class SignupSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data: dict[str, Any]) -> User:
-        return User.objects.create_user(**validated_data)
+        return User.objects.create_user(**validated_data, is_active=False)
 
 
 class UserBriefSerializer(serializers.ModelSerializer):

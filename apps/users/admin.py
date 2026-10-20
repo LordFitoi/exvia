@@ -1,6 +1,7 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from apps.users.models import Contact, UserProfile, Vehicle
@@ -37,6 +38,13 @@ admin.site.unregister(User)
 @admin.register(User)
 class ProfileUserAdmin(UserAdmin):
     inlines = (UserProfileInline,)
+    list_display = (*UserAdmin.list_display, 'is_active')
+    actions = ('approve_accounts',)
+
+    @admin.action(description='Approve selected accounts')
+    def approve_accounts(self, request: HttpRequest, queryset: QuerySet[User]) -> None:
+        approved_count = queryset.filter(is_active=False).update(is_active=True)
+        self.message_user(request, f'Approved {approved_count} account(s).', messages.SUCCESS)
 
     def get_inline_instances(self, request: HttpRequest, obj: User | None = None) -> list:
         """Hide the profile on the add form: the signal creates it on save."""

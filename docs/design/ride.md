@@ -43,7 +43,7 @@ one.
 | Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<uuid>/` for the selected route, with `retry` |
 | Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start and finish markers, framed in view |
 | Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines, the start and finish markers and the other riders |
-| Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts`, `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 5 s and collects the others'; see [Group ride](#group-ride) |
+| Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts` (over the shared `services/socketConnection.ts`), `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 5 s and collects the others'; see [Group ride](#group-ride) |
 | Riders | `views/ride/RidersControl.tsx`, `views/ride/RidersSheet.tsx`, `hooks/useRiderRemoval.ts`, `views/ride/InviteRiderDialog.tsx` | The users button under the X and its sheet listing the riders of the ride: locate for the connected ones, invite and remove for the leader; see [Group ride](#group-ride) |
 | Live group | `context/LiveGroupProvider.tsx`, `hooks/useLiveGroup.ts` | The group of the ride, kept up to date while it goes on (riders invited, removed, joined); read by `useGroupRide` and `RidersControl` |
 | Rider markers | `hooks/useRiderMarkers.ts`, `services/riderBubbleMarker.ts`, `services/riderMarkers.ts` | One bubble marker per other rider, glided as they move and removed when they go quiet |
