@@ -46,7 +46,7 @@ one.
 | Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts`, `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 5 s and collects the others'; see [Group ride](#group-ride) |
 | Riders | `views/ride/RidersControl.tsx`, `views/ride/RidersSheet.tsx`, `hooks/useRiderRemoval.ts`, `views/ride/InviteRiderDialog.tsx` | The users button under the X and its sheet listing the riders of the ride: locate for the connected ones, invite and remove for the leader; see [Group ride](#group-ride) |
 | Live group | `context/LiveGroupProvider.tsx`, `hooks/useLiveGroup.ts` | The group of the ride, kept up to date while it goes on (riders invited, removed, joined); read by `useGroupRide` and `RidersControl` |
-| Rider markers | `hooks/useRiderMarkers.ts`, `services/riderBubbleMarker.ts`, `services/riderMarkers.ts` | One bubble marker per other rider, moved as they move and removed when they go quiet |
+| Rider markers | `hooks/useRiderMarkers.ts`, `services/riderBubbleMarker.ts`, `services/riderMarkers.ts` | One bubble marker per other rider, glided as they move and removed when they go quiet |
 | Rider | `hooks/useRiderFollow.ts`, `services/riderMotion.ts` | The "You" marker and the camera that follows it, gliding between fixes, with `recenter` and `focusOn` (look at another rider) |
 | Heading | `hooks/useRiderHeading.ts` | The direction the rider is moving in, from their last positions |
 | Progress | `hooks/useRideProgress.ts` | Where the rider is on the track (the last spot reached) |
@@ -335,8 +335,12 @@ Ride mode and the free ride share the group's live channel
   it differs from the ink "You" dot. The marker is named for screen readers
   (`role="img"`, `aria-label` the username) and does not take taps. Names and pictures come
   from the group (`GET /api/routes/groups/<id>/`), positions from the channel; one marker per
-  rider is created, moved on every position (it jumps every 5 s, no glide yet) and removed
-  when the rider goes quiet.
+  rider is created, glided to every new position and removed when the rider goes quiet. Riders
+  report every 5 s, so each new position starts a 5 s animation (`useRiderMarkers`, with
+  `interpolatePosition` and `runAnimation` of `services/riderMotion.ts`) from where the marker is
+  drawn now, so a report that lands mid-glide continues from the point reached with no jump. The
+  marker lags the rider by up to one report, which is what keeps it moving without pauses. A
+  repeated, unchanged position does not restart the glide.
 - **Riders.** The **users** button (`RidersControl`, "Riders") sits under the X (or the flag in a
   free ride) in the same top-right control block, and opens `RidersSheet`, a modal sheet with
   every other rider of the group: picture or initials, name and a line under it. The riders on the
