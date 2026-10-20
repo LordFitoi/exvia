@@ -5,10 +5,15 @@ from apps.routes import group_meta
 from apps.users.serializers import UserBriefSerializer
 
 
+EXPIRED_STATUS = 'expired'
+
+
 class NotificationSerializer(serializers.ModelSerializer):
     """A notification as one of its destinations sees it. For a route invitation, `route_group` is
     the group, `route_name` the route (null in free mode) and `status` the caller's answer; all three
-    are null for other events. Read it with `author__profile` and `route_group__route` selected."""
+    are null for other events. `status` is `expired` for an invitation that can no longer be answered:
+    the caller was invited again, or taken out of the group, without answering it. Read it from
+    `NotificationListView`'s queryset, which annotates `answer` and `is_latest_invitation`."""
 
     author = UserBriefSerializer(read_only=True)
     route_name = serializers.SerializerMethodField()
@@ -26,4 +31,9 @@ class NotificationSerializer(serializers.ModelSerializer):
     def get_status(self, event: NotificationEvent) -> str | None:
         if event.route_group is None:
             return None
-        return group_meta.get_status(event.route_group.meta_json, self.context['request'].user.pk)
+        if event.answer is not None:
+            return event.answer
+        if not event.is_latest_invitation:
+            return EXPIRED_STATUS
+        status = group_meta.get_status(event.route_group.meta_json, self.context['request'].user.pk)
+        return status.value if status else EXPIRED_STATUS

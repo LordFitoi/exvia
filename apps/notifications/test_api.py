@@ -22,6 +22,16 @@ class NotificationListTests(TestCase):
         client.force_authenticate(user)
         return client
 
+    def _invite_again(self, group_id: str) -> None:
+        url = reverse('routes:group_invite', args=[group_id])
+        self._client_for(self.owner).post(url, {'username': 'ana'}, format='json')
+
+    def _answer(self, group_id: str, answer: str) -> None:
+        self._client_for(self.ana).post(reverse(f'routes:group_{answer}', args=[group_id]))
+
+    def _listed_statuses(self) -> list[str | None]:
+        return [item['status'] for item in self._client_for(self.ana).get(LIST_URL).data]
+
     def _invite(self, route: Route | None) -> str:
         payload = {'route': str(route.id) if route else None, 'invitees': ['ana']}
         response = self._client_for(self.owner).post(reverse('routes:group_create'), payload, format='json')
@@ -49,6 +59,35 @@ class NotificationListTests(TestCase):
         group_id = self._invite(self.route)
         self._client_for(self.ana).post(reverse('routes:group_accept', args=[group_id]))
         self.assertEqual(self._client_for(self.ana).get(LIST_URL).data[0]['status'], 'accepted')
+
+    def test_an_accepted_invitation_stays_closed_when_the_rider_is_invited_again(self) -> None:
+        group_id = self._invite(self.route)
+        for _ in range(2):
+            self._answer(group_id, 'accept')
+            self._answer(group_id, 'leave')
+            self._invite_again(group_id)
+        self.assertEqual(self._listed_statuses(), ['invited', 'accepted', 'accepted'])
+
+    def test_a_rejected_invitation_stays_closed_when_the_rider_is_invited_again(self) -> None:
+        group_id = self._invite(self.route)
+        self._answer(group_id, 'reject')
+        self._invite_again(group_id)
+        self.assertEqual(self._listed_statuses(), ['invited', 'rejected'])
+
+    def test_answering_the_new_invitation_leaves_the_old_ones_as_they_were(self) -> None:
+        group_id = self._invite(self.route)
+        self._answer(group_id, 'reject')
+        self._invite_again(group_id)
+        self._answer(group_id, 'accept')
+        self.assertEqual(self._listed_statuses(), ['accepted', 'rejected'])
+
+    def test_an_invitation_replaced_without_an_answer_is_expired(self) -> None:
+        group_id = self._invite(self.route)
+        remove_url = reverse('routes:group_remove', args=[group_id])
+        self._client_for(self.owner).post(remove_url, {'user': self.ana.pk}, format='json')
+        self.assertEqual(self._listed_statuses(), ['expired'])
+        self._invite_again(group_id)
+        self.assertEqual(self._listed_statuses(), ['invited', 'expired'])
 
     def test_newest_first(self) -> None:
         first, second = self._invite(self.route), self._invite(None)

@@ -243,9 +243,10 @@ opens the sheet from the Home bell and **Accept** goes to `/ride/<group id>`; bo
 
 ## Key decisions
 
-- **The status is in `meta_json`, not on the notification**: one notification reaches many
-  users, so what each of them answered cannot live on it. The group is the one place that
-  knows its riders ([notifications.md](notifications.md)).
+- **The current status is in `meta_json`; each answer is also kept per notification**: one notification
+  reaches many users, so the group is the one place that knows its riders' current state. A rider invited
+  again gets a new notification, and `InvitationAnswer` keeps the old ones closed with what was answered
+  ([notifications.md](notifications.md)).
 - **The author is a participant** with status `accepted`, so they share their position like
   everyone else and take one of the `MAX_GROUP_PARTICIPANTS` places.
 - **Only the leader manages riders**: the author is the one who invites at the start, so the same rider

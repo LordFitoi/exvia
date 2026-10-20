@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import QuerySet
 
-from apps.notifications.services import notify_route_invitation
+from apps.notifications.services import notify_route_invitation, record_invitation_answer
 from apps.routes import group_meta
 from apps.routes.group_meta import ParticipantStatus
 from apps.routes.models import MAX_GROUP_PARTICIPANTS, Route, RouteGroup
@@ -60,6 +60,7 @@ def answer_invitation(group: RouteGroup, user: User, answer: ParticipantStatus) 
         raise InvitationAlreadyAnswered(f'User {user.pk} has no pending invitation to group {group.pk}.')
     group_meta.set_status(group.meta_json, user.pk, answer)
     group.save(update_fields=['meta_json', 'updated_at'])
+    record_invitation_answer(group, user, answer)
     if answer == ParticipantStatus.REJECTED:
         group.participants.remove(user)
 

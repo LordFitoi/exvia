@@ -2,8 +2,10 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from apps.core.models import TimeStampedModel
+from apps.routes.group_meta import ParticipantStatus
 from apps.routes.models import RouteGroup
 
+ANSWER_STATUS_MAX_LENGTH = 16
 EVENT_TYPE_MAX_LENGTH = 32
 ENDPOINT_MAX_LENGTH = 500
 P256DH_MAX_LENGTH = 128
@@ -37,6 +39,26 @@ class NotificationEvent(TimeStampedModel):
 
     def __str__(self) -> str:
         return f'{self.get_event_type_display()} ({self.created_at:%Y-%m-%d %H:%M})'
+
+
+class InvitationAnswer(TimeStampedModel):
+    """What one destination answered to one invitation event. An event with no answer from a user is
+    still waiting, or was replaced by a newer invitation to the same group. Once recorded it never
+    changes, so an old invitation stays closed when the same rider is invited again."""
+
+    event = models.ForeignKey(NotificationEvent, on_delete=models.CASCADE, related_name='answers')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitation_answers')
+    status = models.CharField(
+        max_length=ANSWER_STATUS_MAX_LENGTH,
+        choices=[(ParticipantStatus.ACCEPTED, 'Accepted'), (ParticipantStatus.REJECTED, 'Rejected')],
+    )
+
+    class Meta:
+        ordering = ('-created_at',)
+        constraints = [models.UniqueConstraint(fields=('event', 'user'), name='one_answer_per_event_and_user')]
+
+    def __str__(self) -> str:
+        return f'{self.user} {self.status} event {self.event_id}'
 
 
 class PushSubscription(TimeStampedModel):

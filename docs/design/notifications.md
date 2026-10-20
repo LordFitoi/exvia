@@ -15,9 +15,9 @@ in `config/urls.py`.
 
 | File | Responsibility |
 |------|----------------|
-| [models.py](../../apps/notifications/models.py) | `EventType` choices and the `NotificationEvent` model |
-| [admin.py](../../apps/notifications/admin.py) | `NotificationEventAdmin` |
-| [services.py](../../apps/notifications/services.py) | `notify_route_invitation`: the one place events are created from other apps |
+| [models.py](../../apps/notifications/models.py) | `EventType` choices, the `NotificationEvent` and `InvitationAnswer` models |
+| [admin.py](../../apps/notifications/admin.py) | Admin of the models |
+| [services.py](../../apps/notifications/services.py) | `notify_route_invitation` creates events from other apps; `record_invitation_answer` closes one with the answer |
 | [serializers.py](../../apps/notifications/serializers.py), [views.py](../../apps/notifications/views.py), [urls.py](../../apps/notifications/urls.py) | `GET /api/notifications/` |
 | [push.py](../../apps/notifications/push.py) | Payload of an event and its delivery to the subscriptions, in a thread |
 | [signals.py](../../apps/notifications/signals.py) | Starts the delivery when users are added to an event's `destinations` |
@@ -36,6 +36,10 @@ ordered newest first.
 | `destinations` | M2M to `auth.User` | Everyone notified by this one event; `related_name='notification_events'` |
 | `route_group` | FK to `routes.RouteGroup` | Optional; the group a route invitation is about; `related_name='notification_events'`, `CASCADE` |
 
+`InvitationAnswer` (`event` FK `related_name='answers'`, `user` FK, `status` `accepted` or `rejected`,
+unique per `event` + `user`) is what one destination answered to one event. It is written once, when the
+rider answers, and never changes.
+
 ## API
 
 `GET /api/notifications/` (JWT) lists the latest 50 events addressed to the caller, newest
@@ -53,10 +57,21 @@ first, in one query, unpaginated:
 }]
 ```
 
-`route_name` is `null` in free mode. `status` is the caller's own answer to the invitation,
-read from the group's `meta_json` (`invited`, `accepted` or `rejected`), and `null` for events
-that are not about a group. A client counts the `invited` ones for a badge. There is no read
-flag yet: an answered invitation stays in the list with its status.
+`route_name` is `null` in free mode. `status` is the caller's answer **to that event** and `null` for events
+that are not about a group:
+
+| Status | When |
+|--------|------|
+| `accepted`, `rejected` | The caller answered this event (an `InvitationAnswer` exists). Final: a later invitation to the same group does not reopen it |
+| `invited` | No answer yet, this is the caller's newest event for the group, and the group's `meta_json` still has them as invited. Only this one can be answered |
+| `expired` | Unanswered but no longer answerable: the caller was invited again, or taken out of the group |
+
+Before a newest event is answered, its status is read from the group's `meta_json`, which is how events
+from before `InvitationAnswer` keep showing their answer. A client counts the `invited` ones for a badge.
+There is no read flag yet: an answered invitation stays in the list with its status.
+
+The list is still **one query**: the caller's answer and "is there a newer event for the same group" are
+annotated as subqueries.
 
 ## Web Push
 
@@ -123,9 +138,13 @@ the home screen.
   rider's invitation into a system event, which is a lie. The notification
   goes with the user, like `ClanNotice.author`.
 - **One event, many destinations**: inviting five riders to a group creates one
-  event, not five. What each destination answered is not stored here: for route
-  invitations it is the participant status in the group's `meta_json`
-  ([routes.md](routes.md#group-meta)).
+  event, not five. What each destination answered is an `InvitationAnswer` row. The group's
+  `meta_json` ([routes.md](routes.md#group-meta)) only holds the rider's *current* state, so it cannot
+  tell the notifications of one rider apart: inviting the same rider again after they answered or left
+  makes a new event for the same group, and reading every event's status from the group made all of the
+  old ones show `invited` again.
+- **Answering closes the newest event**: a rider can only have one pending invitation per group, so the
+  answer endpoints (by group) always mean their newest event for it. Old events cannot be answered.
 - **The link is typed, per kind of event**: `route_group` exists because the first
   event that needs a target is the route invitation; a clan invitation would get its
   own optional FK the same way. A new `event_type` is one `EventType` member plus a

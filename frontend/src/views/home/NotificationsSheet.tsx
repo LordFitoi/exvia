@@ -17,6 +17,7 @@ const FREE_MODE_LABEL = 'Free mode'
 const ANSWERED_BADGES = {
   accepted: { label: 'Accepted', className: 'badge badge-success' },
   rejected: { label: 'Rejected', className: 'badge' },
+  expired: { label: 'Expired', className: 'badge' },
 } as const
 
 interface NotificationsSheetProps {
