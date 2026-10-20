@@ -15,6 +15,7 @@ import type { Coordinates, GeolocationState } from '@/types/geolocation'
 import MapStatusView from '@/views/map/MapStatusView'
 import ChangeRouteControl from '@/views/ride/ChangeRouteControl'
 import FinishFreeRideDialog from '@/views/ride/FinishFreeRideDialog'
+import EdgeIndicators from '@/views/ride/EdgeIndicators'
 import RidersControl from '@/views/ride/RidersControl'
 import RideStatsPanel from '@/views/ride/RideStatsPanel'
 
@@ -35,7 +36,7 @@ export default function FreeRideSessionView({ location, rider, groupRide, onLeav
   const elapsedSeconds = useRideElapsed(startedAt, null)
   const { riders, notice, dismissNotice } = groupRide
   const [isFinishOpen, setIsFinishOpen] = useState(false)
-  const { containerRef, hasLoadFailed, recenter, focusOn } = useFreeRideMap({
+  const { containerRef, hasLoadFailed, recenter, focusOn, indicators } = useFreeRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     rider,
     riders,
@@ -66,6 +67,7 @@ export default function FreeRideSessionView({ location, rider, groupRide, onLeav
       )}
       <div className="map">
         <div ref={containerRef} className="map-canvas"></div>
+        <EdgeIndicators indicators={indicators} />
         <div className="map-overlay">
           <div className="map-controls">
             <button

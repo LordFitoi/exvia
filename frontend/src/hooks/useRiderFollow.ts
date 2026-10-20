@@ -28,6 +28,8 @@ interface RiderFollowOptions {
   fallback: Coordinates
   /** The zoom the locate button returns the camera to. */
   recenterZoom: number
+  /** The pitch, in degrees, the locate button returns the camera to. */
+  recenterPitch: number
 }
 
 const createMarker = ({ mapboxgl, map }: BaseMap, position: Coordinates): Marker =>
@@ -38,7 +40,7 @@ const createMarker = ({ mapboxgl, map }: BaseMap, position: Coordinates): Marker
 
 /** What the map buttons do to the camera. */
 interface RiderCamera {
-  /** Resumes following the rider, back at the ride zoom. */
+  /** Resumes following the rider, back at the ride zoom and pitch. */
   readonly recenter: () => void
   /** Moves the camera to another rider's position, at the ride zoom, and stops following the rider. */
   readonly focusOn: (position: Coordinates) => void
@@ -48,7 +50,7 @@ interface RiderCamera {
  * Shows the rider on the map and keeps the camera on them, turned to face their heading. Each new
  * fix glides the marker and the camera there (position and bearing together); the first one jumps.
  * Dragging the map stops the following until the returned `recenter` is called, which also
- * brings the camera back to `recenterZoom`. `focusOn` stops it too, to look at another rider.
+ * brings the camera back to `recenterZoom` and `recenterPitch`. `focusOn` stops it too, to look at another rider.
  */
 export const useRiderFollow = ({
   mounted,
@@ -56,6 +58,7 @@ export const useRiderFollow = ({
   heading,
   fallback,
   recenterZoom,
+  recenterPitch,
 }: RiderFollowOptions): RiderCamera => {
   const markerRef = useRef<Marker | null>(null)
   const viewRef = useRef<RiderView | null>(null)
@@ -102,6 +105,7 @@ export const useRiderFollow = ({
       center: toLngLat(view?.position ?? fallback),
       bearing: view?.bearing ?? mounted.map.getBearing(),
       zoom: recenterZoom,
+      pitch: recenterPitch,
       duration: RECENTER_DURATION_MS,
     })
   }

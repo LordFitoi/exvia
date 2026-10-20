@@ -44,10 +44,11 @@ one.
 | Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<uuid>/` for the selected route, with `retry` |
 | Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start and finish markers, framed in view |
 | Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines, the start and finish markers and the other riders |
-| Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts` (over the shared `services/socketConnection.ts`), `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 5 s and collects the others'; see [Group ride](#group-ride) |
+| Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts` (over the shared `services/socketConnection.ts`), `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 4 s and collects the others'; see [Group ride](#group-ride) |
 | Riders | `views/ride/RidersControl.tsx`, `views/ride/RidersDialog.tsx`, `views/ride/RiderRow.tsx`, `hooks/useMenuPopover.ts`, `hooks/useRiderRemoval.ts`, `views/ride/InviteRiderDialog.tsx` | The users button under the X and its dialog listing the riders of the ride: locate for the connected ones, invite and remove for the leader; see [Group ride](#group-ride) |
 | Live group | `context/LiveGroupProvider.tsx`, `hooks/useLiveGroup.ts` | The group of the ride, kept up to date while it goes on (riders invited, removed, joined); read by `useGroupRide` and `RidersControl` |
 | Rider markers | `hooks/useRiderMarkers.ts`, `services/riderBubbleMarker.ts`, `services/riderMarkers.ts` | One bubble marker per other rider, glided as they move and removed when they go quiet |
+| Edge indicators | `hooks/useEdgeIndicators.ts`, `services/edgeIndicators.ts`, `views/ride/EdgeIndicators.tsx` | Non-interactive bubbles on the map edge pointing to you and to each rider who is out of view |
 | Rider | `hooks/useRiderFollow.ts`, `services/riderMotion.ts` | The "You" marker and the camera that follows it, gliding between fixes, with `recenter` and `focusOn` (look at another rider) |
 | Heading | `hooks/useRiderHeading.ts` | The direction the rider is moving in, from their last positions |
 | Progress | `hooks/useRideProgress.ts` | Where the rider is on the track (the last spot reached) |
@@ -142,8 +143,8 @@ style guide's [Group rides](../ui-ux/group.html) page.
   shown and followed once the phone has a position. The "You" marker appears
   and **the camera centers on it** by default: the first fix moves the camera
   there at once. Dragging the map stops the following; the locate button
-  (bottom center, see below) resumes it (an 800 ms ease to the rider's position, heading and the ride zoom of 16.5, so
-  a pinch-out is undone too). Without a
+  (bottom center, see below) resumes it (an 800 ms ease to the rider's position, heading, the ride zoom of 16.5 and the ride
+  pitch of 60°, so a pinch-out or a tilt of the camera is undone too). Without a
   position the camera stays at the route start.
 - **Heading** (`useRiderHeading`): the compass bearing from the position the
   last reading was taken from to the current one, read only after the rider has
@@ -308,7 +309,7 @@ Ride mode and the free ride share the group's live channel
 
 - **Sharing.** Once the socket has signed in and the server said `ready`
   (`services/groupConnection.ts`), `useSharePosition` sends the rider's position at once and
-  then **every 5 seconds** (`POSITION_INTERVAL_MS`): the street position shown on the map
+  then **every 4 seconds** (`POSITION_INTERVAL_MS`): the street position shown on the map
   (or the raw fix when it cannot be snapped), the speed in km/h and the accuracy. Nothing is
   sent while the position is unknown. The phone's clock is not used: the server stamps each
   position when it receives it.
@@ -337,7 +338,7 @@ Ride mode and the free ride share the group's live channel
   (`role="img"`, `aria-label` the username) and does not take taps. Names and pictures come
   from the group (`GET /api/routes/groups/<id>/`), positions from the channel; one marker per
   rider is created, glided to every new position and removed when the rider goes quiet. Riders
-  report every 5 s, so each new position starts a 5 s animation (`useRiderMarkers`, with
+  report every 4 s, so each new position starts a 4 s animation (`useRiderMarkers`, with
   `interpolatePosition` and `runAnimation` of `services/riderMotion.ts`) from where the marker is
   drawn now, so a report that lands mid-glide continues from the point reached with no jump. The
   marker lags the rider by up to one report, which is what keeps it moving without pauses. A
@@ -354,6 +355,20 @@ Ride mode and the free ride share the group's live channel
   dragging the map does; the locate button at the bottom brings it back to you. It is a one-off
   move: the camera does not keep following the other rider. The camera keeps the current heading
   and pitch. With nobody else in the group the dialog says "Nobody else is here".
+- **Off-screen indicators.** When you, or another rider, are out of the map's view (the camera was dragged
+  away, or is looking at another rider), a bubble appears on the map edge, one per person, on the line
+  towards where they are, with a green arrow pointing the way (`edge-indicator` in the style guide). Riders
+  show their picture or initials; yours is the ink disc reading "You". It is only a hint, not a control: it
+  takes no taps (`pointer-events: none`), so the map keeps every gesture, and there is nothing to press to
+  recenter besides the locate button. A person in view gets no bubble, so while the camera follows you only
+  riders appear. `useEdgeIndicators` recomputes them on every map `move` and `resize` and whenever a position
+  changes, through `services/edgeIndicators.ts`: a position is out of view when it is behind the camera or
+  its `map.project` point is outside the map. The direction is worked out from the camera's own position
+  (`getFreeCameraOptions`), bearing and pitch, so it is the true screen direction on the pitched 3D view,
+  also for positions behind the camera, where `project` has no answer; the bubble sits where that line from
+  the center of the map leaves it, inset 36 px from the sides and top and 80 px from the bottom to clear
+  the center button (the controls column at the top right can still cover one). Both ride maps
+  (`useRideMap`, `useFreeRideMap`) return the indicators and render them with `views/ride/EdgeIndicators.tsx`.
 - **Promoting.** **Promote to leader** asks first with the confirm dialog "Make ana the leader?" (**Cancel**
   first, **Make leader** in the primary color, since it is not destructive: "They will be able to change the
   route and to invite and remove riders. You stay in the ride as a rider."). Confirming calls
@@ -408,7 +423,7 @@ Ride mode and the free ride share the group's live channel
   otherwise freeze on the others' maps. The saved positions in `ready` are aged by the
   server's clock (`server_time`) against each `recorded_at`, so a rider who left an hour ago
   is not drawn for 30 seconds on arrival, and a phone with a wrong clock does not misjudge.
-  The check runs every 5 seconds (`useNow`).
+  The check runs every 4 seconds (`useNow`).
 - **Failures are quiet.** If the channel cannot be joined the ride works as a solo ride: no
   other riders are drawn and nothing blocks. There is no connection indicator yet.
 - **Finishing.** An accepted rider saves their own summary of the group's route

@@ -20,6 +20,7 @@ import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import MapStatusView from '@/views/map/MapStatusView'
 import ConfirmQuitRideDialog from '@/views/ride/ConfirmQuitRideDialog'
 import RideStatsPanel from '@/views/ride/RideStatsPanel'
+import EdgeIndicators from '@/views/ride/EdgeIndicators'
 import RidersControl from '@/views/ride/RidersControl'
 import RideSummarySheet from '@/views/ride/RideSummarySheet'
 import type { Coordinates, GeolocationState } from '@/types/geolocation'
@@ -61,7 +62,7 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
   const [isSummaryDismissed, setIsSummaryDismissed] = useState(false)
   const [isQuitConfirmOpen, setIsQuitConfirmOpen] = useState(false)
   const quit = useQuitRide({ routeId: route.id, startedAt, speeds, onQuit })
-  const { containerRef, hasLoadFailed, recenter, focusOn } = useRideMap({
+  const { containerRef, hasLoadFailed, recenter, focusOn, indicators } = useRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     path: route.points,
     lines,
@@ -100,6 +101,7 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
       )}
       <div className="map">
         <div ref={containerRef} className="map-canvas"></div>
+        <EdgeIndicators indicators={indicators} />
         <div className="map-overlay">
           <div className="map-controls">
             <button className="icon-button" type="button" aria-label="Quit ride" onClick={handleCloseClick}>

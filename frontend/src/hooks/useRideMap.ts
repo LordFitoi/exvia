@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import type { RefObject } from 'react'
 
+import { useEdgeIndicators } from '@/hooks/useEdgeIndicators'
 import { useMapInstance } from '@/hooks/useMapInstance'
 import { useRiderMarkers } from '@/hooks/useRiderMarkers'
 import { useRiderFollow } from '@/hooks/useRiderFollow'
@@ -10,6 +11,7 @@ import { useRiderHeading } from '@/hooks/useRiderHeading'
 import { calculateBearing } from '@/services/bearing'
 import type { BaseMap } from '@/services/baseMap'
 import { addBuildingsLayer } from '@/services/buildingsLayer'
+import type { EdgeIndicator } from '@/services/edgeIndicators'
 import type { RideLines } from '@/services/rideLines'
 import { addRideLines, updateRideLines } from '@/services/rideMapLayers'
 import { addEndpointMarkers } from '@/services/routeMapLayers'
@@ -37,6 +39,8 @@ interface RideMapHandle {
   recenter: () => void
   /** Moves the camera to a position, to find another rider. */
   focusOn: (position: Coordinates) => void
+  /** The user and the riders who are out of view, to point to from the map edge. */
+  indicators: readonly EdgeIndicator[]
 }
 
 const getRouteBearing = (path: readonly Coordinates[]): number =>
@@ -83,9 +87,17 @@ export const useRideMap = ({ accessToken, path, lines, rider, riders }: RideMapO
   }, [mounted, lines])
 
   useRiderMarkers(mounted, riders)
+  const indicators = useEdgeIndicators(mounted, rider, riders)
 
   const heading = useRiderHeading(rider)
-  const { recenter, focusOn } = useRiderFollow({ mounted, rider, heading, fallback: path[0], recenterZoom: RIDE_ZOOM })
+  const { recenter, focusOn } = useRiderFollow({
+    mounted,
+    rider,
+    heading,
+    fallback: path[0],
+    recenterZoom: RIDE_ZOOM,
+    recenterPitch: RIDE_PITCH_DEGREES,
+  })
 
-  return { containerRef, hasLoadFailed, recenter, focusOn }
+  return { containerRef, hasLoadFailed, recenter, focusOn, indicators }
 }

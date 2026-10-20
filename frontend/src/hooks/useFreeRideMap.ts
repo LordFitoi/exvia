@@ -2,12 +2,14 @@
 
 import type { RefObject } from 'react'
 
+import { useEdgeIndicators } from '@/hooks/useEdgeIndicators'
 import { useMapInstance } from '@/hooks/useMapInstance'
 import { useRiderMarkers } from '@/hooks/useRiderMarkers'
 import { useRiderFollow } from '@/hooks/useRiderFollow'
 import { useRiderHeading } from '@/hooks/useRiderHeading'
 import type { BaseMap } from '@/services/baseMap'
 import { addBuildingsLayer } from '@/services/buildingsLayer'
+import type { EdgeIndicator } from '@/services/edgeIndicators'
 import type { RiderMarkerData } from '@/services/riderMarkers'
 import type { Coordinates } from '@/types/geolocation'
 
@@ -28,6 +30,8 @@ interface FreeRideMapHandle {
   recenter: () => void
   /** Moves the camera to a position, to find another rider. */
   focusOn: (position: Coordinates) => void
+  /** The user and the riders who are out of view, to point to from the map edge. */
+  indicators: readonly EdgeIndicator[]
 }
 
 /**
@@ -46,9 +50,17 @@ export const useFreeRideMap = ({ accessToken, rider, riders }: FreeRideMapOption
   })
 
   useRiderMarkers(mounted, riders)
+  const indicators = useEdgeIndicators(mounted, rider, riders)
 
   const heading = useRiderHeading(rider)
-  const { recenter, focusOn } = useRiderFollow({ mounted, rider, heading, fallback: rider, recenterZoom: RIDE_ZOOM })
+  const { recenter, focusOn } = useRiderFollow({
+    mounted,
+    rider,
+    heading,
+    fallback: rider,
+    recenterZoom: RIDE_ZOOM,
+    recenterPitch: RIDE_PITCH_DEGREES,
+  })
 
-  return { containerRef, hasLoadFailed, recenter, focusOn }
+  return { containerRef, hasLoadFailed, recenter, focusOn, indicators }
 }

@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 import type { ConnectionStatus } from '@/services/groupConnection'
 import type { Coordinates, GeolocationState } from '@/types/geolocation'
 
-export const POSITION_INTERVAL_MS = 5000
+export const POSITION_INTERVAL_MS = 4000
 const KMH_PER_METER_PER_SECOND = 3.6
 
 interface SharePositionOptions {
@@ -17,7 +17,7 @@ interface SharePositionOptions {
   location: GeolocationState
 }
 
-/** Sends the rider's latest position to the group when the channel opens and every 5 seconds after. */
+/** Sends the rider's latest position to the group when the channel opens and every 4 seconds after. */
 export const useSharePosition = ({ send, status, rider, location }: SharePositionOptions): void => {
   const latestRef = useRef({ rider, location })
 

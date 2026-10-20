@@ -241,6 +241,51 @@
   background: var(--color-primary);
 }
 
+/* Off-screen indicator: when you, or a rider of the group, are out of view, a bubble waits on the
+   map edge, on the line towards where they are, with a green arrow pointing the way. It shows their
+   picture (or initials); yours is the ink disc reading "You". Only a hint, not a control: it takes
+   no taps, so the map keeps every gesture. Its centre is set by JS (inset-inline-start /
+   inset-block-start, in px) and the arrow turns with `rotate` on .edge-indicator-pointer (0deg is
+   up, clockwise). Name it with role="img" and aria-label */
+.edge-indicator {
+  position: absolute;
+  z-index: 1;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+
+.edge-indicator > .avatar {
+  inline-size: 100%;
+  block-size: 100%;
+  border: 3px solid var(--color-surface);
+  box-shadow: var(--shadow-z8);
+  color: var(--color-text);
+}
+
+.edge-indicator-me > .avatar {
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-bold);
+}
+
+.edge-indicator-pointer {
+  position: absolute;
+  inset: 0;
+}
+
+.edge-indicator-pointer::before {
+  content: "";
+  position: absolute;
+  inset-block-start: -0.5rem;
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  border-inline: 0.4375rem solid transparent;
+  border-block-end: 0.625rem solid var(--color-primary);
+}
+
 /* Sheet content over the map */
 .map-sheet {
   position: relative;
