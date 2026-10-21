@@ -10,17 +10,15 @@ import FreeRideWaitingView from '@/views/ride/FreeRideWaitingView'
 import RideModeView from '@/views/ride/RideModeView'
 
 interface GroupRideSessionProps {
-  /** Leaves the ride without finishing it. */
+  /** Leaves the ride and the group. */
   onLeave: () => void
-  /** Leaves for good, after the ride was saved. */
-  onFinish: () => void
 }
 
 /**
  * The part of a group ride that outlives the route: the GPS and the live channel. The leader can change the
  * route at any moment, and the ride screen below follows it without the rider leaving and rejoining the channel.
  */
-export default function GroupRideSession({ onLeave, onFinish }: GroupRideSessionProps) {
+export default function GroupRideSession({ onLeave }: GroupRideSessionProps) {
   const { group } = useLiveGroup()
   const location = useGeolocation()
   const street = useStreetPosition({
@@ -41,7 +39,6 @@ export default function GroupRideSession({ onLeave, onFinish }: GroupRideSession
         rider={rider}
         groupRide={groupRide}
         onQuit={onLeave}
-        onFinish={onFinish}
       />
     )
   }

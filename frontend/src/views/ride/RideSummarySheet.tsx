@@ -16,10 +16,8 @@ interface RideSummarySheetProps {
   saveStatus: SaveRideStatus
   /** Tries to save the ride again after a failure. */
   onRetrySave: () => void
-  /** Closes the summary and stays on the map. */
+  /** Closes the summary; the rider stays on the map and in the ride. */
   onClose: () => void
-  /** Ends the ride and leaves ride mode. */
-  onDone: () => void
 }
 
 /** Shown when the rider reaches the finish: the time it took, the distance and the average speed. */
@@ -30,7 +28,6 @@ export default function RideSummarySheet({
   saveStatus,
   onRetrySave,
   onClose,
-  onDone,
 }: RideSummarySheetProps) {
   const dialogRef = useModalDialog(isOpen)
 
@@ -65,7 +62,7 @@ export default function RideSummarySheet({
       </div>
       <p className="text-small text-muted">Estimated time was {formatDuration(route.estimated_time)}.</p>
       <RideSaveStatus status={saveStatus} onRetry={onRetrySave} />
-      <button className="button button-primary button-lg button-block" type="button" onClick={onDone}>
+      <button className="button button-primary button-lg button-block" type="button" onClick={onClose}>
         Done
       </button>
     </dialog>

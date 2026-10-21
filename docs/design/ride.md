@@ -198,10 +198,11 @@ style guide's [Group rides](../ui-ux/group.html) page.
   and `RideSummarySheet` opens: a modal sheet ("You've arrived!", the guide's
   `sheet-modal` with a close X) with the route name and three `route-stats`:
   **Time**, **Distance** and **Avg km/h**, then the route's estimated time
-  and a **Done** button. Done ends the ride and opens the Map tab (`router.replace('/map')`, so Back does
-  not return to the finished ride); the X on the map still goes back to the
-  picker. Closing the sheet
-  (X, Esc) keeps the map open. Time is the strip's clock, stopped at the
+  and a **Done** button. Done only closes the sheet, like its X and Esc: the rider stays on the
+  map, in the group and connected to its live channel, so the others keep seeing them and they
+  keep seeing the others. Finishing the route does not leave the group; the X on the map does
+  (it needs no confirmation once the rider has arrived), and replaces the screen with the Map tab
+  (`router.replace('/map')`, so Back does not return to the ride). Time is the strip's clock, stopped at the
   first GPS fix at the end (that fix's own timestamp, `GeolocationPosition.timestamp`,
   passed on by `useGeolocation`). Stops are not paused, so Time is the elapsed
   time, and Distance and Avg km/h use the route's own length, not the path the
@@ -209,7 +210,7 @@ style guide's [Group rides](../ui-ux/group.html) page.
   Every modal `<dialog>` is opened by `useModalDialog`, which also closes it when
   the screen goes away. `cacheComponents` makes Next keep a left route hidden
   instead of unmounting it, and a modal left open there keeps blocking the whole
-  document, so after leaving a ride (Done, or Quit with the confirm dialog open)
+  document, so after leaving a ride (Quit, with the confirm dialog open)
   no button of the next screen could be tapped.
   The guide shows it in [patterns.html](../ui-ux/patterns.html) ("Ride summary"),
   with `map-scrim` standing in for the dialog backdrop.
@@ -302,7 +303,7 @@ it see each other on the map.
   `/ride` with that page, so a reload (or the app being closed and opened from Home's **Join
   back**) reopens the same ride; the timer starts again. The price is that quitting returns to
   the Map tab (not the picker), so the route and invitations are chosen again for the next ride. The ride stays open for the
-  rider until they quit or finish it ([route-groups.md](route-groups.md#active-group)).
+  rider until they quit it ([route-groups.md](route-groups.md#active-group)).
 - **A ride is always a group**: even alone, **Ride** creates a `RouteGroup`, so there is one
   path for solo and shared rides. Quitting and riding again creates a new group (and
   notifies the invitees again); the earlier one stays on the server.

@@ -30,5 +30,5 @@ export default function JoinedRideView({ groupId }: JoinedRideViewProps) {
   }
   if (!group) return <LoadingScreen />
 
-  return <GroupRideView group={group} onLeave={handleExit} onFinish={handleExit} />
+  return <GroupRideView group={group} onLeave={handleExit} />
 }

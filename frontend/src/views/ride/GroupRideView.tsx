@@ -7,19 +7,17 @@ import GroupRideSession from '@/views/ride/GroupRideSession'
 
 interface GroupRideViewProps {
   group: RouteGroup
-  /** Leaves the ride without finishing it. */
+  /** Leaves the ride. */
   onLeave: () => void
-  /** Leaves for good, after the ride was saved. */
-  onFinish: () => void
 }
 
 /** The ride of a group: ride mode on its route, or a free ride when it has none. Leaving it leaves the group. */
-export default function GroupRideView({ group, onLeave, onFinish }: GroupRideViewProps) {
-  const exit = useLeaveGroupOnExit({ groupId: group.id, onLeave, onFinish })
+export default function GroupRideView({ group, onLeave }: GroupRideViewProps) {
+  const leave = useLeaveGroupOnExit({ groupId: group.id, onLeave })
 
   return (
     <LiveGroupProvider key={group.id} initialGroup={group}>
-      <GroupRideSession onLeave={exit.leave} onFinish={exit.finish} />
+      <GroupRideSession onLeave={leave} />
     </LiveGroupProvider>
   )
 }

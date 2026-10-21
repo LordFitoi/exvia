@@ -192,7 +192,7 @@ untouched.
 
 ## Leaving
 
-A rider who ends their ride (quits, finishes, or leaves a free ride) is taken out of the group by
+A rider who ends their ride (quits, or leaves a free ride) is taken out of the group by
 `POST /api/routes/groups/<uuid>/leave/` (`leave_group`): their entry is removed from `meta_json`
 and from `participants`, which frees the place, hides the group from them (`404` afterwards) and
 stops it being offered back through [Active group](#active-group) while the others still ride.
@@ -214,7 +214,7 @@ Its `updated_at` is its last activity: it moves with every saved position, invit
 `find_active_group(groups, user, now)` answers the **newest** group (by `created_at`) that:
 
 - the caller has **accepted** (an invitation not answered, or rejected, does not count), and has
-  **not left** (leaving, quitting and finishing remove the rider, see [Leaving](#leaving)), and
+  **not left** (leaving and quitting remove the rider, see [Leaving](#leaving); reaching the finish and closing the summary does not), and
 - had activity within `RESUME_WINDOW`.
 
 Nobody has to be connected, the caller included, and a solo ride counts. A phone that is locked, in

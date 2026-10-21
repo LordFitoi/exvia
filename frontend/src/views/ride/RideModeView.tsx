@@ -35,13 +35,11 @@ interface RideModeViewProps {
   rider: Coordinates | null
   /** The group channel: the other riders and the notice of who came or went. */
   groupRide: GroupRide
-  /** Leaves ride mode for the picker, with the route still selected. */
+  /** Leaves ride mode and the group. */
   onQuit: () => void
-  /** Leaves ride mode for good, after the summary of a finished ride. */
-  onFinish: () => void
 }
 
-export default function RideModeView({ route, location, rider, groupRide, onQuit, onFinish }: RideModeViewProps) {
+export default function RideModeView({ route, location, rider, groupRide, onQuit }: RideModeViewProps) {
   const { riders, notice, dismissNotice } = groupRide
   const progress = useRideProgress({ path: route.points, rider })
   const lines = useRideLines({
@@ -137,7 +135,6 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
           saveStatus={save.status}
           onRetrySave={save.retry}
           onClose={() => setIsSummaryDismissed(true)}
-          onDone={onFinish}
         />
       )}
     </main>
