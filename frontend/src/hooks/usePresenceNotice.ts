@@ -1,9 +1,9 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { PresenceHandler } from '@/hooks/useGroupChannel'
-import { describePresence } from '@/services/riderPresence'
+import { describePresence, PRESENCE_GRACE_MS } from '@/services/riderPresence'
 import type { GroupParticipant } from '@/types/routeGroup'
 
 /** A message to show once; a new `id` restarts the toast even when the text repeats. */
@@ -36,11 +36,21 @@ const appendNotice = (notices: readonly PresenceNotice[], incoming: PresenceNoti
 /**
  * Turns the joins and leaves heard on the group channel, and the news of the ride, into one notice at a
  * time. A notice that arrives while another is showing waits, so "You lead the ride now" is not lost
- * under the "ana left" of the leader who handed over by leaving.
+ * under the "ana left" of the leader who handed over by leaving. A "left" is held for `PRESENCE_GRACE_MS`: a
+ * rider who signs in again meanwhile (a locked screen, another app) never left, so neither toast is shown.
  */
 export const usePresenceNotice = (participants: readonly GroupParticipant[]): PresenceNoticeHandle => {
   const [notices, setNotices] = useState<readonly PresenceNotice[]>([])
   const nextId = useRef(0)
+  const pendingLeaves = useRef(new Map<number, ReturnType<typeof setTimeout>>())
+
+  useEffect(() => {
+    const pending = pendingLeaves.current
+    return () => {
+      pending.forEach(clearTimeout)
+      pending.clear()
+    }
+  }, [])
 
   const announce = useCallback((message: string, iconClass = DEFAULT_ICON_CLASS) => {
     nextId.current += 1
@@ -50,8 +60,19 @@ export const usePresenceNotice = (participants: readonly GroupParticipant[]): Pr
 
   const handlePresence = useCallback<PresenceHandler>(
     (userId, status) => {
+      const pending = pendingLeaves.current.get(userId)
+      clearTimeout(pending)
+      pendingLeaves.current.delete(userId)
+      if (pending !== undefined && status === 'joined') return
+      // Read now: when the grace ends a rider who really left is gone from the participants.
       const message = describePresence(participants, userId, status)
-      if (message) announce(message)
+      if (!message) return
+      if (status === 'joined') return announce(message)
+      const timer = setTimeout(() => {
+        pendingLeaves.current.delete(userId)
+        announce(message)
+      }, PRESENCE_GRACE_MS)
+      pendingLeaves.current.set(userId, timer)
     },
     [participants, announce],
   )

@@ -418,8 +418,10 @@ Ride mode and the free ride share the group's live channel
   participants. One toast at a time, each lasting 5 seconds: a newer one waits its turn, in the order
   it came (at most three wait; the oldest waiting one is dropped), so the "You are the leader of the
   ride now" toast (crown icon) is not lost under the "ana left" of the leader who handed over by
-  leaving. A dropped connection that reconnects shows "left" and then "joined", because the
-  server cannot tell it from a rider who really left.
+  leaving. The server cannot tell a dropped connection from a rider who really left, so the client
+  holds each "left" for **20 seconds** (`PRESENCE_GRACE_MS`): a rider who signs in again meanwhile (a
+  locked screen, another app, a network blip) shows neither toast, and their marker stays on the map
+  throughout (see **Stale riders**). The group is still read again at once, only the toast waits.
 - **Stale riders.** A rider with no report for **30 seconds** (`STALE_AFTER_MS`, six missed
   reports) is taken off the map: the channel has no leave message, so a closed app would
   otherwise freeze on the others' maps. The saved positions in `ready` are aged by the

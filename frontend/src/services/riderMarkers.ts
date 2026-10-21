@@ -2,7 +2,10 @@ import type { LivePosition } from '@/services/groupMessages'
 import type { Coordinates } from '@/types/geolocation'
 import type { GroupParticipant } from '@/types/routeGroup'
 
-/** A rider that has not reported for this long is left off the map: they probably closed the app. */
+/**
+ * A rider that has not reported for this long is left off the map: they probably closed the app. It must
+ * outlast `PRESENCE_GRACE_MS` plus one report, so a rider who drops stays visible while the grace runs.
+ */
 export const STALE_AFTER_MS = 30_000
 
 /** What the map needs to draw another rider: who they are and where they are. */
