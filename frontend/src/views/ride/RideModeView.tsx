@@ -7,13 +7,14 @@ import { useState } from 'react'
 import Toast from '@/components/feedback/Toast'
 import type { GroupRide } from '@/hooks/useGroupRide'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
+import { useLiveGroup } from '@/hooks/useLiveGroup'
 import { useQuitRide } from '@/hooks/useQuitRide'
 import { useRideArrival } from '@/hooks/useRideArrival'
 import { useRideElapsed } from '@/hooks/useRideElapsed'
 import { useRideLines } from '@/hooks/useRideLines'
 import { useRideMap } from '@/hooks/useRideMap'
 import { useRideProgress } from '@/hooks/useRideProgress'
-import { useRideSpeeds } from '@/hooks/useRideSpeeds'
+import { useRideMaxSpeed } from '@/hooks/useRideMaxSpeed'
 import { useSaveRideSummary } from '@/hooks/useSaveRideSummary'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
@@ -26,6 +27,8 @@ import RideSummarySheet from '@/views/ride/RideSummarySheet'
 import type { Coordinates, GeolocationState } from '@/types/geolocation'
 import type { RideRoute } from '@/types/route'
 import ChangeRouteControl from '@/views/ride/ChangeRouteControl'
+
+const METERS_PER_KILOMETER = 1000
 
 interface RideModeViewProps {
   route: RideRoute
@@ -41,6 +44,7 @@ interface RideModeViewProps {
 
 export default function RideModeView({ route, location, rider, groupRide, onQuit }: RideModeViewProps) {
   const { riders, notice, dismissNotice } = groupRide
+  const { group } = useLiveGroup()
   const progress = useRideProgress({ path: route.points, rider })
   const lines = useRideLines({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -49,17 +53,19 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
     rider,
   })
   const arrivedAt = useRideArrival({ progress, fixTime: location.timestamp })
+  // The finish counts as covered once the rider has arrived, like the summary does.
+  const coveredKilometres = arrivedAt === null ? (progress.reached?.distance ?? 0) / METERS_PER_KILOMETER : route.distance
   const [startedAt] = useState(() => Date.now())
   const elapsedSeconds = useRideElapsed(startedAt, arrivedAt)
-  const speeds = useRideSpeeds({
+  const maxSpeed = useRideMaxSpeed({
     speed: location.speed,
     fixTime: location.timestamp,
     isRiding: arrivedAt === null,
   })
-  const save = useSaveRideSummary({ routeId: route.id, startedAt, endedAt: arrivedAt, speeds })
+  const save = useSaveRideSummary({ routeId: route.id, groupId: group.id, startedAt, endedAt: arrivedAt, maxSpeed })
   const [isSummaryDismissed, setIsSummaryDismissed] = useState(false)
   const [isQuitConfirmOpen, setIsQuitConfirmOpen] = useState(false)
-  const quit = useQuitRide({ routeId: route.id, startedAt, speeds, onQuit })
+  const quit = useQuitRide({ routeId: route.id, groupId: group.id, startedAt, maxSpeed, onQuit })
   const { containerRef, hasLoadFailed, recenter, focusOn, indicators } = useRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     path: route.points,
@@ -119,7 +125,13 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
           <span className="icon icon-locate" aria-hidden="true"></span>
         </button>
       </div>
-      <RideStatsPanel elapsedSeconds={elapsedSeconds} speed={location.speed} />
+      <RideStatsPanel
+        elapsedSeconds={elapsedSeconds}
+        speed={location.speed}
+        maxSpeed={maxSpeed}
+        route={route}
+        coveredKilometres={coveredKilometres}
+      />
       <ConfirmQuitRideDialog
         isOpen={isQuitConfirmOpen}
         isPending={quit.isPending}

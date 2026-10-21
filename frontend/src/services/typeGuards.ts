@@ -41,7 +41,6 @@ export const isRideSummaryListItem = (value: unknown): value is RideSummaryListI
   typeof value.end_at === 'string' &&
   typeof value.duration === 'number' &&
   typeof value.is_finished === 'boolean' &&
-  isNumberOrNull(value.avg_speed) &&
   typeof value.created_at === 'string'
 
 export const isRideSummaryDetail = (value: unknown): value is RideSummaryDetail =>
@@ -51,7 +50,7 @@ export const isRideSummaryDetail = (value: unknown): value is RideSummaryDetail 
   value.participants.every(isRider) &&
   'estimated_time' in value &&
   typeof value.estimated_time === 'number' &&
+  'author' in value &&
+  typeof value.author === 'number' &&
   'max_speed' in value &&
-  isNumberOrNull(value.max_speed) &&
-  'min_speed' in value &&
-  isNumberOrNull(value.min_speed)
+  isNumberOrNull(value.max_speed)

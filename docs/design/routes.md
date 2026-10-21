@@ -52,9 +52,7 @@ It inherits `TimeStampedModel` and is ordered by `-start_at`.
 | `end_at` | `DateTimeField` | Must be after `start_at` |
 | `duration` | `DurationField` | `end_at - start_at`, calculated, `editable=False` |
 | `is_finished` | `BooleanField` | Default `True`; `False` when the rider quit before the finish |
-| `max_speed` | `FloatField` | km/h, fastest GPS reading while moving; null when unknown; `>= 0` |
-| `min_speed` | `FloatField` | km/h, slowest GPS reading while moving; null when unknown; `>= 0` |
-| `avg_speed` | `FloatField` | km/h, mean of the GPS readings while moving; null when unknown; `>= 0` |
+| `max_speed` | `FloatField` | km/h, fastest GPS reading; null when unknown; `>= 0` |
 | `participants` | M2M to `auth.User` | `related_name='route_summaries'`, optional (`blank=True`) |
 | `author` | FK to `auth.User` | `related_name='authored_route_summaries'`, `CASCADE` |
 
@@ -80,18 +78,27 @@ It inherits `TimeStampedModel` and is ordered by `-start_at`.
 
 `POST /api/routes/<uuid>/summaries/` (JWT) saves a finished ride of one of the
 caller's routes. The body is `{"start_at": "...", "end_at": "..."}`
-(ISO 8601 datetimes, both required), plus optional `is_finished` (default `true`), `max_speed`, `min_speed`
-and `avg_speed` in km/h; the answer is `201` with the full ride, the shape in
+(ISO 8601 datetimes, both required), plus optional `is_finished` (default `true`), `max_speed`
+in km/h and `group` (the id of the group it was ridden in, never returned); the answer is `201` with the full ride, the shape in
 [Reading rides](#reading-rides).
 
-Only those six fields are writable: the route comes from the URL, and the
-caller is the `author` and the only participant (the rider rode it), whatever
-the body says. `end_at` not after `start_at` is `400` with an `end_at` message
+Only those seven fields are writable: the route comes from the URL, and the
+caller is the `author` and always a participant, whatever the body says. The other
+participants come from `group` (see [Participants](#ride-participants)). `end_at` not after `start_at` is `400` with an `end_at` message
 (the database constraint is the backstop), and a negative speed is `400` with
 that field's message. Another user's route, or one that does not exist, is
 `404`, as for the other route endpoints; unauthenticated calls are `401`.
 `RideSummarySerializer` serializes the `RouteSummary` model; the name keeps it
 apart from `RouteSummarySerializer`, the route list shape.
+
+<a id="ride-participants"></a>**Participants.** With `group`, the ride also lists the riders of that group who are
+**connected at the moment it is saved** (`group_service.connected_riders`): the ones who accepted and whose
+latest position is at most 30 seconds old (`CONNECTED_WINDOW`, the same rule that takes a rider off the ride
+map), since a connected rider reports every 4 seconds. The caller counts whatever their own position says.
+Invited riders, riders who left and riders who dropped more than 30 seconds ago are not participants. A
+`group` the caller has not accepted is `400` (`group`: "You are not riding in this group."); a group that is no
+longer on this route (the leader changed it) adds nobody, so the ride is still saved. Each rider saves their
+own ride when they arrive, so every rider has their own copy, listing the riders connected when they saved it.
 
 ### Reading rides
 
@@ -118,8 +125,6 @@ A ride (the detail, and the answer to the `POST`):
   "duration": 2700,
   "is_finished": true,
   "max_speed": 31.5,
-  "min_speed": 6.2,
-  "avg_speed": 19.8,
   "author": 1,
   "participants": [{"id": 1, "username": "rider"}],
   "created_at": "2026-10-15T09:45:02Z"
@@ -129,8 +134,8 @@ A ride (the detail, and the answer to the `POST`):
 `duration` and `estimated_time` are **whole seconds**; `distance` is the
 route's, in km, and `route_name`, `distance` and `estimated_time` come from the
 route. The list rows (`RideSummaryListSerializer`) carry only `id`, `route`,
-`route_name`, `distance`, `start_at`, `end_at`, `duration`, `is_finished`, `avg_speed` and
-`created_at`, so the row can be drawn without the participants or extremes.
+`route_name`, `distance`, `start_at`, `end_at`, `duration`, `is_finished` and
+`created_at`, so the row can be drawn without the participants or the top speed.
 
 Deleting a ride removes the `RouteSummary` row (and its participant links) for
 everyone who rode it, and leaves the route alone. It is limited to the author

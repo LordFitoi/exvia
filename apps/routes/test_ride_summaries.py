@@ -106,11 +106,10 @@ class RideSummaryApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertFalse(RouteSummary.objects.exists())
 
-    def test_saves_speeds_and_accepts_their_absence(self) -> None:
-        speeds = {'max_speed': 31.5, 'min_speed': 6.2, 'avg_speed': 19.8}
-        self.client.post(self.url, {**self.body, **speeds}, format='json')
+    def test_saves_the_top_speed_and_accepts_its_absence(self) -> None:
+        self.client.post(self.url, {**self.body, 'max_speed': 31.5}, format='json')
         saved = RouteSummary.objects.get()
-        self.assertEqual((saved.max_speed, saved.min_speed, saved.avg_speed), (31.5, 6.2, 19.8))
+        self.assertEqual(saved.max_speed, 31.5)
         self.client.post(self.url, self.body, format='json')
         self.assertIsNone(RouteSummary.objects.exclude(pk=saved.pk).get().max_speed)
 
@@ -139,7 +138,7 @@ class RideHistoryApiTests(TestCase):
         start_at = datetime(2026, 10, day, 9, 0, tzinfo=timezone.utc)
         summary = RouteSummary.objects.create(
             route=self.route, author=riders[0], start_at=start_at,
-            end_at=start_at + timedelta(minutes=30), avg_speed=20.0,
+            end_at=start_at + timedelta(minutes=30), max_speed=20.0,
         )
         summary.participants.set(riders)
         return summary
@@ -173,7 +172,9 @@ class RideHistoryApiTests(TestCase):
         self.assertEqual(response.data['duration'], 30 * 60)
         self.assertEqual(response.data['route'], self.route.pk)
         self.assertEqual(response.data['estimated_time'], round(self.route.estimated_time.total_seconds()))
-        self.assertEqual(response.data['avg_speed'], 20.0)
+        self.assertEqual(response.data['max_speed'], 20.0)
+        self.assertNotIn('min_speed', response.data)
+        self.assertNotIn('avg_speed', response.data)
 
     def test_detail_of_a_ride_the_caller_did_not_take_is_not_found(self) -> None:
         summary = self._create_summary([self.stranger])

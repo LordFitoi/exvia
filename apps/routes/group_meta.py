@@ -107,6 +107,18 @@ def set_position(meta: dict[str, Any], user_id: int, position: dict[str, Any]) -
     meta['participants'][str(user_id)]['position'] = position
 
 
+def get_connected_ids(meta: dict[str, Any], since: datetime) -> list[int]:
+    """The ids of the participants who accepted and reported a position at or after `since`: the riders
+    that are connected, since a connected rider reports every few seconds."""
+    return [
+        int(user_id)
+        for user_id, entry in meta.get('participants', {}).items()
+        if entry['status'] == ParticipantStatus.ACCEPTED
+        and entry['position'] is not None
+        and datetime.fromisoformat(entry['position']['recorded_at']) >= since
+    ]
+
+
 def get_positions(meta: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """The latest position of every participant that has reported one, by user id."""
     return {

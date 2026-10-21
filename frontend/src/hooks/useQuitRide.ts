@@ -3,18 +3,18 @@
 import { useState } from 'react'
 
 import { ApiError } from '@/services/apiClient'
-import { getAverageSpeed } from '@/services/rideSpeed'
-import type { SpeedStats } from '@/services/rideSpeed'
 import { createRideSummary } from '@/services/rideSummariesApi'
 
 const SAVE_FAILED_MESSAGE = 'Your ride could not be saved. Check your connection, or quit without saving.'
 
 interface QuitRideOptions {
   routeId: string
+  /** The group the ride is taken in. */
+  groupId: string
   /** When ride mode opened, in milliseconds since the epoch. */
   startedAt: number
-  /** The speed readings of the ride so far. */
-  speeds: SpeedStats
+  /** The top speed of the ride so far in km/h, or null when the device gave none. */
+  maxSpeed: number | null
   /** Leaves ride mode. */
   onQuit: () => void
 }
@@ -28,7 +28,7 @@ interface QuitRide {
 }
 
 /** Quitting before the finish saves the ride so far (not finished), then leaves ride mode. */
-export const useQuitRide = ({ routeId, startedAt, speeds, onQuit }: QuitRideOptions): QuitRide => {
+export const useQuitRide = ({ routeId, groupId, startedAt, maxSpeed, onQuit }: QuitRideOptions): QuitRide => {
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,12 +40,11 @@ export const useQuitRide = ({ routeId, startedAt, speeds, onQuit }: QuitRideOpti
     setIsPending(true)
     try {
       await createRideSummary(routeId, {
+        groupId,
         startedAt,
         endedAt: Date.now(),
         isFinished: false,
-        maxSpeed: speeds.max,
-        minSpeed: speeds.min,
-        avgSpeed: getAverageSpeed(speeds),
+        maxSpeed,
       })
       onQuit()
     } catch (failure) {

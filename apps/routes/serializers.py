@@ -3,9 +3,12 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from apps.routes.models import Route, RouteSummary
+from apps.routes import group_meta
+from apps.routes.group_meta import ParticipantStatus
+from apps.routes.models import Route, RouteGroup, RouteSummary
 
 END_BEFORE_START_MESSAGE = 'The end must be after the start.'
+NOT_RIDING_IN_GROUP_MESSAGE = 'You are not riding in this group.'
 
 
 class RouteSerializer(serializers.ModelSerializer):
@@ -54,9 +57,13 @@ class RiderSerializer(serializers.ModelSerializer):
 
 
 class RideSummarySerializer(serializers.ModelSerializer):
-    """A `RouteSummary` as exposed by the API. The client sends only `start_at`, `end_at` and the
-    speeds (km/h, optional); `duration` is whole seconds; `distance` and `estimated_time` are the route's."""
+    """A `RouteSummary` as exposed by the API. The client sends only `start_at`, `end_at`, the top speed
+    (km/h, optional) and the `group` it rode in (optional, never returned); `duration` is whole seconds;
+    `distance` and `estimated_time` are the route's."""
 
+    group = serializers.PrimaryKeyRelatedField(
+        queryset=RouteGroup.objects.all(), write_only=True, required=False, allow_null=True,
+    )
     duration = serializers.SerializerMethodField()
     route_name = serializers.CharField(source='route.name', read_only=True)
     distance = serializers.FloatField(source='route.distance', read_only=True)
@@ -67,10 +74,15 @@ class RideSummarySerializer(serializers.ModelSerializer):
         model = RouteSummary
         fields = (
             'id', 'route', 'route_name', 'distance', 'estimated_time', 'start_at', 'end_at', 'duration',
-            'is_finished',
-            'max_speed', 'min_speed', 'avg_speed', 'author', 'participants', 'created_at',
+            'is_finished', 'max_speed', 'group', 'author', 'participants', 'created_at',
         )
         read_only_fields = ('id', 'route', 'author', 'created_at')
+
+    def validate_group(self, group: RouteGroup | None) -> RouteGroup | None:
+        user = self.context['request'].user
+        if group is not None and group_meta.get_status(group.meta_json, user.pk) != ParticipantStatus.ACCEPTED:
+            raise serializers.ValidationError(NOT_RIDING_IN_GROUP_MESSAGE)
+        return group
 
     def get_duration(self, summary: RouteSummary) -> int:
         return round(summary.duration.total_seconds())
@@ -85,10 +97,10 @@ class RideSummarySerializer(serializers.ModelSerializer):
 
 
 class RideSummaryListSerializer(RideSummarySerializer):
-    """The history list shape: no participants, estimate or extremes."""
+    """The history list shape: no participants, estimate or top speed."""
 
     class Meta(RideSummarySerializer.Meta):
         fields = (
-            'id', 'route', 'route_name', 'distance', 'start_at', 'end_at', 'duration', 'is_finished', 'avg_speed',
+            'id', 'route', 'route_name', 'distance', 'start_at', 'end_at', 'duration', 'is_finished',
             'created_at',
         )

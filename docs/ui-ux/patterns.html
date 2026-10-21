@@ -245,11 +245,20 @@
             <button class="icon-button icon-button-primary map-control-bottom-center" type="button" aria-label="Center on my location"><span class="icon icon-locate" aria-hidden="true"></span></button>
           </div>
           <section class="ride-panel" aria-label="Ride stats">
-            <div class="route-stat"><span class="route-stat-value data">12:34</span><span class="text-caption">Time (min:sec)</span></div>
-            <div class="route-stat"><span class="route-stat-value data">26</span><span class="text-caption">Speed (km/h)</span></div>
+            <div class="ride-panel-summary">
+              <div class="route-stat"><span class="route-stat-value data">12:34</span><span class="text-caption">Time (min:sec)</span></div>
+              <div class="route-stat"><span class="route-stat-value data">26</span><span class="text-caption">Speed (km/h)</span></div>
+              <button class="icon-button ride-panel-toggle" type="button" aria-label="Hide all stats" aria-expanded="true" aria-controls="ride-stats-details"><span class="icon icon-chevron-down" aria-hidden="true"></span></button>
+            </div>
+            <div class="ride-panel-details route-stats" id="ride-stats-details">
+              <div class="route-stat"><span class="route-stat-value data">18.4 km</span><span class="text-caption">Distance</span></div>
+              <div class="route-stat"><span class="route-stat-value data">52 min</span><span class="text-caption">Estimated</span></div>
+              <div class="route-stat"><span class="route-stat-value data">24.1</span><span class="text-caption">Avg km/h</span></div>
+              <div class="route-stat"><span class="route-stat-value data">38.5</span><span class="text-caption">Max km/h</span></div>
+            </div>
           </section>
         </div>
-        <figcaption class="phone-caption">Ride mode: the map fills the screen above a stats strip with the time and current speed; the center button sits in the middle, right above the strip; no tab bar</figcaption>
+        <figcaption class="phone-caption">Ride mode: the map fills the screen above a stats strip with the time and current speed; the chevron button at its end shows or hides the rest of the stats (shown open here, closed in the group ride); the center button sits in the middle, right above the strip; no tab bar</figcaption>
       </figure>
 
       <figure>

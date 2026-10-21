@@ -49,8 +49,7 @@ the stats; the participants.
 | Time | `duration`, as a stopwatch (`42:10`) |
 | Distance | the route's length |
 | Avg km/h | distance over time, stops included, as in the finish sheet |
-| Max km/h, Lowest km/h | fastest and slowest GPS reading while moving |
-| Moving km/h | mean of the GPS readings while moving |
+| Max km/h | fastest GPS reading |
 
 The time is followed by the route's estimated time. A speed the ride did not
 record (the device gave none, or the ride was saved before speeds existed) is a
@@ -62,7 +61,7 @@ A ride the rider quit before the finish is saved too ([ride.md](ride.md)), with
 `is_finished` false. The route's length says nothing about how far they got, so
 for these rides the list row has no average and carries a **Not finished** badge,
 and the summary shows a dash for Distance and Avg km/h and the badge next to the
-day. Time and the three GPS speeds are real, so they stay.
+day. Time and the top GPS speed are real, so they stay.
 
 ## Delete
 
@@ -74,21 +73,16 @@ failure keeps the dialog open with the message. On success the screen goes back
 to the list, which reloads without the ride. The route itself is not touched.
 
 Only the **author** can delete (anyone else gets `404`, as for a ride that is not
-theirs). Today the author is always the only participant, so the button is always
-offered; once rides have other participants, the button should be hidden for
-those who did not write it.
+theirs). A ride saved from a group also lists the riders connected then as participants, so the
+button is shown only to the author (`author` in the detail, compared with the signed-in user).
 
 ## Key decisions
 
-- **Speeds are measured on the phone and stored**, because the server cannot
-  derive them from a start, an end and a route length. `useRideSpeeds` keeps
-  running totals of the GPS readings (`services/rideSpeed.ts`) and sends max,
-  lowest and mean with the ride; see [ride.md](ride.md#ride-mode).
-- **"Moving" excludes stops**: readings under 10 km/h (`MOVING_SPEED_KMH`) are
-  ignored, otherwise the lowest speed would always be 0 and the mean would
-  drop at every light.
-- **Two averages on purpose**: "Avg km/h" matches the number the rider saw when
-  they finished; "Moving km/h" is the one without stops.
+- **The top speed is measured on the phone and stored**, because the server cannot
+  derive it from a start, an end and a route length. `useRideMaxSpeed` keeps the
+  highest GPS reading (`services/rideSpeed.ts`) and sends it with the ride; see
+  [ride.md](ride.md#ride-mode). The lowest and the moving (mean) speeds are not kept:
+  the lowest was always about zero at a stop, and the mean is close to "Avg km/h".
 - **Whose rides**: the ones the caller took part in (`participants`), which
   includes every ride they saved, since the author is always a participant.
 - **The preview uses the route endpoint**, which only returns routes the

@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db.models import Q, QuerySet
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework.generics import (
     CreateAPIView,
     ListAPIView,
@@ -13,6 +14,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.serializers import BaseSerializer
 
+from apps.routes import group_service
 from apps.routes.group_meta import ParticipantStatus
 from apps.routes.models import Route, RouteSummary
 from apps.routes.serializers import (
@@ -65,7 +67,8 @@ def rideable_routes(user: User) -> QuerySet[Route]:
 
 class RideSummaryCreateView(CreateAPIView):
     """Saves the summary of a ride of a route the caller can ride (see `rideable_routes`); any other
-    route is 404. The caller is its author and its only participant."""
+    route is 404. The caller is its author. Its participants are the caller and, when it was ridden in a
+    group of that route (`group`), the riders of the group who are connected at that moment."""
 
     serializer_class = RideSummarySerializer
 
@@ -74,8 +77,11 @@ class RideSummaryCreateView(CreateAPIView):
         self.route = get_object_or_404(rideable_routes(request.user), pk=kwargs['pk'])
 
     def perform_create(self, serializer: BaseSerializer) -> None:
+        group = serializer.validated_data.pop('group', None)
         summary = serializer.save(route=self.route, author=self.request.user)
         summary.participants.add(self.request.user)
+        if group is not None and group.route_id == self.route.pk:
+            summary.participants.add(*group_service.connected_riders(group, timezone.now()))
 
 
 class MyRideSummariesMixin:

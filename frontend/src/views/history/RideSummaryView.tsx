@@ -3,6 +3,7 @@
 import ConfirmDialog from '@/components/feedback/ConfirmDialog'
 import StateView from '@/components/feedback/StateView'
 import RoutePreview from '@/components/route/RoutePreview'
+import { useAuth } from '@/hooks/useAuth'
 import { useRideSummaryDeletion } from '@/hooks/useRideSummaryDeletion'
 import { useRideSummaryDetail } from '@/hooks/useRideSummaryDetail'
 import { useRouteDetail } from '@/hooks/useRouteDetail'
@@ -59,6 +60,7 @@ function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
 
 /** One ride of the history: its route and preview, who rode, the time it took and the speeds. */
 export default function RideSummaryView({ summaryId, onClose, onDeleted }: RideSummaryViewProps) {
+  const { user } = useAuth()
   const detail = useRideSummaryDetail(summaryId)
   const deletion = useRideSummaryDeletion({ summaryId, onDeleted })
 
@@ -91,7 +93,7 @@ export default function RideSummaryView({ summaryId, onClose, onDeleted }: RideS
           <span className="icon icon-lg icon-alert"></span>
         </StateView>
       )}
-      {detail.summary && (
+      {detail.summary && detail.summary.author === user?.id && (
         <button
           className="button button-soft button-error button-lg button-block"
           type="button"

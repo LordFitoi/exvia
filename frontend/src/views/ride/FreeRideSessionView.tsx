@@ -9,6 +9,7 @@ import { useFreeRideMap } from '@/hooks/useFreeRideMap'
 import type { GroupRide } from '@/hooks/useGroupRide'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useRideElapsed } from '@/hooks/useRideElapsed'
+import { useRideMaxSpeed } from '@/hooks/useRideMaxSpeed'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { Coordinates, GeolocationState } from '@/types/geolocation'
@@ -34,6 +35,7 @@ interface FreeRideSessionViewProps {
 export default function FreeRideSessionView({ location, rider, groupRide, onLeave }: FreeRideSessionViewProps) {
   const [startedAt] = useState(() => Date.now())
   const elapsedSeconds = useRideElapsed(startedAt, null)
+  const maxSpeed = useRideMaxSpeed({ speed: location.speed, fixTime: location.timestamp, isRiding: true })
   const { riders, notice, dismissNotice } = groupRide
   const [isFinishOpen, setIsFinishOpen] = useState(false)
   const { containerRef, hasLoadFailed, recenter, focusOn, indicators } = useFreeRideMap({
@@ -91,7 +93,13 @@ export default function FreeRideSessionView({ location, rider, groupRide, onLeav
           <span className="icon icon-locate" aria-hidden="true"></span>
         </button>
       </div>
-      <RideStatsPanel elapsedSeconds={elapsedSeconds} speed={location.speed} />
+      <RideStatsPanel
+        elapsedSeconds={elapsedSeconds}
+        speed={location.speed}
+        maxSpeed={maxSpeed}
+        route={null}
+        coveredKilometres={0}
+      />
       <FinishFreeRideDialog
         isOpen={isFinishOpen}
         onKeepRiding={handleKeepRiding}

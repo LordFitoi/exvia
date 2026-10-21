@@ -56,8 +56,8 @@ one.
 | Arrival | `hooks/useRideArrival.ts` | Detects the finish (the time of the first GPS fix at the end); vibrates on arrival |
 | Elapsed | `hooks/useRideElapsed.ts` | The seconds since ride mode opened, ticking once a second until the finish |
 | Save | `hooks/useSaveRideSummary.ts`, `views/ride/RideSaveStatus.tsx` | Saves the finished ride on the server once, and shows saving, saved, or a failure with Try again |
-| Speeds | `hooks/useRideSpeeds.ts`, `services/rideSpeed.ts` | Max, lowest and mean speed of the ride from the GPS readings |
-| Stats strip | `views/ride/RideStatsPanel.tsx` | The time and current speed under the map |
+| Max speed | `hooks/useRideMaxSpeed.ts`, `services/rideSpeed.ts` | The top speed of the ride from the GPS readings |
+| Stats strip | `views/ride/RideStatsPanel.tsx` | The time and current speed under the map, and a button for all the other stats of the ride |
 | Summary | `views/ride/RideSummarySheet.tsx` | The "You've arrived!" modal sheet with time, distance and average speed |
 | Wake lock | `hooks/useWakeLock.ts` | Keeps the screen on while riding (Screen Wake Lock API) |
 | Way to start | `hooks/useApproachPath.ts` | Street path from the rider to the route start (Directions API) |
@@ -184,7 +184,7 @@ style guide's [Group rides](../ui-ux/group.html) page.
   drawn.
 - **Stats strip** (`RideStatsPanel`): the screen is the map above a strip, not an
   overlay, so it never covers the map (`ride-screen`, `ride-panel`; the tab bar
-  is hidden, so the strip carries the bottom safe area). Two boxes: **Time**
+  is hidden, so the strip carries the bottom safe area). Two boxes and a button: **Time**
   (`useRideElapsed`, as a stopwatch `min:sec`, `h:mm:ss` from an hour up) and
   **Speed** in km/h. Time starts at 0:00 when ride mode opens (the way to the
   start counts, and it does not wait for a GPS fix), counts up each second, and
@@ -193,6 +193,14 @@ style guide's [Group rides](../ui-ux/group.html) page.
   to km/h); it is a dash when the device gives none. It is not a blocking modal
   on purpose: the rider keeps the map while the numbers stay in view. The locate
   button sits at the middle of the map's bottom edge, just above the strip.
+- **All the stats.** The chevron button at the end of the strip (`ride-panel-toggle`, "Show all stats" /
+  "Hide all stats", `aria-expanded`) shows or hides a grid of the rest of the stats of the
+  [summary](#ride-mode), four in one row (a compact `body2` value so "1 h 05 min" still fits a 390px phone): **Distance** of the route, **Estimated** time, **Avg km/h** (the
+  kilometres covered so far over the elapsed time; at the finish it is the summary's: the route's distance
+  over the time) and **Max** km/h (from [Ride speeds](#ride-speeds)). The grid
+  starts hidden, to leave the map its room, and the strip grows upwards when it opens. A free ride has no
+  route, so its grid has only the max speed (`useRideMaxSpeed` runs there too). All the stats start over
+  with a new ride, see [Changing the route](#changing-the-route).
 - **Arrival** (`useRideArrival`): the rider has arrived when the progress on
   the track is within 40 m of its end (`ARRIVAL_METERS`). The phone vibrates
   and `RideSummarySheet` opens: a modal sheet ("You've arrived!", the guide's
@@ -217,7 +225,7 @@ style guide's [Group rides](../ui-ux/group.html) page.
   **Saving the ride**: when the summary appears, `useSaveRideSummary` posts the
   ride once to `POST /api/routes/<uuid>/summaries/` ([routes.md](routes.md#route-summaries))
   with the time ride mode opened as `start_at`, the arrival time as `end_at`
-  (the same two instants the Time box measures) and the speeds below. The sheet
+  (the same two instants the Time box measures) and the top speed below. The sheet
   shows "Saving your ride…", then "Ride saved."; if the request fails it shows
   "Could not save your ride." with **Try again**, and Done and the X still work
   (an unsaved ride is lost when the rider leaves). A fix older than the ride
@@ -225,12 +233,10 @@ style guide's [Group rides](../ui-ux/group.html) page.
   the server accepts it (`createRideSummary` does this for every save).
   Quitting before the finish saves an unfinished ride (see the X below). Saved rides
   are listed in the [ride history](ride-history.md).
-- **Ride speeds** (`useRideSpeeds`, `services/rideSpeed.ts`): each new GPS fix
-  (counted once per `timestamp`) adds its `coords.speed` to running totals, with
-  no list of readings kept. Readings under 10 km/h (`MOVING_SPEED_KMH`) are stops
-  and are ignored; the rest give the max, the lowest and the mean, in km/h. The
-  totals freeze when the rider arrives and are sent with the ride. With no
-  speed from the device (or only stops) they are null, which the history shows as
+- <a id="ride-speeds"></a>**Ride speeds** (`useRideMaxSpeed`, `services/rideSpeed.ts`): each new GPS fix
+  (counted once per `timestamp`) is compared with the top speed so far, in km/h, and
+  no list of readings is kept. The top speed freezes when the rider arrives and is sent
+  with the ride. With no speed from the device it is null, which the history shows as
   a dash.
 - **The screen stays on** while riding (`useWakeLock`, Screen Wake Lock API),
   except on the map-failure screen. Browsers release the lock whenever the page
@@ -252,8 +258,8 @@ style guide's [Group rides](../ui-ux/group.html) page.
   riding** (outline, first) and **Quit ride** (`button-error`). Keep riding and
   Esc close the dialog and the ride goes on.
   **Quit ride** saves the ride so far, then leaves (`useQuitRide`): `start_at` is
-  when ride mode opened, `end_at` is now, `is_finished` is `false`, and the speeds
-  so far go with it. While it saves, both buttons are disabled and Quit shows
+  when ride mode opened, `end_at` is now, `is_finished` is `false`, and the top speed
+  so far goes with it. While it saves, both buttons are disabled and Quit shows
   the loading state. If the save fails the dialog stays open with the error and
   the button reads **Quit anyway**, which leaves without saving, so a bad
   connection never traps the rider. Leaving goes back to the picker with the same
@@ -447,7 +453,8 @@ Ride mode and the free ride share the group's live channel
   other riders are drawn and nothing blocks. There is no connection indicator yet.
 - **Finishing.** An accepted rider saves their own summary of the group's route
   (`POST /api/routes/<uuid>/summaries/`, which accepts routes of accepted groups); the
-  summary lists only them as participant, there is no shared ride record yet.
+  summary lists as participants the riders connected to the group at that moment (the client sends the
+  `group`, see [routes.md](routes.md#ride-participants)), and each rider saves their own copy.
 
 ## Changing the route
 
@@ -471,9 +478,12 @@ block; riders who are not the leader do not see it, since the route is the group
   brings the picker back with the new route **chosen**; it is applied to the group only when the leader
   presses **Save**, like any other choice. The X of the creator comes back to the picker as it was.
 - **The ride follows the group.** `GroupRideSession` renders ride mode from `group.route` and keys it by
-  the route id, so a new route starts a **new ride**: the clock, the speeds, the progress and the map
+  the route id, so a new route starts a **new ride**: the clock, the top speed, the progress and the map
   start over, and the ride on the old route is **not saved** (it is neither finished nor quit). Going
-  to or from free mode swaps the free-ride screen for ride mode the same way.
+  to or from free mode swaps the free-ride screen for ride mode the same way. Every rider, the leader
+  included, gets the toast "Ride stats were reset for the new route" (or "...for the free ride") once
+  their group shows the other route (`useStatsResetNotice`), after "ana changed the route" for the others.
+  The strip's open or closed state also starts closed again.
 - **The channel is kept.** The GPS and `useGroupRide` live in `GroupRideSession`, above the route
   screens, so changing route does not reconnect the socket. Otherwise every rider would hear the
   leader "leave" and "join" at each change.

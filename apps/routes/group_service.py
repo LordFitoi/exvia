@@ -10,6 +10,10 @@ from apps.routes import group_meta
 from apps.routes.group_meta import ParticipantStatus
 from apps.routes.models import MAX_GROUP_PARTICIPANTS, Route, RouteGroup
 
+# A rider counts as connected when they reported a position within this long; the ride map uses the same
+# rule (`STALE_AFTER_MS` in the frontend), since a connected rider reports every 4 seconds.
+CONNECTED_WINDOW = timedelta(seconds=30)
+
 # A group with no activity for this long has ended and is no longer offered back to its riders.
 RESUME_WINDOW = timedelta(hours=2)
 
@@ -162,6 +166,12 @@ def save_position(group_id: object, user_id: int, position: dict[str, Any]) -> b
         group_meta.set_position(group.meta_json, user_id, position)
         group.save(update_fields=['meta_json', 'updated_at'])
     return True
+
+
+def connected_riders(group: RouteGroup, now: datetime) -> QuerySet[User]:
+    """The riders of the group who are connected at `now` (see `CONNECTED_WINDOW`)."""
+    connected_ids = group_meta.get_connected_ids(group.meta_json, now - CONNECTED_WINDOW)
+    return group.participants.filter(pk__in=connected_ids)
 
 
 def find_active_group(groups: QuerySet[RouteGroup], user: User, now: datetime) -> RouteGroup | None:

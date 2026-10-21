@@ -131,7 +131,8 @@ frees the place and makes every later call about that group `404` for them.
 
 **Saving the ride**: `POST /api/routes/<uuid>/summaries/` (see [routes.md](routes.md#route-summaries))
 now also accepts the route of a group the caller has **accepted** (looked up in `meta_json`);
-an invited-only or rejected rider still gets `404`. The summary belongs to the caller alone.
+an invited-only or rejected rider still gets `404`. The summary is the caller's, and lists as participants the riders
+connected to the group when it is saved (`group`, see [routes.md](routes.md#ride-participants)).
 
 Also new, in the users app: `GET /api/auth/users/lookup/?username=<name>` returns
 `{"id", "username", "avatar"}` for an active user with exactly that username, `404` otherwise.

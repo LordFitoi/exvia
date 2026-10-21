@@ -113,15 +113,32 @@
 .ride-screen > .map { flex: 1; }
 
 .ride-panel {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-3) calc(var(--space-3) + var(--safe-bottom));
   background: var(--color-surface);
   box-shadow: var(--shadow-sheet);
 }
 
+/* The two stats that matter while riding, and the button that shows or hides the rest. */
+.ride-panel-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+}
+
 .ride-panel .route-stat-value { font-size: var(--text-h3); }
+
+/* The other stats of the ride; they take the height they need and push the map up. */
+.ride-panel .ride-panel-details { grid-template-columns: repeat(4, 1fr); gap: var(--space-2); }
+.ride-panel-details .route-stat { min-inline-size: 0; padding: var(--space-2); }
+.ride-panel-details .route-stat-value { font-size: var(--text-body2); overflow-wrap: anywhere; }
+.ride-panel .ride-panel-details[hidden] { display: none; }
+
+.ride-panel-toggle .icon { transition: rotate var(--duration-fast) var(--ease-out); }
+.ride-panel-toggle[aria-expanded="true"] .icon { rotate: 180deg; }
 
 /* Map panel: a flat, square-cornered block of data under a map (the shared route page). Not a
    sheet: nothing slides, drags or covers the map; it takes the height its content needs. */

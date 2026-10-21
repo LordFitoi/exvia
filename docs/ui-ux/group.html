@@ -191,8 +191,12 @@
             <button class="icon-button icon-button-primary map-control-bottom-center" type="button" aria-label="Center on my location"><span class="icon icon-locate" aria-hidden="true"></span></button>
           </div>
           <section class="ride-panel" aria-label="Ride stats">
-            <div class="route-stat"><span class="route-stat-value data">12:34</span><span class="text-caption">Time (min:sec)</span></div>
-            <div class="route-stat"><span class="route-stat-value data">26</span><span class="text-caption">Speed (km/h)</span></div>
+            <div class="ride-panel-summary">
+              <div class="route-stat"><span class="route-stat-value data">12:34</span><span class="text-caption">Time (min:sec)</span></div>
+              <div class="route-stat"><span class="route-stat-value data">26</span><span class="text-caption">Speed (km/h)</span></div>
+              <button class="icon-button ride-panel-toggle" type="button" aria-label="Show all stats" aria-expanded="false" aria-controls="ride-stats-details"><span class="icon icon-chevron-down" aria-hidden="true"></span></button>
+            </div>
+            <div class="ride-panel-details route-stats" id="ride-stats-details" hidden></div>
           </section>
         </div>
         <figcaption class="phone-caption">Group ride: each other rider is a bubble (their picture, or initials without one) above a green dot on their exact position; &ldquo;You&rdquo; stays the ink dot with the pulse; the users button under the X lists the riders; the leader also has the route button under it, to change the route or go to free mode; a rider (or you) out of view gets a bubble on the map edge with an arrow pointing the way; it is only a hint and takes no taps</figcaption>

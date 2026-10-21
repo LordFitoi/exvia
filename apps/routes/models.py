@@ -56,8 +56,6 @@ class RouteSummary(TimeStampedModel):
     duration = models.DurationField(editable=False, help_text='Calculated as end_at - start_at.')
     is_finished = models.BooleanField(default=True, help_text='False when the rider quit before the finish.')
     max_speed = models.FloatField(**SPEED_FIELD, help_text='Fastest GPS reading, km/h.')
-    min_speed = models.FloatField(**SPEED_FIELD, help_text='Slowest GPS reading while moving, km/h.')
-    avg_speed = models.FloatField(**SPEED_FIELD, help_text='Mean of the GPS readings while moving, km/h.')
     participants = models.ManyToManyField(User, related_name='route_summaries', blank=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='authored_route_summaries')
 

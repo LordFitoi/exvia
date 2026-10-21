@@ -10,6 +10,7 @@ import { useNow } from '@/hooks/useNow'
 import { usePresenceNotice } from '@/hooks/usePresenceNotice'
 import type { PresenceNotice } from '@/hooks/usePresenceNotice'
 import { POSITION_INTERVAL_MS, useSharePosition } from '@/hooks/useSharePosition'
+import { useStatsResetNotice } from '@/hooks/useStatsResetNotice'
 import { buildRiderMarkers } from '@/services/riderMarkers'
 import type { RiderMarkerData } from '@/services/riderMarkers'
 import type { Coordinates, GeolocationState } from '@/types/geolocation'
@@ -81,6 +82,7 @@ export const useGroupRide = ({ rider, location }: GroupRideOptions): GroupRide =
     if (status === 'denied') announce(LOST_PLACE_MESSAGE)
   }, [status, announce])
   useSharePosition({ send, status, rider, location })
+  useStatsResetNotice(group.route?.id ?? null, announce)
   // Riders drop off the map when their reports stop, so staleness is checked as often as they report.
   const now = useNow(POSITION_INTERVAL_MS)
 
