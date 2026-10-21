@@ -88,7 +88,7 @@ export const useRideMap = ({ accessToken, path, waypoints, lines, rider, riders 
     if (mounted) updateRideLines(mounted.map, lines)
   }, [mounted, lines])
 
-  useRiderMarkers(mounted, riders)
+  useRiderMarkers(mounted, riders, path)
   const indicators = useEdgeIndicators(mounted, rider, riders)
 
   const heading = useRiderHeading(rider)

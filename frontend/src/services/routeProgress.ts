@@ -1,6 +1,9 @@
 import type { Coordinates } from '@/types/geolocation'
 
 export const METERS_PER_DEGREE_LATITUDE = 111_320
+const METERS_PER_KILOMETER = 1000
+// A route has at least a start and a finish.
+const MIN_WAYPOINTS = 2
 // A rider this close to the track is on it; GPS and street snapping are never exact.
 const ON_TRACK_METERS = 40
 // Progress only moves forward, and only this far ahead of the last fix, so a loop that comes back
@@ -59,6 +62,17 @@ const pointAt = (from: Coordinates, to: Coordinates, fraction: number): Coordina
   longitude: from.longitude + (to.longitude - from.longitude) * fraction,
   latitude: from.latitude + (to.latitude - from.latitude) * fraction,
 })
+
+/** The point of the path at this distance from its start, held at the first or last point beyond them. */
+export const getPointAt = (path: MeasuredPath, distance: number): Coordinates => {
+  const last = path.points.length - 1
+  if (distance <= 0 || last === 0) return path.points[0]
+  if (distance >= path.distances[last]) return path.points[last]
+  const segment = path.distances.findIndex((end) => end >= distance) - 1
+  const length = path.distances[segment + 1] - path.distances[segment]
+  const fraction = length === 0 ? 0 : (distance - path.distances[segment]) / length
+  return pointAt(path.points[segment], path.points[segment + 1], fraction)
+}
 
 const locateOnSegment = (
   path: MeasuredPath,
@@ -134,6 +148,18 @@ export const measureCheckpoints = (path: MeasuredPath, checkpoints: readonly Coo
     from = locateOnPath(path, checkpoint, { from, to: getPathLength(path) })?.distance ?? from
     return from
   })
+}
+
+/**
+ * The length in kilometres of each leg of the route: from the start to the first checkpoint, from each
+ * checkpoint to the next, and from the last one to the finish, measured along the path. Empty when the
+ * route has no waypoints (routes saved before they were stored), so its legs are unknown.
+ */
+export const measureLegs = (path: MeasuredPath, waypoints: readonly Coordinates[]): number[] => {
+  if (waypoints.length < MIN_WAYPOINTS) return []
+  const checkpoints = measureCheckpoints(path, waypoints.slice(1, -1))
+  const stops = [0, ...checkpoints, getPathLength(path)]
+  return stops.slice(1).map((distance, index) => (distance - stops[index]) / METERS_PER_KILOMETER)
 }
 
 /**

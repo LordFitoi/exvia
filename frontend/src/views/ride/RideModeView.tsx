@@ -16,6 +16,7 @@ import { useRideLines } from '@/hooks/useRideLines'
 import { useRideMap } from '@/hooks/useRideMap'
 import { useRideProgress } from '@/hooks/useRideProgress'
 import { useRideMaxSpeed } from '@/hooks/useRideMaxSpeed'
+import { useRouteLegs } from '@/hooks/useRouteLegs'
 import { useSaveRideSummary } from '@/hooks/useSaveRideSummary'
 import { useWakeLock } from '@/hooks/useWakeLock'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
@@ -65,11 +66,13 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
     isRiding: arrivedAt === null,
   })
   const [startedAt] = useState(() => Date.now())
+  const legKilometres = useRouteLegs(route)
   const checkpoints = {
     startedAt,
     count: countCheckpoints(route.waypoints),
     reachedAt: checkpointTimes,
     finishedAt: arrivedAt,
+    legKilometres,
   }
   const elapsedSeconds = useRideElapsed(startedAt, arrivedAt)
   const maxSpeed = useRideMaxSpeed({

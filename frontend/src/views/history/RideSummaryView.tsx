@@ -7,6 +7,7 @@ import RoutePreview from '@/components/route/RoutePreview'
 import { useAuth } from '@/hooks/useAuth'
 import { useRideSummaryDeletion } from '@/hooks/useRideSummaryDeletion'
 import { useRideSummaryDetail } from '@/hooks/useRideSummaryDetail'
+import { useRouteLegs } from '@/hooks/useRouteLegs'
 import { useRouteDetail } from '@/hooks/useRouteDetail'
 import { formatRideDate } from '@/services/formatRoute'
 import { countCheckpoints } from '@/services/routeProgress'
@@ -44,6 +45,7 @@ function ParticipantList({ summary }: { summary: RideSummaryDetail }) {
 function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
   const route = useRouteDetail(summary.route)
   const reachedAt = summary.reached_at.map((moment) => Date.parse(moment))
+  const legKilometres = useRouteLegs(route.shownRoute)
 
   return (
     <>
@@ -61,6 +63,7 @@ function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
         count={Math.max(countCheckpoints(route.shownRoute?.waypoints ?? []), reachedAt.length - 1)}
         reachedAt={reachedAt}
         finishedAt={summary.is_finished ? Date.parse(summary.end_at) : null}
+        legKilometres={legKilometres}
       />
       <ParticipantList summary={summary} />
     </>

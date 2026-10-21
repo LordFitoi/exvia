@@ -44,10 +44,10 @@ one.
 | Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<uuid>/` for the selected route, with `retry` |
 | Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start, checkpoint and finish markers, framed in view |
 | Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines, the start, checkpoint and finish markers and the other riders |
-| Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts` (over the shared `services/socketConnection.ts`), `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 4 s and collects the others'; see [Group ride](#group-ride) |
+| Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts` (over the shared `services/socketConnection.ts`), `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 2 s and collects the others'; see [Group ride](#group-ride) |
 | Riders | `views/ride/RidersControl.tsx`, `views/ride/RidersDialog.tsx`, `views/ride/RiderRow.tsx`, `hooks/useMenuPopover.ts`, `hooks/useRiderRemoval.ts`, `views/ride/InviteRiderDialog.tsx` | The users button under the X and its dialog listing the riders of the ride: locate for the connected ones, invite and remove for the leader; see [Group ride](#group-ride) |
 | Live group | `context/LiveGroupProvider.tsx`, `hooks/useLiveGroup.ts` | The group of the ride, kept up to date while it goes on (riders invited, removed, joined); read by `useGroupRide` and `RidersControl` |
-| Rider markers | `hooks/useRiderMarkers.ts`, `services/riderBubbleMarker.ts`, `services/riderMarkers.ts` | One bubble marker per other rider, glided as they move and removed when they go quiet |
+| Rider markers | `hooks/useRiderMarkers.ts`, `services/riderBubbleMarker.ts`, `services/riderMarkers.ts`, `services/riderForecast.ts`, `services/pathAhead.ts`, `services/streetLines.ts`, `services/pathWalk.ts` | One bubble marker per other rider, moved on between reports along the street at their last speed (`riderForecast`, `pathAhead`, `streetLines`) and removed when they go quiet |
 | Edge indicators | `hooks/useEdgeIndicators.ts`, `services/edgeIndicators.ts`, `views/ride/EdgeIndicators.tsx` | Non-interactive bubbles on the map edge pointing to you and to each rider who is out of view |
 | Rider | `hooks/useRiderFollow.ts`, `services/riderMotion.ts` | The "You" marker and the camera that follows it, gliding between fixes, with `recenter` and `focusOn` (look at another rider) |
 | Heading | `hooks/useRiderHeading.ts` | The direction the rider is moving in, from their last positions |
@@ -316,8 +316,14 @@ by arrival along the track (`useRideArrival`).
   of the route and the finish**, one row each, in route order, so a route with no points in between still lists
   its start and finish. A stop not reached yet is gray (`avatar`, `list-item-pending`): "Not reached yet" and a
   dash. Once reached it is colored (`avatar-primary`, the green of the map markers) and shows **the hour** it was
-  reached at (`At 09:12`, the reader's locale) and, on the right, **the time it took** from the moment ride
-  mode opened as a stopwatch (`8:41`). The start shows the flag, the finish shows the checkered
+  reached at (`At 09:12`, the reader's locale), followed by **the average speed since the stop before it**
+  (`At 09:12 · 24.5 km/h`) and, on the right, **the time it took** from the moment ride mode opened as a
+  stopwatch (`8:41`). The speed of a leg is its length along the route over the time between the two stops:
+  `measureLegs` (`services/routeProgress.ts`) measures each leg, from the start to the first checkpoint and on
+  to the finish, and `useRouteLegs` hands the lengths to `CheckpointTimes` as `legKilometres`. The start has
+  no leg, and a stop shows no speed when the route has no stored waypoints (old routes), or when it and the stop
+  before it were marked at the same moment (passing several checkpoints at once marks them together, so there
+  is no time between them) The start shows the flag, the finish shows the checkered
   flag and is reached on arrival; the checkpoints show their number (the first is 2, like the markers) and their
   count is the route's waypoints between the first and the last (`countCheckpoints`). It is in the expanded ride
   stats, in the "You've arrived!" sheet and in the history's ride summary ([ride-history.md](ride-history.md)).
@@ -376,7 +382,7 @@ Ride mode and the free ride share the group's live channel
 
 - **Sharing.** Once the socket has signed in and the server said `ready`
   (`services/groupConnection.ts`), `useSharePosition` sends the rider's position at once and
-  then **every 4 seconds** (`POSITION_INTERVAL_MS`): the street position shown on the map
+  then **every 2 seconds** (`POSITION_INTERVAL_MS`): the street position shown on the map
   (or the raw fix when it cannot be snapped), the speed in km/h and the accuracy. Nothing is
   sent while the position is unknown. The phone's clock is not used: the server stamps each
   position when it receives it.
@@ -404,12 +410,38 @@ Ride mode and the free ride share the group's live channel
   it differs from the ink "You" dot. The marker is named for screen readers
   (`role="img"`, `aria-label` the username) and does not take taps. Names and pictures come
   from the group (`GET /api/routes/groups/<id>/`), positions from the channel; one marker per
-  rider is created, glided to every new position and removed when the rider goes quiet. Riders
-  report every 4 s, so each new position starts a 4 s animation (`useRiderMarkers`, with
-  `interpolatePosition` and `runAnimation` of `services/riderMotion.ts`) from where the marker is
-  drawn now, so a report that lands mid-glide continues from the point reached with no jump. The
-  marker lags the rider by up to one report, which is what keeps it moving without pauses. A
-  repeated, unchanged position does not restart the glide.
+  rider is created, moved as the rider moves and removed when the rider goes quiet. See
+  [Predicted movement](#predicted-movement).
+- **Predicted movement.** <a id="predicted-movement"></a>A rider reports every 2 s, and a report is already a moment old
+  when it arrives, so a marker that only went to the last report would always show the rider behind where they are.
+  `useRiderMarkers` therefore keeps every marker **moving between reports**, at the speed of the last one, along the
+  street the rider is on (the position reported is already snapped to a street):
+  - **Forecast.** Each report starts a `Forecast` (`services/riderForecast.ts`): a short street path from the reported
+    position and a speed in m/s. The speed is the `speed` the report carries (km/h, forwarded by the server and read
+    by `parseGroupMessage`), or else the distance between the last two reports over the time between them; under
+    1.5 km/h the rider is standing and the marker does not move. The direction is the bearing between the last two
+    reports (`estimateHeading`), kept while the rider has not moved 5 m. Position at `now` is the path at
+    `speed * (now - report time)`, held at the end of the path.
+  - **The street.** The path is made by `findPathAhead` (`services/pathAhead.ts`), long enough for 10 s at that speed:
+    the **route** of the ride when the rider is within 25 m of it, with the route's own turns, walked in the
+    direction of the heading; else the **streets drawn on the map** around them (`services/streetLines.ts`: the road
+    lines of the style's `road` source layer that `queryRenderedFeatures` finds in the tiles already loaded, so there
+    is no request), following the street they are on and, at each junction, the street that bends least (no U-turns,
+    at most 110 degrees); else a straight line along the heading, which is what a rider off screen gets, as the map
+    has no streets loaded there and nobody sees them. The free ride has no route and uses the streets.
+  - **No jumps, no lurches.** A new report moves the forecast to where the rider really was. The marker is drawn at
+    `forecast(now) + correction`, and the correction starts as the gap between where the marker was drawn and where the
+    new forecast puts it, with the rate the gap was changing at, and fades out critically damped (time constant
+    700 ms). Both the position and the speed of the marker are therefore continuous when a report lands, whether
+    the rider sped up, slowed down or the report came late.
+  - **Signal lost.** If reports stop, the marker goes on at the last speed for `MAX_FORECAST_MS` (10 s) and then
+    waits where it got to, until the rider reports again or is taken off the map (**Stale riders**). A rider who
+    is standing, or has no speed to tell by, is not moved.
+  - **Measured** in a browser against a street route of 2.4 km, one rider driving it at 29 km/h with fake GPS and
+    another watching: reports every 2.0 s, the marker never more than 0.5 m off the street (route and free ride),
+    3 to 4 m behind the rider in steady driving against 12 m for the last report alone, and a speed that stays
+    within 8 to 12 m/s for a rider at 8 m/s. Right after a standstill the marker is still for a report or two,
+    since nothing says the rider is about to move.
 - **Change route.** The leader also has the **route** button (`ChangeRouteControl`) under the users
   button; see [Changing the route](#changing-the-route).
 - **Riders.** The **users** button (`RidersControl`, "Riders") sits under the X (or the flag in a
@@ -489,12 +521,12 @@ Ride mode and the free ride share the group's live channel
   holds each "left" for **20 seconds** (`PRESENCE_GRACE_MS`): a rider who signs in again meanwhile (a
   locked screen, another app, a network blip) shows neither toast, and their marker stays on the map
   throughout (see **Stale riders**). The group is still read again at once, only the toast waits.
-- **Stale riders.** A rider with no report for **30 seconds** (`STALE_AFTER_MS`, six missed
+- **Stale riders.** A rider with no report for **30 seconds** (`STALE_AFTER_MS`, fifteen missed
   reports) is taken off the map: the channel has no leave message, so a closed app would
   otherwise freeze on the others' maps. The saved positions in `ready` are aged by the
   server's clock (`server_time`) against each `recorded_at`, so a rider who left an hour ago
   is not drawn for 30 seconds on arrival, and a phone with a wrong clock does not misjudge.
-  The check runs every 4 seconds (`useNow`).
+  The check runs every 2 seconds (`useNow`).
 - **Failures are quiet.** If the channel cannot be joined the ride works as a solo ride: no
   other riders are drawn and nothing blocks. There is no connection indicator yet.
 - **Finishing.** An accepted rider saves their own summary of the group's route

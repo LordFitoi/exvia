@@ -7,6 +7,8 @@ export interface RiderPosition {
   readonly userId: number
   readonly coordinates: Coordinates
   readonly recordedAt: number
+  /** How fast the rider was going, in km/h; null when their device gave none. */
+  readonly speed: number | null
 }
 
 /** A rider's latest position and when this phone learned it (milliseconds since the epoch, this phone's clock). */
@@ -37,7 +39,8 @@ const parseRiderPosition = (userId: number, value: unknown): RiderPosition | nul
   if (!isRecord(value) || typeof value.recorded_at !== 'string') return null
   const coordinates = parseLngLat([value.lng, value.lat])
   const recordedAt = Date.parse(value.recorded_at)
-  return coordinates && !Number.isNaN(recordedAt) ? { userId, coordinates, recordedAt } : null
+  const speed = typeof value.speed === 'number' ? value.speed : null
+  return coordinates && !Number.isNaN(recordedAt) ? { userId, coordinates, recordedAt, speed } : null
 }
 
 const parseReady = (message: Record<string, unknown>): GroupMessage | null => {

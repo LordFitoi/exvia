@@ -103,7 +103,7 @@ apart from `RouteSummarySerializer`, the route list shape.
 <a id="ride-participants"></a>**Participants.** With `group`, the ride also lists the riders of that group who are
 **connected at the moment it is saved** (`group_service.connected_riders`): the ones who accepted and whose
 latest position is at most 30 seconds old (`CONNECTED_WINDOW`, the same rule that takes a rider off the ride
-map), since a connected rider reports every 4 seconds. The caller counts whatever their own position says.
+map), since a connected rider reports every 2 seconds. The caller counts whatever their own position says.
 Invited riders, riders who left and riders who dropped more than 30 seconds ago are not participants. A
 `group` the caller has not accepted is `400` (`group`: "You are not riding in this group."); a group that is no
 longer on this route (the leader changed it) adds nobody, so the ride is still saved. Each rider saves their

@@ -158,7 +158,7 @@ answer the updated group, with the body of a read.
   participant of the group, or the leader themselves (use [leave](#leaving) to go).
 - **The removed rider's channel** is not cut at once: their next position finds no place in the
   group, `save_position` says so and the consumer closes the socket with `4403`, which the others hear
-  as "left". That takes at most one reporting interval (4 s).
+  as "left". That takes at most one reporting interval (2 s).
 
 ## Changing the leader
 
@@ -265,7 +265,7 @@ on every position instead.
 | server -> others | `{"type": "leader_changed", "user_id": 7}` with the new leader when the leader hands the group over ([Changing the leader](#changing-the-leader)); not sent to the former leader |
 | server -> rider | `{"type": "error", "detail": "..."}` for a bad position, an unknown type or a non-object; the socket stays open |
 
-Riders send their position every 4 s (the client's job, see [ride.md](ride.md)). Each
+Riders send their position every 2 s (the client's job, see [ride.md](ride.md)). Each
 position is checked and stamped by `clean_position`, **saved** as the rider's latest in
 `meta_json` and then broadcast. Saving locks the group row (`select_for_update`), so riders
 reporting at the same moment cannot overwrite each other; a test runs two threads against it
