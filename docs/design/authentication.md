@@ -24,6 +24,7 @@ Mounted at `/api/auth/` (see [config/urls.py](../../config/urls.py)):
 | `signup/` | `apps.users.views.SignupView` | Public self-serve registration; creates an inactive user from `username`, `email`, `password`, pending admin approval |
 | `me/` | `apps.users.views.CurrentUserView` | Example protected endpoint; returns the authenticated caller's `id`, `username`, `email` and `is_staff` |
 | `users/lookup/?username=` | `apps.users.views.UserLookupView` | `{id, username, avatar}` of the active user with exactly that username, `404` otherwise |
+| `users/search/?q=` | `apps.users.views.UserSearchView` | `[{id, username, avatar}]`: up to 5 (`SUGGESTION_LIMIT`) active users, other than the caller, whose username starts with `q` (case-insensitive, ordered by username); a blank `q` gives `[]`. Feeds the username autocomplete of the invite dialogs |
 
 ## Configuration
 

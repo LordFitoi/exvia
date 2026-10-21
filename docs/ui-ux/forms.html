@@ -81,8 +81,8 @@
     </section>
 
     <section class="guide-section" id="selects" aria-labelledby="selects-title">
-      <h2 id="selects-title">Select and dropdown</h2>
-      <p>Prefer the native <code>select</code> on mobile: it opens the OS picker. Use the custom dropdown for short lists (7 options or fewer) that need rich rows. Group longer lists, and preselect the common choice.</p>
+      <h2 id="selects-title">Select, dropdown and suggestions</h2>
+      <p>Prefer the native <code>select</code> on mobile: it opens the OS picker. Use the custom dropdown for short lists (7 options or fewer) that need rich rows. Group longer lists, and preselect the common choice. When the answer is a name the person types (a rider's username), complete it with suggestions under the field instead of a list to scroll.</p>
       <div class="specimen-grid">
         <div class="specimen">
           <span class="specimen-title">Native select</span>
@@ -108,6 +108,21 @@
               <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">Track day</button></li>
             </ul>
           </details>
+          <div class="dropdown-spacer"></div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Suggestions (open)</span>
+          <div class="field">
+            <label class="field-label" for="in-rider">Username</label>
+            <div class="suggestions">
+              <input class="input" id="in-rider" type="text" role="combobox" aria-expanded="true" aria-controls="in-rider-list" aria-autocomplete="list" aria-activedescendant="in-rider-marco" autocomplete="off" value="mar">
+              <ul class="suggestion-list" id="in-rider-list" role="listbox" aria-label="Username suggestions">
+                <li class="suggestion-option" id="in-rider-marco" role="option" aria-selected="true"><span class="avatar avatar-sm" aria-hidden="true">MC</span>marco</li>
+                <li class="suggestion-option" role="option" aria-selected="false"><span class="avatar avatar-sm" aria-hidden="true">MA</span>maria</li>
+              </ul>
+            </div>
+            <span class="field-hint">They join the clan when they accept.</span>
+          </div>
           <div class="dropdown-spacer"></div>
         </div>
       </div>

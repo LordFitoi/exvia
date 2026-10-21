@@ -18,7 +18,7 @@ or `open` (macOS).
 | `index.html` | Overview: principles, UX laws by component, layout and PWA rules |
 | `foundations.html` | Color palettes and roles, type scale, spacing, radius, elevation, icons |
 | `components.html` | Controls: buttons, checkbox, radio, switch, slider, segmented control, chips |
-| `forms.html` | Fields, select and dropdown, form sections, disclosure, step indicator |
+| `forms.html` | Fields, select, dropdown and suggestions, form sections, disclosure, step indicator |
 | `content.html` | Feedback and states, lists, avatars, cards, app bar, tabs, tab bar, floating sheet, modal sheet form, dialog |
 | `patterns.html` | Full mobile screens in phone frames: sign in, home feed, map, route creator, ride mode, ride summary, profile |
 | `group.html` | Group rides: ride setup (route and invitations), free mode, the choose-a-route sheet, the group map with rider bubbles, Home notifications, the Riding now row and the join-back dialog |
@@ -185,6 +185,20 @@ Exvia changes the following on purpose:
   (Ride) as a round, filled primary button 1.5rem above the bar, with its label
   level with the others. Only one per bar: Von Restorff only works if it is
   the single filled shape. It stays a link in the same `<nav>`.
+- **Suggestions.** A field whose answer is a name the person types, such as the
+  username of a rider to invite, completes it: `suggestions` wraps the input and
+  a `suggestion-list` of `suggestion-option`s (avatar and name, 44px tall) that
+  opens under it once something is typed and only while there are matches. It is
+  the WAI-ARIA combobox with a list: the input is `role="combobox"` with
+  `aria-expanded`, `aria-controls` and `aria-activedescendant`, the list a
+  `listbox` and the active option `aria-selected`. The focus never leaves the
+  input: the arrow keys move the active option, Enter picks it (and only then
+  does not send the form), Escape closes the list and not the dialog around it,
+  and pressing an option does not blur the input. Typing a whole name without
+  picking stays valid. In a dialog the list is `popover="manual"` (top layer,
+  `suggestion-list[popover]`): the app sets `top`, `left` and `width` from the
+  input's rectangle, below it or flipped above when there is no room, and closes
+  it on scroll and resize, like the action menu's panel.
 - **Action menu.** `menu` and `menu-panel` give an icon button a small popover
   of actions (`menuitem`s), aligned to the button's right edge so it opens
   inward. It follows the WAI-ARIA menu button pattern: `aria-haspopup`,

@@ -199,3 +199,56 @@
   .dropdown-option:hover,
   .dropdown-option[aria-selected="true"]:hover { background: var(--color-surface-sunken); }
 }
+
+/* Suggestions: a text field that completes what is typed offers the matches in a list under it
+   (WAI-ARIA combobox: the input is role="combobox" with aria-controls and aria-activedescendant,
+   the list a listbox of options). The focus stays in the input, so the arrow keys move the active
+   option (aria-selected) and Enter picks it. The list is opaque, like the action menu */
+.suggestions { position: relative; }
+
+.suggestion-list {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(100% + var(--space-2));
+  z-index: var(--z-sheet);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-dropdown);
+  animation: fade-in var(--duration-fast) var(--ease-out);
+}
+
+/* In a box that scrolls or clips (a dialog) the list goes to the top layer, like the action menu's
+   panel: fixed, with `top`, `left` and `width` set by the app from the input's rectangle */
+.suggestion-list[popover] {
+  position: fixed;
+  inset: auto;
+  border: 0;
+  overflow: visible;
+  color: var(--color-text);
+}
+
+.suggestion-list[popover]:not(:popover-open) { display: none; }
+
+.suggestion-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--tap-target);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-body2);
+  cursor: pointer;
+}
+
+.suggestion-option[aria-selected="true"] { background: var(--color-surface-selected); }
+.suggestion-option:active { background: var(--color-surface-sunken); }
+
+@media (hover: hover) {
+  .suggestion-option:hover { background: var(--color-surface-sunken); }
+}

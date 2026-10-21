@@ -103,7 +103,9 @@ style guide's [Group rides](../ui-ux/group.html) page.
   previous one).
 - **Invitations section.** Empty: "Riding solo. Add riders by username to ride together."
   **Add** opens `InviteRiderDialog` (the guide's centered panel dialog with a form, label above the field):
-  the username is checked against `GET /api/auth/users/lookup/`, so an unknown name is
+  the field completes the name as it is typed (`UsernameField`: after a 200 ms pause it asks `GET /api/auth/users/search/?q=`
+  and lists up to five matching riders, without the ones already added, under the field; arrow keys and Enter or a tap pick one).
+  Whatever is in the field is then checked against `GET /api/auth/users/lookup/`, so an unknown name is
   refused **in the dialog** ("No rider with this username."), not when Ride is pressed; so
   is your own name ("You lead this ride already.") and a name already added. Each invited
   rider is a row with their picture or initials, their name and a trash button (`Remove <name>`), not an X, so it is not mistaken for closing the screen.

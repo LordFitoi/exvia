@@ -1,6 +1,8 @@
 import { useId } from 'react'
 import type { HTMLInputAutoCompleteAttribute, HTMLInputTypeAttribute } from 'react'
 
+import FieldMessage from '@/components/form/FieldMessage'
+
 interface TextFieldProps {
   name: string
   label: string
@@ -46,17 +48,7 @@ export default function TextField({
         aria-invalid={hasError}
         aria-describedby={error || hint ? messageId : undefined}
       />
-      {error ? (
-        <p className="field-error" id={messageId} role="alert">
-          {error}
-        </p>
-      ) : (
-        hint && (
-          <p className="field-hint" id={messageId}>
-            {hint}
-          </p>
-        )
-      )}
+      <FieldMessage id={messageId} error={error} hint={hint} />
     </div>
   )
 }

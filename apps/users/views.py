@@ -8,6 +8,8 @@ from rest_framework.views import APIView
 
 from apps.users.serializers import SignupSerializer, UserBriefSerializer
 
+SUGGESTION_LIMIT = 5
+
 
 class SignupView(CreateAPIView):
     """Registers an inactive user account from a unique username, unique email and password;
@@ -37,3 +39,21 @@ class UserLookupView(APIView):
         username = request.query_params.get('username', '').strip()
         user = get_object_or_404(User.objects.select_related('profile'), username=username, is_active=True)
         return Response(UserBriefSerializer(user).data)
+
+
+class UserSearchView(APIView):
+    """Completes a username: up to `SUGGESTION_LIMIT` active users other than the caller whose
+    username starts with `q` (query string, case-insensitive), ordered by username.
+    A blank `q` suggests nobody."""
+
+    def get(self, request: Request) -> Response:
+        prefix = request.query_params.get('q', '').strip()
+        if not prefix:
+            return Response([])
+        users = (
+            User.objects.select_related('profile')
+            .filter(username__istartswith=prefix, is_active=True)
+            .exclude(pk=request.user.pk)
+            .order_by('username')[:SUGGESTION_LIMIT]
+        )
+        return Response(UserBriefSerializer(users, many=True).data)

@@ -1,7 +1,7 @@
 'use client'
 
 import FormSheet from '@/components/form/FormSheet'
-import TextField from '@/components/form/TextField'
+import UsernameField from '@/components/form/UsernameField'
 import { useFormSubmission } from '@/hooks/useFormSubmission'
 import { inviteToClan } from '@/services/clansApi'
 
@@ -34,10 +34,9 @@ export default function InviteMemberDialog({ clanId, onClose, onInvited }: Invit
       onSubmit={handleSubmit}
       onClose={onClose}
     >
-      <TextField
+      <UsernameField
         name="username"
         label="Username"
-        autoComplete="off"
         hint="They join the clan when they accept."
         error={fieldErrors.username}
       />

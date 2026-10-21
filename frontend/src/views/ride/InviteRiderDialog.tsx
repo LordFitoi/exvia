@@ -1,7 +1,7 @@
 'use client'
 
 import FormSheet from '@/components/form/FormSheet'
-import TextField from '@/components/form/TextField'
+import UsernameField from '@/components/form/UsernameField'
 import { useFormSubmission } from '@/hooks/useFormSubmission'
 import { ApiError } from '@/services/apiClient'
 import { lookupRider } from '@/services/routeGroupApi'
@@ -53,6 +53,8 @@ export default function InviteRiderDialog({
     await onAdded(await findRider(name))
   }, FIELD_NAMES)
 
+  const invitedUsernames = invitees.map((rider) => rider.username)
+
   return (
     <FormSheet
       title="Invite a rider"
@@ -63,12 +65,12 @@ export default function InviteRiderDialog({
       onSubmit={handleSubmit}
       onClose={onClose}
     >
-      <TextField
+      <UsernameField
         name="username"
         label="Username"
-        autoComplete="off"
         hint={hint}
         error={fieldErrors.username}
+        excludedUsernames={invitedUsernames}
       />
     </FormSheet>
   )
