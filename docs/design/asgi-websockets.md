@@ -34,6 +34,13 @@ Locally `make redis_setup` installs Redis, `make run_redis` starts it, `make sto
 `REDIS_URL=redis://localhost:6379`. Like the `PG*` variables it has no
 default in settings, so it must be exported.
 
+The host is a dict with `socket_timeout` set to `REDIS_SOCKET_TIMEOUT_SECONDS` (15 s). A connection waits for its
+next message with a blocking Redis read of 5 s (`brpop_timeout` of channels_redis) and redis-py 8 times out any
+read after 5 s by default, so the two ended together and an idle connection (nothing in the channel layer for a
+few seconds, which is normal now that positions do not go through it) died with
+`redis.exceptions.TimeoutError: Timeout reading from localhost:6379`. The read timeout has to be longer than the
+blocking wait; `apps/core/test_channel_layer.py` checks it.
+
 ## Through the frontend
 
 The browser only talks to the frontend's domain ([frontend.md](frontend.md)), so the websocket goes

@@ -102,10 +102,15 @@ DATABASES = {
 # Channels
 # https://channels.readthedocs.io/en/stable/topics/channel_layers.html
 
+# A connection waits for its next message with a blocking Redis read of 5 seconds (channels_redis'
+# `brpop_timeout`), and redis-py times out any read after 5 seconds by default: the two end together and an
+# idle connection fails with a `TimeoutError`. The read timeout must be longer than that wait.
+REDIS_SOCKET_TIMEOUT_SECONDS = 15
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {'hosts': [os.environ["REDIS_URL"]]},
+        'CONFIG': {'hosts': [{'address': os.environ["REDIS_URL"], 'socket_timeout': REDIS_SOCKET_TIMEOUT_SECONDS}]},
     }
 }
 
