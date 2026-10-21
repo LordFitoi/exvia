@@ -402,6 +402,8 @@
   gap: var(--space-3);
 }
 
+.route-stats-pair { grid-template-columns: repeat(2, 1fr); }
+
 .route-stat {
   display: flex;
   flex-direction: column;

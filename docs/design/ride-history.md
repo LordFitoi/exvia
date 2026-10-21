@@ -19,7 +19,7 @@ it needs no location, so it opens even while the map is still waiting for a fix.
 | List screen | `views/history/RideSummariesView.tsx` | "Ride history" header with an X, the list; holds which ride is open and swaps to its summary |
 | List | `views/history/RideSummaryList.tsx` | Skeleton, error, empty and ready states; one row per ride |
 | Summary screen | `views/history/RideSummaryView.tsx` | "Ride summary" header with an X (back to the list): route name and day, route preview, stats, checkpoint times, participants |
-| Stats | `views/history/RideStatsGrid.tsx` | The two `route-stats` grids |
+| Stats | `views/history/RideStatsGrid.tsx` | The two `route-stats route-stats-pair` grids (2 columns): time and distance, then average and max speed |
 | Checkpoint times | `components/route/CheckpointTimes.tsx` | The checkpoints the rider reached: the hour and the time from the start |
 | Delete | `hooks/useRideSummaryDeletion.ts`, `hooks/useConfirmedDeletion.ts`, `components/feedback/ConfirmDialog.tsx` | Asks first, then `DELETE`s the ride |
 | List data | `hooks/useMyRideSummaries.ts` | `GET /api/routes/summaries/`, with `reload` |

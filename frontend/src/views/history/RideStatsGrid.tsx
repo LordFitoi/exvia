@@ -27,21 +27,22 @@ interface RideStatsGridProps {
 }
 
 /**
- * The time, distance and top speed of a ride. The top speed comes from the phone's GPS. The
- * route's distance only describes a finished ride, so a ride quit early shows a dash for it.
+ * The time and distance of a ride, then its average and top speed. The top speed comes from the
+ * phone's GPS. The route's distance only describes a finished ride, so a ride quit early shows a
+ * dash for the distance and the average speed.
  */
 export default function RideStatsGrid({ summary }: RideStatsGridProps) {
   const { duration, distance, estimated_time, is_finished, max_speed } = summary
 
   return (
     <section className="stack" aria-label="Ride statistics">
-      <div className="route-stats">
+      <div className="route-stats route-stats-pair">
         <RideStat value={formatClock(duration)} label="Time" />
         <RideStat value={is_finished ? formatDistance(distance) : NO_VALUE} label="Distance" />
-        <RideStat value={is_finished ? formatAverageSpeed(distance, duration) : NO_VALUE} label="Avg km/h" />
       </div>
       <p className="text-small text-muted">Estimated time was {formatDuration(estimated_time)}.</p>
-      <div className="route-stats">
+      <div className="route-stats route-stats-pair">
+        <RideStat value={is_finished ? formatAverageSpeed(distance, duration) : NO_VALUE} label="Avg km/h" />
         <RideStat value={formatSpeed(max_speed)} label="Max km/h" />
       </div>
     </section>
