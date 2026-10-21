@@ -20,6 +20,9 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  /* The app is a full-screen tool with its own map gestures: panning stays, pinch and double-tap
+     page zoom do not (iOS ignores this, so the app also stops its gesture events) */
+  touch-action: pan-x pan-y;
 }
 
 body {

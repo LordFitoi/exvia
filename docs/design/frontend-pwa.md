@@ -9,7 +9,7 @@ navigation are described in [frontend-screens.md](frontend-screens.md).
 | File | Job |
 |------|-----|
 | [manifest.ts](../../frontend/src/app/manifest.ts) | Web app manifest, served at `/manifest.webmanifest` |
-| [layout.tsx](../../frontend/src/app/layout.tsx) | Icons, Apple web app tags, `theme-color` per color scheme, `viewport-fit=cover` |
+| [layout.tsx](../../frontend/src/app/layout.tsx) | Icons, Apple web app tags, `theme-color` per color scheme, `viewport-fit=cover`, no page zoom (`maximum-scale=1`, `user-scalable=no`; `touch-action: pan-x pan-y` on `html`; `PinchZoomLock` for the iOS pinch gesture, which the viewport cannot forbid). The map keeps its own pinch zoom |
 | [public/sw.js](../../frontend/public/sw.js) | Service worker: offline fallback and asset caching |
 | [ServiceWorkerRegistration.tsx](../../frontend/src/components/layout/ServiceWorkerRegistration.tsx) | Registers the worker, production builds only |
 | [offline/page.tsx](../../frontend/src/app/offline/page.tsx) | Page shown when a screen is not available offline |

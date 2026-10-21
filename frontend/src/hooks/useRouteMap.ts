@@ -36,6 +36,8 @@ interface RouteMapHandle {
   containerRef: RefObject<HTMLDivElement | null>
   hasLoadFailed: boolean
   recenter: () => void
+  /** Flies to a spot, in the part of the map that the sheet leaves free. */
+  focusOn: (coordinates: Coordinates) => void
 }
 
 export const useRouteMap = ({
@@ -103,5 +105,9 @@ export const useRouteMap = ({
     mounted?.map.flyTo({ center: toLngLat(centerRef.current), zoom: ROUTE_ZOOM })
   }
 
-  return { containerRef, hasLoadFailed, recenter }
+  const focusOn = (coordinates: Coordinates) => {
+    mounted?.map.flyTo({ center: toLngLat(coordinates), zoom: ROUTE_ZOOM, padding: FIT_PADDING })
+  }
+
+  return { containerRef, hasLoadFailed, recenter, focusOn }
 }

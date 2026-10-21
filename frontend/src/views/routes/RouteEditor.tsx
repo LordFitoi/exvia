@@ -11,10 +11,12 @@ import { useRouteMap } from '@/hooks/useRouteMap'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import { flattenRoutePath } from '@/services/routePath'
 import MapStatusView from '@/views/map/MapStatusView'
+import PlaceSearch from '@/views/routes/PlaceSearch'
 import RoutePointList from '@/views/routes/RoutePointList'
 import RouteSheet from '@/views/routes/RouteSheet'
 import SaveRouteDialog from '@/views/routes/SaveRouteDialog'
 import type { Coordinates } from '@/types/geolocation'
+import type { Place } from '@/types/place'
 import type { DraftPoint, NewRoute, SavedRoute } from '@/types/route'
 
 const MIN_ROUTE_POINTS = 2
@@ -62,7 +64,7 @@ export default function RouteEditor({
 }: RouteEditorProps) {
   const [isSaveOpen, setIsSaveOpen] = useState(false)
   const draft = useRouteDraft({ accessToken: MAPBOX_ACCESS_TOKEN, initialPoints })
-  const { containerRef, hasLoadFailed, recenter } = useRouteMap({
+  const { containerRef, hasLoadFailed, recenter, focusOn } = useRouteMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     center,
     userPosition,
@@ -72,6 +74,11 @@ export default function RouteEditor({
     onPointRemove: draft.removePoint,
   })
   const { title, cancelLabel, recenterLabel } = COPY[mode]
+
+  const handlePlaceSelect = ({ coordinates, name }: Place) => {
+    focusOn(coordinates)
+    draft.addPoint(coordinates, name)
+  }
 
   // The load-failure screen has no way out of its own, so it keeps the tab bar.
   useHideTabBar(!hasLoadFailed)
@@ -93,6 +100,7 @@ export default function RouteEditor({
       <h1 className="visually-hidden">{title}</h1>
       <div ref={containerRef} className="map-canvas"></div>
       <div className="map-overlay">
+        <PlaceSearch proximity={userPosition ?? center} onSelect={handlePlaceSelect} />
         <div className="map-controls">
           <button className="icon-button" type="button" aria-label={cancelLabel} onClick={onClose}>
             <span className="icon icon-x" aria-hidden="true"></span>

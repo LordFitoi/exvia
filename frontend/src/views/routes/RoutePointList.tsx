@@ -32,7 +32,7 @@ export default function RoutePointList({ points, onRemove, onMove }: RoutePointL
     <>
       <div className="route-point-list" ref={listRef}>
         <ul className="list">
-          {points.map(({ id, coordinates }, index) => (
+          {points.map(({ id, coordinates, label }, index) => (
             <li
               className="list-item route-point"
               key={id}
@@ -43,7 +43,7 @@ export default function RoutePointList({ points, onRemove, onMove }: RoutePointL
                 {index + 1}
               </span>
               <span className="list-item-body">
-                <span className="list-item-title">Point {index + 1}</span>
+                <span className="list-item-title">{label ?? `Point ${index + 1}`}</span>
                 <span className="list-item-meta">{formatCoordinates(coordinates)}</span>
               </span>
               <button

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 
 import AuthProvider from "@/context/AuthProvider";
 import { SITE_URL } from "@/services/siteConfig";
+import PinchZoomLock from "@/components/layout/PinchZoomLock";
 import ServiceWorkerRegistration from "@/components/layout/ServiceWorkerRegistration";
 import "@/styles/exvia-ui/exvia-ui.css";
 import "./globals.css";
@@ -24,6 +25,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   viewportFit: "cover",
+  maximumScale: 1,
+  userScalable: false,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#141a21" },
@@ -36,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <AuthProvider>{children}</AuthProvider>
         <ServiceWorkerRegistration />
+        <PinchZoomLock />
       </body>
     </html>
   );

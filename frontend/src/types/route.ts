@@ -38,11 +38,13 @@ export interface RouteDetail extends RouteSummary {
  * A point added to a route being drawn; the id keeps list and marker identity stable.
  * `path` is the street path that leads to the point from the previous one, without the previous
  * point itself, ending at `coordinates`. For the first point it is just `[coordinates]`.
+ * `label` is the place or address the rider picked in the search, when there was one.
  */
 export interface DraftPoint {
   readonly id: number
   readonly coordinates: Coordinates
   readonly path: readonly Coordinates[]
+  readonly label?: string
 }
 
 /** What a ride needs of its route: the path, the checkpoints and the facts of the summary. A group member

@@ -28,7 +28,7 @@ interface RouteDraft {
   points: readonly DraftPoint[]
   isBusy: boolean
   error: string | null
-  addPoint: (coordinates: Coordinates) => Promise<void>
+  addPoint: (coordinates: Coordinates, label?: string) => Promise<void>
   removePoint: (id: number) => Promise<void>
   movePoint: (id: number, toIndex: number) => Promise<void>
 }
@@ -101,14 +101,14 @@ export const useRouteDraft = ({ accessToken, initialPoints }: RouteDraftOptions)
     }
   }
 
-  const addPoint = (tapped: Coordinates) =>
+  const addPoint = (tapped: Coordinates, label?: string) =>
     runExclusive(async (options) => {
       const street = await snapToStreet(tapped, options)
       if (!street) return setError(NO_STREET_MESSAGE)
       const path = await buildLeg(points.at(-1), street, options)
       if (!path) return setError(NO_ROUTE_MESSAGE)
       const id = nextIdRef.current++
-      setPoints((previous) => [...previous, { id, coordinates: street, path }])
+      setPoints((previous) => [...previous, { id, coordinates: street, path, label }])
     })
 
   // Removing a point joins its neighbours with a new leg; if that fails the point stays.

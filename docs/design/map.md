@@ -78,7 +78,8 @@ full height and the cancel button is the way out.
 | Piece | File | Job |
 |-------|------|-----|
 | Screen | `views/routes/RouteCreatorView.tsx`, `views/routes/RouteEditor.tsx` | The creator is a thin wrapper; `RouteEditor` is the shared screen (also used to [edit a route](route-management.md#edit)): full-bleed map, cancel and locate controls, bottom sheet with the point list and the save button |
-| List | `views/routes/RoutePointList.tsx` | Numbered points with coordinates and a remove button each; a hint while empty |
+| List | `views/routes/RoutePointList.tsx` | Numbered points, each titled with its place or address (or "Point N" when tapped) and its coordinates, and a remove button; a hint while empty |
+| Search | `views/routes/PlaceSearch.tsx`, `hooks/usePlaceCompletion.ts`, `hooks/usePlaceSuggestions.ts`, `services/placeSearchApi.ts`, `services/placeParsing.ts`, `services/placeCategories.ts` | The search field over the map: offers matching places and adds the picked one as a point |
 | Modal | `views/routes/SaveRouteDialog.tsx` | Name (required, 100) and description (optional, 255), then saves through the `saveRoute` it is given: `POST /api/routes/` here, `PUT` when editing |
 | Points | `hooks/useRouteDraft.ts` | The ordered points; snaps each tap to a street, routes each leg, and adds, removes and moves points |
 | Sheet | `views/routes/RouteSheet.tsx`, `hooks/useSheetGrab.ts` | The floating sheet and its collapse gesture |
@@ -98,6 +99,48 @@ Behavior:
   and no point is added. Taps while a lookup is running are ignored, so the
   order cannot be scrambled by slow responses; the sheet badge reads
   "Routing…" and Save is disabled meanwhile.
+- **Searching a place**: the guide's map search field (`map-search`) sits at the
+  top of the map, over the controls. After 3 characters and a 300 ms pause it
+  asks **two services at once** and merges the answers:
+  - **Mapbox Geocoding** (v6) for addresses, streets and areas. It handles house
+    numbers well ("calle alcala 50").
+  - **Photon** (`photon.komoot.io`, OpenStreetMap data) for businesses and
+    landmarks: gas stations, malls, restaurants. Mapbox's own search has almost
+    no businesses in some countries (in the Dominican Republic it knows one
+    Shell, none of Sigma, Next or Petronan), OpenStreetMap does. Roads, towns
+    and buildings are dropped from the Photon answer, since the address search
+    covers them. If one service fails the other still answers.
+  The OpenStreetMap credit is already in the map's attribution.
+  Photon is a free public instance: the typed text and the rider's approximate
+  position are sent to it. Swap `PHOTON_URL` in `services/placeSearchApi.ts` for
+  a self-hosted Photon (the same API) if its usage limits are ever a problem.
+- **Nearest first, and only nearby**: both requests carry the rider's position
+  (or the route's center when editing, where the rider's position is not known)
+  and a bounding box of **100 km** around it, so a namesake in another country
+  never shows. The services only lean towards that position, so 10 matches are
+  asked of each and the result is **sorted by distance**, the 6 nearest kept;
+  the same place mapped twice within 100 m is shown once. The list is the guide's
+  suggestion list (WAI-ARIA combobox, like the username field: arrow keys, Enter
+  picks the active row or the first one, Escape closes the list). Each row has
+  the name, and under it the address and the distance from the rider.
+  - **A category row** ("Gas stations", "Restaurants", "Cafés", "Shopping malls",
+    "Supermarkets", "Pharmacies", "Hotels") appears first when the text starts to
+    name one, in English or Spanish (`services/placeCategories.ts`). It does not
+    add anything: it fills the field with the category and lists its nearest
+    places (Photon `/reverse` with the OpenStreetMap tag, such as
+    `amenity:fuel`). Typing again goes back to the normal search.
+  - **A place row** is added as a point. The camera flies to the place (clear of
+    the sheet) and the point is added **as a tapped point would be**: snapped to
+    the nearest street within 50 m, with the street leg from the previous point.
+    It is titled with the place's name and address ("Next, Avenida Abraham
+    Lincoln, Polígono Central, Santo Domingo") instead of "Point N"; points added
+    by tapping keep "Point N". The field then clears, ready for the next place.
+  - The title is only a draft label: it is not saved with the route, so reopening
+    a route to edit shows "Point N" again. A failed search leaves the list as it
+    was, since it is only a help. A place with no street within 50 m shows the
+    same "No street here" alert as a tap.
+  - **Not supported**: crossings of two streets ("Alcalá & Serrano"); neither
+    service searches them. Tap the map there.
 - Each point after the first also fetches the **street path from the previous
   point** (Mapbox Directions, `driving`, `overview=full`, GeoJSON geometry) and
   keeps it as that point's `path` without the shared first vertex. If Mapbox
