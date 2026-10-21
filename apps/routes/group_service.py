@@ -11,7 +11,7 @@ from apps.routes.group_meta import ParticipantStatus
 from apps.routes.models import MAX_GROUP_PARTICIPANTS, Route, RouteGroup
 
 # A rider counts as connected when they reported a position within this long; the ride map uses the same
-# rule (`STALE_AFTER_MS` in the frontend), since a connected rider reports every 2 seconds.
+# rule (`STALE_AFTER_MS` in the frontend), since a connected rider reports every 4 seconds.
 CONNECTED_WINDOW = timedelta(seconds=30)
 
 # A group with no activity for this long has ended and is no longer offered back to its riders.

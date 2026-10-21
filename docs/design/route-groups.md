@@ -158,7 +158,7 @@ answer the updated group, with the body of a read.
   participant of the group, or the leader themselves (use [leave](#leaving) to go).
 - **The removed rider's channel** is not cut at once: their next position finds no place in the
   group, `save_position` says so and the consumer closes the socket with `4403`, which the others hear
-  as "left". That takes at most one reporting interval (2 s).
+  as "left". That takes at most one send interval (`POSITIONS_INTERVAL_SECONDS`, 4 s): the consumer finds no place for the rider when it reads the positions.
 
 ## Changing the leader
 
@@ -259,19 +259,32 @@ on every position instead.
 |-----------|---------|
 | server -> rider | `{"type": "ready", "user_id": 5, "positions": {"7": {...}}, "server_time": "..."}` right after a good `auth`: who you are, the latest saved position of every rider (so a late joiner sees the others at once) and the server's clock, so the client can tell how old each `recorded_at` is without trusting the phone's clock |
 | rider -> server | `{"type": "position", "lng": -3.7, "lat": 40.4, "heading": 90, "speed": 25.5, "accuracy": 8}`; `heading`, `speed` (km/h) and `accuracy` (m) are optional |
-| server -> others | `{"type": "position", "user_id": 5, "lng": ..., "lat": ..., "heading": ..., "speed": ..., "accuracy": ..., "recorded_at": "..."}`; not echoed back to the sender |
+| server -> rider | `{"type": "positions", "positions": {"7": {"lng": ..., "lat": ..., "heading": ..., "speed": ..., "accuracy": ..., "recorded_at": "..."}, "9": {...}}, "server_time": "..."}` every `POSITIONS_INTERVAL_SECONDS` (4 s): **one message with the positions of all the other riders that changed since the last one**; none when nothing changed, and never the rider's own. `server_time` is the server's clock, so the client ages every `recorded_at` against it |
 | server -> others | `{"type": "presence", "user_id": 5, "status": "joined" \| "left"}` when a rider signs in (after their `ready`) or their socket drops; not sent to that rider, and not for a socket that never got past sign-in |
 | server -> others | `{"type": "route_changed"}` when the leader changes the route ([Changing the route](#changing-the-route)); not sent to the leader |
 | server -> others | `{"type": "leader_changed", "user_id": 7}` with the new leader when the leader hands the group over ([Changing the leader](#changing-the-leader)); not sent to the former leader |
 | server -> rider | `{"type": "error", "detail": "..."}` for a bad position, an unknown type or a non-object; the socket stays open |
 
-Riders send their position every 2 s (the client's job, see [ride.md](ride.md)). Each
-position is checked and stamped by `clean_position`, **saved** as the rider's latest in
-`meta_json` and then broadcast. Saving locks the group row (`select_for_update`), so riders
-reporting at the same moment cannot overwrite each other; a test runs two threads against it
-and fails without the lock. A rider sending faster than once a second
+Riders send their position every 4 s (the client's job, see [ride.md](ride.md)). Each
+position is checked and stamped by `clean_position` and **saved** as the rider's latest in
+`meta_json`; it is not answered and not broadcast one by one. Saving locks the group row
+(`select_for_update`), so riders reporting at the same moment cannot overwrite each other; a test
+runs two threads against it and fails without the lock. A rider sending faster than once a second
 (`MIN_POSITION_INTERVAL_SECONDS`) has the extra positions dropped silently, so a broken or
 hostile client cannot hammer the database.
+
+**Bulk positions.** A group of N riders used to make every rider's report a websocket message to each
+of the other N-1 riders, so N-1 messages per interval to every client. Now each connection runs one
+task (`_send_positions_forever`) that, every `POSITIONS_INTERVAL_SECONDS`, reads the group's saved
+positions (`load_positions`, one query) and sends **one** `positions` message with those that changed since
+what it sent that connection before (`sent_recorded_at`, a map of user id to `recorded_at`, which starts
+from the `ready` snapshot so nothing is sent twice). The number of messages a client receives is at most one per
+interval whatever the size of the group, and the channel layer carries no position traffic at all (it is
+only used for presence, route and leader changes). Because positions are delivered in batches, up to an
+interval after they were recorded, each carries the server's `recorded_at` and the message the server's
+clock, and the client works out how old a position is from them (the forecast of the marker covers that age,
+see [ride.md](ride.md#predicted-movement)). The same read tells a rider who lost their place: the consumer
+closes the socket with `4403` and the task ends.
 
 **Not in the channel:** joining and leaving. Answering an invitation is REST; a rider who
 accepts simply connects, and one who disconnects just stops updating (their last position

@@ -44,7 +44,7 @@ one.
 | Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<uuid>/` for the selected route, with `retry` |
 | Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start, checkpoint and finish markers, framed in view |
 | Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines, the start, checkpoint and finish markers and the other riders |
-| Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts` (over the shared `services/socketConnection.ts`), `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 2 s and collects the others'; see [Group ride](#group-ride) |
+| Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts` (over the shared `services/socketConnection.ts`), `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 4 s and collects the others' (one bulk message per interval); see [Group ride](#group-ride) |
 | Riders | `views/ride/RidersControl.tsx`, `views/ride/RidersDialog.tsx`, `views/ride/RiderRow.tsx`, `hooks/useMenuPopover.ts`, `hooks/useRiderRemoval.ts`, `views/ride/InviteRiderDialog.tsx` | The users button under the X and its dialog listing the riders of the ride: locate for the connected ones, invite and remove for the leader; see [Group ride](#group-ride) |
 | Live group | `context/LiveGroupProvider.tsx`, `hooks/useLiveGroup.ts` | The group of the ride, kept up to date while it goes on (riders invited, removed, joined); read by `useGroupRide` and `RidersControl` |
 | Rider markers | `hooks/useRiderMarkers.ts`, `services/riderBubbleMarker.ts`, `services/riderMarkers.ts`, `services/riderForecast.ts`, `services/pathAhead.ts`, `services/streetLines.ts`, `services/pathWalk.ts` | One bubble marker per other rider, moved on between reports along the street at their last speed (`riderForecast`, `pathAhead`, `streetLines`) and removed when they go quiet |
@@ -382,10 +382,16 @@ Ride mode and the free ride share the group's live channel
 
 - **Sharing.** Once the socket has signed in and the server said `ready`
   (`services/groupConnection.ts`), `useSharePosition` sends the rider's position at once and
-  then **every 2 seconds** (`POSITION_INTERVAL_MS`): the street position shown on the map
+  then **every 4 seconds** (`POSITION_INTERVAL_MS`): the street position shown on the map
   (or the raw fix when it cannot be snapped), the speed in km/h and the accuracy. Nothing is
   sent while the position is unknown. The phone's clock is not used: the server stamps each
   position when it receives it.
+- **Receiving.** The server does not forward each rider's report; every 4 s it sends **one `positions` message
+  with the positions of all the other riders that changed** ([route-groups.md](route-groups.md#live-channel)).
+  `useGroupChannel` merges the whole message into the riders' positions in a single state update, so a group
+  of any size is one message and one render per interval. Each position is dated with the server's stamp moved
+  by how far this phone's clock is from the server's (`server_time` of the message), not with the moment the
+  message arrived, so a position that waited up to an interval for its batch is known to be that old.
 - **Signing in.** The socket is same-origin, `wss://<host>/ws/routes/groups/<id>/`; Next's
   rewrite forwards the upgrade to Django (checked with `next dev` and `next start`, see
   [asgi-websockets.md](asgi-websockets.md)). The first message carries the access token, which
@@ -412,8 +418,8 @@ Ride mode and the free ride share the group's live channel
   from the group (`GET /api/routes/groups/<id>/`), positions from the channel; one marker per
   rider is created, moved as the rider moves and removed when the rider goes quiet. See
   [Predicted movement](#predicted-movement).
-- **Predicted movement.** <a id="predicted-movement"></a>A rider reports every 2 s, and a report is already a moment old
-  when it arrives, so a marker that only went to the last report would always show the rider behind where they are.
+- **Predicted movement.** <a id="predicted-movement"></a>A rider reports every 4 s, and a report is already old
+  when it arrives (it waited for the rider's send and for the server's batch), so a marker that only went to the last report would always show the rider behind where they are.
   `useRiderMarkers` therefore keeps every marker **moving between reports**, at the speed of the last one, along the
   street the rider is on (the position reported is already snapped to a street):
   - **Forecast.** Each report starts a `Forecast` (`services/riderForecast.ts`): a short street path from the reported
@@ -422,7 +428,7 @@ Ride mode and the free ride share the group's live channel
     1.5 km/h the rider is standing and the marker does not move. The direction is the bearing between the last two
     reports (`estimateHeading`), kept while the rider has not moved 5 m. Position at `now` is the path at
     `speed * (now - report time)`, held at the end of the path.
-  - **The street.** The path is made by `findPathAhead` (`services/pathAhead.ts`), long enough for 10 s at that speed:
+  - **The street.** The path is made by `findPathAhead` (`services/pathAhead.ts`), long enough for `MAX_FORECAST_MS` at that speed:
     the **route** of the ride when the rider is within 25 m of it, with the route's own turns, walked in the
     direction of the heading; else the **streets drawn on the map** around them (`services/streetLines.ts`: the road
     lines of the style's `road` source layer that `queryRenderedFeatures` finds in the tiles already loaded, so there
@@ -434,14 +440,15 @@ Ride mode and the free ride share the group's live channel
     new forecast puts it, with the rate the gap was changing at, and fades out critically damped (time constant
     700 ms). Both the position and the speed of the marker are therefore continuous when a report lands, whether
     the rider sped up, slowed down or the report came late.
-  - **Signal lost.** If reports stop, the marker goes on at the last speed for `MAX_FORECAST_MS` (10 s) and then
+  - **Signal lost.** If reports stop, the marker goes on at the last speed for `MAX_FORECAST_MS` (15 s: the age of a report, plus a missed one) and then
     waits where it got to, until the rider reports again or is taken off the map (**Stale riders**). A rider who
     is standing, or has no speed to tell by, is not moved.
-  - **Measured** in a browser against a street route of 2.4 km, one rider driving it at 29 km/h with fake GPS and
-    another watching: reports every 2.0 s, the marker never more than 0.5 m off the street (route and free ride),
-    3 to 4 m behind the rider in steady driving against 12 m for the last report alone, and a speed that stays
-    within 8 to 12 m/s for a rider at 8 m/s. Right after a standstill the marker is still for a report or two,
-    since nothing says the rider is about to move.
+  - **Measured** in a browser against a street route of 2.4 km, two riders driving it at 29 km/h with fake GPS and
+    a third watching: reports every 4.0 s, 17 `positions` messages in 48 s where one message per rider would
+    have been 30, the marker never more than 0.5 m off the street (route and free ride), 6 to 9 m behind the
+    rider in steady driving (the sender's own delay between the GPS fix and the send) against 33 to 39 m for the
+    last report alone, and a speed that stays within 8 to 13 m/s for a rider at 8 m/s. Right after a standstill
+    the marker is still until the first report that shows the rider moving, up to one interval.
 - **Change route.** The leader also has the **route** button (`ChangeRouteControl`) under the users
   button; see [Changing the route](#changing-the-route).
 - **Riders.** The **users** button (`RidersControl`, "Riders") sits under the X (or the flag in a
@@ -521,12 +528,12 @@ Ride mode and the free ride share the group's live channel
   holds each "left" for **20 seconds** (`PRESENCE_GRACE_MS`): a rider who signs in again meanwhile (a
   locked screen, another app, a network blip) shows neither toast, and their marker stays on the map
   throughout (see **Stale riders**). The group is still read again at once, only the toast waits.
-- **Stale riders.** A rider with no report for **30 seconds** (`STALE_AFTER_MS`, fifteen missed
+- **Stale riders.** A rider with no report for **30 seconds** (`STALE_AFTER_MS`, seven missed
   reports) is taken off the map: the channel has no leave message, so a closed app would
   otherwise freeze on the others' maps. The saved positions in `ready` are aged by the
   server's clock (`server_time`) against each `recorded_at`, so a rider who left an hour ago
   is not drawn for 30 seconds on arrival, and a phone with a wrong clock does not misjudge.
-  The check runs every 2 seconds (`useNow`).
+  The check runs every 4 seconds (`useNow`).
 - **Failures are quiet.** If the channel cannot be joined the ride works as a solo ride: no
   other riders are drawn and nothing blocks. There is no connection indicator yet.
 - **Finishing.** An accepted rider saves their own summary of the group's route

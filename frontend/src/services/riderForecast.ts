@@ -5,10 +5,11 @@ import type { Coordinates } from '@/types/geolocation'
 
 /**
  * How long a rider is moved on without a new report, at the speed of the last one. It bridges the gap between
- * reports and a short loss of signal; beyond it the marker waits where it got to, until the rider reports
- * again or is dropped as stale (`STALE_AFTER_MS`).
+ * reports (a report is already up to a send interval old when it arrives, and the next comes one interval later)
+ * and a short loss of signal; beyond it the marker waits where it got to, until the rider reports again or is
+ * dropped as stale (`STALE_AFTER_MS`).
  */
-export const MAX_FORECAST_MS = 10_000
+export const MAX_FORECAST_MS = 15_000
 
 const MS_PER_SECOND = 1000
 const METERS_PER_SECOND_PER_KMH = 1 / 3.6

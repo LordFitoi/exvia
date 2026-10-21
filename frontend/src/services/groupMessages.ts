@@ -11,7 +11,11 @@ export interface RiderPosition {
   readonly speed: number | null
 }
 
-/** A rider's latest position and when this phone learned it (milliseconds since the epoch, this phone's clock). */
+/**
+ * A rider's latest position and when the server received it, on this phone's clock (milliseconds since the
+ * epoch): the server's stamp moved by how far this phone's clock is from the server's. Positions come in batches,
+ * so it is not when this phone heard them, and it is what tells how old a position is.
+ */
 export interface LivePosition {
   readonly position: RiderPosition
   readonly seenAt: number
@@ -19,15 +23,16 @@ export interface LivePosition {
 
 export type PresenceStatus = 'joined' | 'left'
 
+/** Positions with the server's clock when it sent them, to age them without trusting the phone's. */
+export interface PositionBatch {
+  readonly serverTime: number
+  readonly positions: readonly RiderPosition[]
+}
+
 export type GroupMessage =
-  | {
-      readonly type: 'ready'
-      readonly userId: number
-      /** The server's clock when it sent this, to age the saved positions without trusting the phone's. */
-      readonly serverTime: number
-      readonly positions: readonly RiderPosition[]
-    }
-  | { readonly type: 'position'; readonly position: RiderPosition }
+  | ({ readonly type: 'ready'; readonly userId: number } & PositionBatch)
+  /** The positions of the other riders that changed since the last one, in a single message. */
+  | ({ readonly type: 'positions' } & PositionBatch)
   | { readonly type: 'presence'; readonly userId: number; readonly status: PresenceStatus }
   /** The leader changed the route (or went to free mode); the group has to be read again for the new one. */
   | { readonly type: 'route_changed' }
@@ -43,14 +48,25 @@ const parseRiderPosition = (userId: number, value: unknown): RiderPosition | nul
   return coordinates && !Number.isNaN(recordedAt) ? { userId, coordinates, recordedAt, speed } : null
 }
 
-const parseReady = (message: Record<string, unknown>): GroupMessage | null => {
+const parsePositionBatch = (message: Record<string, unknown>): PositionBatch | null => {
   const serverTime = typeof message.server_time === 'string' ? Date.parse(message.server_time) : Number.NaN
-  if (typeof message.user_id !== 'number' || Number.isNaN(serverTime) || !isRecord(message.positions)) return null
+  if (Number.isNaN(serverTime) || !isRecord(message.positions)) return null
   const positions = Object.entries(message.positions).flatMap(([userId, value]) => {
     const position = parseRiderPosition(Number(userId), value)
     return position ? [position] : []
   })
-  return { type: 'ready', userId: message.user_id, serverTime, positions }
+  return { serverTime, positions }
+}
+
+const parseReady = (message: Record<string, unknown>): GroupMessage | null => {
+  const batch = parsePositionBatch(message)
+  if (typeof message.user_id !== 'number' || !batch) return null
+  return { type: 'ready', userId: message.user_id, ...batch }
+}
+
+const parsePositions = (message: Record<string, unknown>): GroupMessage | null => {
+  const batch = parsePositionBatch(message)
+  return batch ? { type: 'positions', ...batch } : null
 }
 
 const parsePresence = (message: Record<string, unknown>): GroupMessage | null => {
@@ -70,6 +86,7 @@ export const parseGroupMessage = (raw: unknown): GroupMessage | null => {
   }
   if (!isRecord(message)) return null
   if (message.type === 'ready') return parseReady(message)
+  if (message.type === 'positions') return parsePositions(message)
   if (message.type === 'error' && typeof message.detail === 'string') {
     return { type: 'error', detail: message.detail }
   }
@@ -78,7 +95,5 @@ export const parseGroupMessage = (raw: unknown): GroupMessage | null => {
   if (message.type === 'leader_changed' && typeof message.user_id === 'number') {
     return { type: 'leader_changed', userId: message.user_id }
   }
-  if (message.type !== 'position' || typeof message.user_id !== 'number') return null
-  const position = parseRiderPosition(message.user_id, message)
-  return position ? { type: 'position', position } : null
+  return null
 }
