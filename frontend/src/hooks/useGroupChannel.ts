@@ -9,6 +9,8 @@ import type { GroupMessage, LivePosition, PresenceStatus } from '@/services/grou
 export type PresenceHandler = (userId: number, status: PresenceStatus) => void
 
 export interface GroupChannelHandlers {
+  /** Hears the channel sign in, the first time and after every drop: what was missed meanwhile is read again. */
+  readonly onReady: () => void
   /** Hears the other riders come and go. */
   readonly onPresence: PresenceHandler
   /** Hears the leader change the route. */
@@ -44,7 +46,10 @@ export const useGroupChannel = (groupId: string, handlers: GroupChannelHandlers)
 
   useEffect(() => {
     const handleMessage = (message: GroupMessage) => {
-      if (message.type === 'ready') setPositions(toSnapshot(message))
+      if (message.type === 'ready') {
+        setPositions(toSnapshot(message))
+        handlersRef.current.onReady()
+      }
       if (message.type === 'error') console.error(`The ride channel refused a message: ${message.detail}`)
       if (message.type === 'presence') handlersRef.current.onPresence(message.userId, message.status)
       if (message.type === 'route_changed') handlersRef.current.onRouteChange()

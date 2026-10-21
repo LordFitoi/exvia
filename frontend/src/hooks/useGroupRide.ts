@@ -35,9 +35,10 @@ const describeLeaderChange = (leaderName: string | null, isYou: boolean): string
 
 /**
  * Shares the rider's position with their group and returns where the other riders are, and who came or went.
- * Whenever a rider joins or leaves the group is read again, so riders invited or removed meanwhile show up;
- * so it is when the leader changes the route, which the ride screen then follows, or hands the group to
- * another rider, whose controls then show.
+ * Whenever the channel signs in (also after a drop, which misses the joins and leaves meanwhile) or a rider
+ * joins or leaves, the group is read again, so riders invited or removed meanwhile show up; so it is when the
+ * leader changes the route, which the ride screen then follows, or hands the group to another rider, whose
+ * controls then show.
  */
 export const useGroupRide = ({ rider, location }: GroupRideOptions): GroupRide => {
   const { user } = useAuth()
@@ -67,8 +68,13 @@ export const useGroupRide = ({ rider, location }: GroupRideOptions): GroupRide =
     [announce, participants, userId, reloadGroup],
   )
   const channelHandlers = useMemo(
-    () => ({ onPresence: handlePresence, onRouteChange: handleRouteChange, onLeaderChange: handleLeaderChange }),
-    [handlePresence, handleRouteChange, handleLeaderChange],
+    () => ({
+      onReady: reloadGroup,
+      onPresence: handlePresence,
+      onRouteChange: handleRouteChange,
+      onLeaderChange: handleLeaderChange,
+    }),
+    [reloadGroup, handlePresence, handleRouteChange, handleLeaderChange],
   )
   const { status, positions, send } = useGroupChannel(group.id, channelHandlers)
   useEffect(() => {

@@ -402,8 +402,10 @@ Ride mode and the free ride share the group's live channel
 - **Live group** (`LiveGroupProvider`, `useLiveGroup`). The group is read once when the ride opens
   but its riders change during it, so `GroupRideView` keeps it in a context for the ride screen.
   It is replaced by the group the invite and remove calls answer, and read again
-  (`GET /api/routes/groups/<id>/`) whenever the channel announces a rider joining or leaving, so
-  everyone's list learns about riders invited or removed meanwhile. A rider invited after the
+  (`GET /api/routes/groups/<id>/`) whenever the channel announces a rider joining or leaving, and
+  every time the channel signs in (`ready`), so everyone's list learns about riders invited or removed
+  meanwhile, including the ones missed while this rider's socket was down (a locked phone, or a ride
+  screen Next kept hidden and shows again). A rider invited after the
   others opened the ride therefore shows on their map from the moment they connect (the "joined"
   toast is skipped for that first time, as the name is not known yet).
 - **Removed riders.** The removed rider's channel is closed (`4403`) at their next position, and the
