@@ -69,8 +69,8 @@ It inherits `TimeStampedModel` and is ordered by `-start_at`.
 - **`reached_at` is measured on the phone and stored**, like the top speed: the server cannot tell when a
   rider passed a point from a start and an end. Entry 0 is the moment the rider reached the start (they may
   still be riding to it when ride mode opens, so it is not `start_at`) and entry `i` the moment they reached
-  checkpoint `i + 1` (the numbering of the map markers, the start being 1; the finish is `end_at`). It is
-  shorter than the route's stops when some were not reached (a ride quit early, a route without waypoints)
+  checkpoint `i + 1` (the numbering of the map markers, the start being 1; the finish is `end_at`). Reaching a stop reaches the ones before it, so there are no gaps: the list is shorter than the route's stops
+  when the rider did not get to the last ones (a ride quit early, a route without waypoints)
   and empty for rides saved before the field existed. The server only checks that it is a list of datetimes, since
   it cannot check a GPS fix; the time it took is the entry minus `start_at`, worked out by the reader.
 - **`end_at` after `start_at` is a database `CheckConstraint`**

@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='routesummary',
             name='reached_at',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.DateTimeField(), blank=True, default=list, help_text='When the rider reached the start, then each checkpoint, in route order; shorter if some were not reached.', size=500),
+            field=django.contrib.postgres.fields.ArrayField(base_field=models.DateTimeField(), blank=True, default=list, help_text='When the rider reached the start, then each checkpoint, in route order; shorter if the rider did not get to the last ones.', size=500),
         ),
     ]

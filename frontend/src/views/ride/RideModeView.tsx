@@ -60,7 +60,9 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
   const checkpointTimes = useCheckpointTimes({
     progress,
     waypoints: route.waypoints,
+    rider,
     fixTime: location.timestamp,
+    isRiding: arrivedAt === null,
   })
   const [startedAt] = useState(() => Date.now())
   const checkpoints = {

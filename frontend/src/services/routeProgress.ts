@@ -6,6 +6,8 @@ const ON_TRACK_METERS = 40
 // Progress only moves forward, and only this far ahead of the last fix, so a loop that comes back
 // near the start is not mistaken for the start.
 const SEARCH_AHEAD_METERS = 400
+// A rider on another street this close to the track still passes what is beside them along it.
+const PASSING_METERS = 100
 // GPS jitter can place the rider a little behind the last fix; that is not a move backwards.
 const JITTER_BACK_METERS = 30
 
@@ -132,6 +134,17 @@ export const measureCheckpoints = (path: MeasuredPath, checkpoints: readonly Coo
     from = locateOnPath(path, checkpoint, { from, to: getPathLength(path) })?.distance ?? from
     return from
   })
+}
+
+/**
+ * How far along the track the rider is when they are beside it on another street: the spot of the track
+ * closest to `position`, moving only forward from `passed` (the distance reached so far) and only as far as
+ * `PASSING_METERS` away from it. Returns null when the rider is not beside the stretch ahead.
+ */
+export const trackPassing = (path: MeasuredPath, position: Coordinates, passed: number): number | null => {
+  const from = Math.max(0, passed - JITTER_BACK_METERS)
+  const ahead = locateOnPath(path, position, { from, to: passed + SEARCH_AHEAD_METERS })
+  return ahead && ahead.offset <= PASSING_METERS ? ahead.distance : null
 }
 
 /** The part of the path between two distances, as a line from `fromPoint` to `toPoint`. */

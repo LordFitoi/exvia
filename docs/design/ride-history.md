@@ -59,7 +59,7 @@ dash. Participants are rows with an initial avatar and the username.
 The **checkpoint times** list the start, every checkpoint of the route and the finish ([ride.md](ride.md#checkpoint-times)).
 The start and each checkpoint the ride reached are colored (entry 0 of `reached_at` is the start), and so is the
 finish when the ride is finished (`end_at`). A colored stop shows the hour and the time it took (the moment minus
-`start_at`); the rest are gray and "Not reached yet" (a ride quit early, or one saved before they were recorded).
+`start_at`); the rest are gray and "Not reached yet" (a ride quit early, or a ride saved before they were recorded).
 The number of checkpoints
 comes from the route's waypoints (the route the preview loads), or from `reached_at` if the route is not loaded.
 

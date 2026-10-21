@@ -59,7 +59,7 @@ class RouteSummary(TimeStampedModel):
     max_speed = models.FloatField(**SPEED_FIELD, help_text='Fastest GPS reading, km/h.')
     reached_at = ArrayField(
         models.DateTimeField(), size=MAX_WAYPOINTS, default=list, blank=True,
-        help_text='When the rider reached the start, then each checkpoint, in route order; shorter if some were not reached.',
+        help_text='When the rider reached the start, then each checkpoint, in route order; shorter if the rider did not get to the last ones.',
     )
     participants = models.ManyToManyField(User, related_name='route_summaries', blank=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='authored_route_summaries')

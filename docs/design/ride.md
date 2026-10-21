@@ -286,14 +286,29 @@ per point, numbered like in the route creator (the start is 1). They are plain m
 ### Checkpoint times
 
 <a id="checkpoint-times"></a>Ride mode records when the rider reaches the start and then each checkpoint (`useCheckpointTimes`): the waypoints
-between the first and the last, in route order. The start counts as reached once the rider is on the track, not
-when ride mode opens, as they may still be riding to it. `measureCheckpoints` (`services/routeProgress.ts`) places each
-one along the track, never before the one ahead of it, and a checkpoint counts as reached once the rider's
-progress on the track is within 40 m of it (`CHECKPOINT_METERS`, like the finish). The time kept is that of the GPS
-fix that showed it; a checkpoint passed between two fixes shares the later fix. Progress only moves forward, so a
-checkpoint is recorded once. The times are only ever added to: the group reloads the route as new arrays whenever
-someone joins or leaves, and that must not erase them. A new route (the leader changed it) remounts the ride
-(`key` on the route id) and starts them over, as the other stats.
+between the first and the last, in route order. A stop counts as reached in any of these ways
+(`CHECKPOINT_METERS`, 40 m, like the finish):
+
+- **Along the track.** The rider's progress on the track is within 40 m of it. `measureCheckpoints`
+  (`services/routeProgress.ts`) places each stop along the track, never before the one ahead of it. This covers
+  a gap in the GPS: a stop passed between two fixes shares the later fix.
+- **Beside it on another street.** The hook also follows how far along the track the rider has got while they are
+  off it (`trackPassing`): the spot of the track closest to them, only forward and only up to 400 m ahead of the
+  last one, and only while they are within 100 m of the track (`PASSING_METERS`). Riding down a parallel street
+  marks each checkpoint as the rider draws level with it. This is kept apart from `useRideProgress`, so it does
+  not move the route line or the arrival at the finish, which still need the rider on the track.
+- **Near it, wherever the rider is.** The rider's position is within 40 m of the stop in a straight line.
+
+Reaching a stop reaches all those before it (the furthest one reached decides), like the route line colors the
+whole stretch behind the rider: a checkpoint skipped by taking another street is marked as soon as the rider
+draws level with it, goes past it or comes back to the route, with the time of that fix.
+
+The start counts once the rider is there, not when ride mode opens, as they may still be riding to it. The time
+kept is that of the first GPS fix that showed it. A stop is recorded once, and the times are only ever added to:
+the group reloads the route as new arrays whenever someone joins or leaves, and that must not erase them. They
+freeze when the rider arrives, since the ride is saved with them then. A new route (the leader changed it)
+remounts the ride (`key` on the route id) and starts them over, as the other stats. The finish is still reached
+by arrival along the track (`useRideArrival`).
 
 - **Where they show.** `CheckpointTimes` (`components/route/`), a flat `list` with **the start, every checkpoint
   of the route and the finish**, one row each, in route order, so a route with no points in between still lists
