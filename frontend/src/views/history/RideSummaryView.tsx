@@ -2,12 +2,14 @@
 
 import ConfirmDialog from '@/components/feedback/ConfirmDialog'
 import StateView from '@/components/feedback/StateView'
+import CheckpointTimes from '@/components/route/CheckpointTimes'
 import RoutePreview from '@/components/route/RoutePreview'
 import { useAuth } from '@/hooks/useAuth'
 import { useRideSummaryDeletion } from '@/hooks/useRideSummaryDeletion'
 import { useRideSummaryDetail } from '@/hooks/useRideSummaryDetail'
 import { useRouteDetail } from '@/hooks/useRouteDetail'
 import { formatRideDate } from '@/services/formatRoute'
+import { countCheckpoints } from '@/services/routeProgress'
 import RideStatsGrid from '@/views/history/RideStatsGrid'
 import type { RideSummaryDetail } from '@/types/rideSummary'
 
@@ -41,6 +43,7 @@ function ParticipantList({ summary }: { summary: RideSummaryDetail }) {
 
 function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
   const route = useRouteDetail(summary.route)
+  const reachedAt = summary.reached_at.map((moment) => Date.parse(moment))
 
   return (
     <>
@@ -53,12 +56,18 @@ function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
       </div>
       <RoutePreview size="compact" status={route.status} route={route.shownRoute} onRetry={route.retry} />
       <RideStatsGrid summary={summary} />
+      <CheckpointTimes
+        startedAt={Date.parse(summary.start_at)}
+        count={Math.max(countCheckpoints(route.shownRoute?.waypoints ?? []), reachedAt.length - 1)}
+        reachedAt={reachedAt}
+        finishedAt={summary.is_finished ? Date.parse(summary.end_at) : null}
+      />
       <ParticipantList summary={summary} />
     </>
   )
 }
 
-/** One ride of the history: its route and preview, who rode, the time it took and the speeds. */
+/** One ride of the history: its route and preview, who rode, the time it took, the speeds and when each checkpoint was reached. */
 export default function RideSummaryView({ summaryId, onClose, onDeleted }: RideSummaryViewProps) {
   const { user } = useAuth()
   const detail = useRideSummaryDetail(summaryId)

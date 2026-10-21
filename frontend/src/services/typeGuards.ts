@@ -53,4 +53,7 @@ export const isRideSummaryDetail = (value: unknown): value is RideSummaryDetail 
   'author' in value &&
   typeof value.author === 'number' &&
   'max_speed' in value &&
-  isNumberOrNull(value.max_speed)
+  isNumberOrNull(value.max_speed) &&
+  'reached_at' in value &&
+  Array.isArray(value.reached_at) &&
+  value.reached_at.every((moment) => typeof moment === 'string')

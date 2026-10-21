@@ -117,6 +117,10 @@ button.list-item[aria-pressed="true"] .list-item-title { color: var(--color-prim
   line-height: var(--leading-compact);
 }
 
+/* A row not done yet (a checkpoint not reached): its title is muted, next to a gray avatar */
+.list-item-pending .list-item-title,
+.list-item-pending .data { color: var(--color-text-muted); }
+
 .list-item-meta {
   font-size: var(--text-caption);
   color: var(--color-text-muted);
@@ -182,6 +186,9 @@ button.list-item[aria-pressed="true"] .list-item-title { color: var(--color-prim
   block-size: 100%;
   object-fit: cover;
 }
+
+/* Colored disc, for a state reached (a checkpoint passed): the primary of the map markers */
+.avatar-primary { background: var(--color-primary); color: var(--color-on-primary); }
 
 .avatar-sm { inline-size: 2rem; block-size: 2rem; font-size: var(--text-caption); }
 .avatar-lg { inline-size: 4rem; block-size: 4rem; font-size: var(--text-h5); }

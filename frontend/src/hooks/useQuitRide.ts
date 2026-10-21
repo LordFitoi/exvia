@@ -15,6 +15,8 @@ interface QuitRideOptions {
   startedAt: number
   /** The top speed of the ride so far in km/h, or null when the device gave none. */
   maxSpeed: number | null
+  /** When the start and then each checkpoint were reached so far, in milliseconds since the epoch. */
+  reachedAt: readonly number[]
   /** Leaves ride mode. */
   onQuit: () => void
 }
@@ -28,7 +30,14 @@ interface QuitRide {
 }
 
 /** Quitting before the finish saves the ride so far (not finished), then leaves ride mode. */
-export const useQuitRide = ({ routeId, groupId, startedAt, maxSpeed, onQuit }: QuitRideOptions): QuitRide => {
+export const useQuitRide = ({
+  routeId,
+  groupId,
+  startedAt,
+  maxSpeed,
+  reachedAt,
+  onQuit,
+}: QuitRideOptions): QuitRide => {
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -45,6 +54,7 @@ export const useQuitRide = ({ routeId, groupId, startedAt, maxSpeed, onQuit }: Q
         endedAt: Date.now(),
         isFinished: false,
         maxSpeed,
+        reachedAt,
       })
       onQuit()
     } catch (failure) {

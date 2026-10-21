@@ -199,14 +199,15 @@ style guide's [Group rides](../ui-ux/group.html) page.
   kilometres covered so far over the elapsed time; at the finish it is the summary's: the route's distance
   over the time) and **Max** km/h (from [Ride speeds](#ride-speeds)). The grid
   starts hidden, to leave the map its room, and the strip grows upwards when it opens. A free ride has no
-  route, so its grid has only the max speed (`useRideMaxSpeed` runs there too). All the stats start over
+  route, so its grid has only the max speed (`useRideMaxSpeed` runs there too). Under the four stats
+  come the [checkpoint times](#checkpoint-times) (the start and the finish, at least). All the stats start over
   with a new ride, see [Changing the route](#changing-the-route).
 - **Arrival** (`useRideArrival`): the rider has arrived when the progress on
   the track is within 40 m of its end (`ARRIVAL_METERS`). The phone vibrates
   and `RideSummarySheet` opens: a modal sheet ("You've arrived!", the guide's
   `sheet-modal` with a close X) with the route name and three `route-stats`:
   **Time**, **Distance** and **Avg km/h**, then the route's estimated time
-  and a **Done** button. Done only closes the sheet, like its X and Esc: the rider stays on the
+  the [checkpoint times](#checkpoint-times) and a **Done** button. Done only closes the sheet, like its X and Esc: the rider stays on the
   map, in the group and connected to its live channel, so the others keep seeing them and they
   keep seeing the others. Finishing the route does not leave the group; the X on the map does
   (it needs no confirmation once the rider has arrived), and replaces the screen with the Map tab
@@ -277,9 +278,37 @@ per point, numbered like in the route creator (the start is 1). They are plain m
 
 - **Ride mode gets them from the group**: `GroupRouteSerializer` includes `waypoints`, and
   `RideRoute` carries them, because a member cannot read the leader's route through the route endpoint.
-- **A route without waypoints** (saved before they were stored) shows only the start and the finish.
+- **A route without waypoints** (saved before they were stored) shows only the start and the finish, and has
+  no checkpoint times.
 - **The shared page of a route** (`/routes/<id>`) does not show them: that endpoint never returned the waypoints
   ([route-sharing.md](route-sharing.md)).
+
+### Checkpoint times
+
+<a id="checkpoint-times"></a>Ride mode records when the rider reaches the start and then each checkpoint (`useCheckpointTimes`): the waypoints
+between the first and the last, in route order. The start counts as reached once the rider is on the track, not
+when ride mode opens, as they may still be riding to it. `measureCheckpoints` (`services/routeProgress.ts`) places each
+one along the track, never before the one ahead of it, and a checkpoint counts as reached once the rider's
+progress on the track is within 40 m of it (`CHECKPOINT_METERS`, like the finish). The time kept is that of the GPS
+fix that showed it; a checkpoint passed between two fixes shares the later fix. Progress only moves forward, so a
+checkpoint is recorded once. The times are only ever added to: the group reloads the route as new arrays whenever
+someone joins or leaves, and that must not erase them. A new route (the leader changed it) remounts the ride
+(`key` on the route id) and starts them over, as the other stats.
+
+- **Where they show.** `CheckpointTimes` (`components/route/`), a flat `list` with **the start, every checkpoint
+  of the route and the finish**, one row each, in route order, so a route with no points in between still lists
+  its start and finish. A stop not reached yet is gray (`avatar`, `list-item-pending`): "Not reached yet" and a
+  dash. Once reached it is colored (`avatar-primary`, the green of the map markers) and shows **the hour** it was
+  reached at (`At 09:12`, the reader's locale) and, on the right, **the time it took** from the moment ride
+  mode opened as a stopwatch (`8:41`). The start shows the flag, the finish shows the checkered
+  flag and is reached on arrival; the checkpoints show their number (the first is 2, like the markers) and their
+  count is the route's waypoints between the first and the last (`countCheckpoints`). It is in the expanded ride
+  stats, in the "You've arrived!" sheet and in the history's ride summary ([ride-history.md](ride-history.md)).
+  In the strip it scrolls within 30% of the screen so many checkpoints do not squeeze the map. The guide shows
+  it in [patterns.html](../ui-ux/patterns.html).
+- **Saved with the ride.** The times go as `reached_at` in the save at the finish (`useSaveRideSummary`) and in the
+  unfinished one of a quit (`useQuitRide`, with the checkpoints reached so far); see
+  [routes.md](routes.md#route-summaries). A free ride has no checkpoints.
 
 ## Free ride
 

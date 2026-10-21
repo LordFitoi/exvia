@@ -46,6 +46,10 @@ export const formatCurrentSpeed = (metersPerSecond: number | null): string => {
 export const formatSpeed = (kilometresPerHour: number | null): string =>
   kilometresPerHour === null ? NO_VALUE : kilometresPerHour.toFixed(1)
 
+/** The time of day as the reader's locale writes it, such as "09:12", for a moment in milliseconds since the epoch. */
+export const formatTimeOfDay = (epochMs: number): string =>
+  new Date(epochMs).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+
 /** The day of a ride as the reader's locale writes it, such as "15 Oct 2026". */
 export const formatRideDate = (isoDateTime: string): string =>
   new Date(isoDateTime).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })

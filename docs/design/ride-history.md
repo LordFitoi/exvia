@@ -18,8 +18,9 @@ it needs no location, so it opens even while the map is still waiting for a fix.
 |-------|------|-----|
 | List screen | `views/history/RideSummariesView.tsx` | "Ride history" header with an X, the list; holds which ride is open and swaps to its summary |
 | List | `views/history/RideSummaryList.tsx` | Skeleton, error, empty and ready states; one row per ride |
-| Summary screen | `views/history/RideSummaryView.tsx` | "Ride summary" header with an X (back to the list): route name and day, route preview, stats, participants |
+| Summary screen | `views/history/RideSummaryView.tsx` | "Ride summary" header with an X (back to the list): route name and day, route preview, stats, checkpoint times, participants |
 | Stats | `views/history/RideStatsGrid.tsx` | The two `route-stats` grids |
+| Checkpoint times | `components/route/CheckpointTimes.tsx` | The checkpoints the rider reached: the hour and the time from the start |
 | Delete | `hooks/useRideSummaryDeletion.ts`, `hooks/useConfirmedDeletion.ts`, `components/feedback/ConfirmDialog.tsx` | Asks first, then `DELETE`s the ride |
 | List data | `hooks/useMyRideSummaries.ts` | `GET /api/routes/summaries/`, with `reload` |
 | Summary data | `hooks/useRideSummaryDetail.ts` | `GET /api/routes/summaries/<id>/`, with `retry` |
@@ -27,7 +28,7 @@ it needs no location, so it opens even while the map is still waiting for a fix.
 
 Both screens are full height with their own X, so they hide the tab bar
 (`useHideTabBar`, held by `RideSummariesView` for both). They reuse the guide's
-`list-item`, `route-stats`, `avatar` and `screen-header`; no new component.
+`list-item`, `route-stats`, `avatar` and `screen-header`; the checkpoint times are one more list of those.
 
 ## List
 
@@ -42,7 +43,7 @@ with Try again, "No rides yet".
 
 Top to bottom: the route name and the day; the route on a compact preview map
 (`RoutePreview`, the same one the route list uses, loaded with `useRouteDetail`);
-the stats; the participants.
+the stats; the checkpoint times; the participants.
 
 | Stat | Source |
 |------|--------|
@@ -55,13 +56,20 @@ The time is followed by the route's estimated time. A speed the ride did not
 record (the device gave none, or the ride was saved before speeds existed) is a
 dash. Participants are rows with an initial avatar and the username.
 
+The **checkpoint times** list the start, every checkpoint of the route and the finish ([ride.md](ride.md#checkpoint-times)).
+The start and each checkpoint the ride reached are colored (entry 0 of `reached_at` is the start), and so is the
+finish when the ride is finished (`end_at`). A colored stop shows the hour and the time it took (the moment minus
+`start_at`); the rest are gray and "Not reached yet" (a ride quit early, or one saved before they were recorded).
+The number of checkpoints
+comes from the route's waypoints (the route the preview loads), or from `reached_at` if the route is not loaded.
+
 ## Rides quit early
 
 A ride the rider quit before the finish is saved too ([ride.md](ride.md)), with
 `is_finished` false. The route's length says nothing about how far they got, so
 for these rides the list row has no average and carries a **Not finished** badge,
 and the summary shows a dash for Distance and Avg km/h and the badge next to the
-day. Time and the top GPS speed are real, so they stay.
+day. Time, the top GPS speed and the checkpoint times (the ones reached) are real, so they stay.
 
 ## Delete
 

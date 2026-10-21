@@ -1,5 +1,7 @@
 'use client'
 
+import CheckpointTimes from '@/components/route/CheckpointTimes'
+import type { CheckpointTimesProps } from '@/components/route/CheckpointTimes'
 import SheetHeader from '@/components/layout/SheetHeader'
 import { useModalDialog } from '@/hooks/useModalDialog'
 import { formatAverageSpeed, formatClock, formatDistance, formatDuration } from '@/services/formatRoute'
@@ -12,6 +14,8 @@ interface RideSummarySheetProps {
   route: RideRoute
   /** How long the ride took, in seconds. */
   rideSeconds: number
+  /** The checkpoints of the route and when each was reached. */
+  checkpoints: CheckpointTimesProps
   /** Whether the ride has been saved on the server. */
   saveStatus: SaveRideStatus
   /** Tries to save the ride again after a failure. */
@@ -20,11 +24,12 @@ interface RideSummarySheetProps {
   onClose: () => void
 }
 
-/** Shown when the rider reaches the finish: the time it took, the distance and the average speed. */
+/** Shown when the rider reaches the finish: the time it took, the distance, the average speed and the checkpoints with when each was reached. */
 export default function RideSummarySheet({
   isOpen,
   route,
   rideSeconds,
+  checkpoints,
   saveStatus,
   onRetrySave,
   onClose,
@@ -61,6 +66,7 @@ export default function RideSummarySheet({
         </div>
       </div>
       <p className="text-small text-muted">Estimated time was {formatDuration(route.estimated_time)}.</p>
+      <CheckpointTimes {...checkpoints} />
       <RideSaveStatus status={saveStatus} onRetry={onRetrySave} />
       <button className="button button-primary button-lg button-block" type="button" onClick={onClose}>
         Done

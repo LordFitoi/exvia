@@ -14,7 +14,7 @@ const unexpectedResponse = (): ApiError => new ApiError(502, UNEXPECTED_RESPONSE
 /** Saves a finished ride of one of the caller's routes; the server makes the caller its rider. */
 export const createRideSummary = async (
   routeId: string,
-  { groupId, startedAt, endedAt, isFinished, maxSpeed }: NewRideSummary,
+  { groupId, startedAt, endedAt, isFinished, maxSpeed, reachedAt }: NewRideSummary,
 ): Promise<void> => {
   const saved = await requestJsonAuthorized(`${ROUTES_PATH}${routeId}/summaries/`, {
     method: 'POST',
@@ -24,6 +24,7 @@ export const createRideSummary = async (
       end_at: new Date(Math.max(endedAt, startedAt + MIN_RIDE_MS)).toISOString(),
       is_finished: isFinished,
       max_speed: maxSpeed,
+      reached_at: reachedAt.map((moment) => new Date(moment).toISOString()),
     },
   })
   if (!isRecord(saved) || typeof saved.id !== 'number') throw unexpectedResponse()

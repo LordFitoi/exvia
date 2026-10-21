@@ -2,6 +2,8 @@
 
 import { useId, useState } from 'react'
 
+import CheckpointTimes from '@/components/route/CheckpointTimes'
+import type { CheckpointTimesProps } from '@/components/route/CheckpointTimes'
 import {
   formatAverageSpeed,
   formatClock,
@@ -36,13 +38,22 @@ interface RideStatsPanelProps {
   route: Pick<RideRoute, 'distance' | 'estimated_time'> | null
   /** The kilometres covered so far, which the average speed of the ride is worked out from. */
   coveredKilometres: number
+  /** The checkpoints of the route and when each was reached so far; null in free mode, which has none. */
+  checkpoints: CheckpointTimesProps | null
 }
 
 /**
  * The strip under the ride map: how long the ride has lasted and how fast the rider goes now, and a button
  * that shows the rest of the stats of the ride summary. The details start hidden, to leave the map its room.
  */
-export default function RideStatsPanel({ elapsedSeconds, speed, maxSpeed, route, coveredKilometres }: RideStatsPanelProps) {
+export default function RideStatsPanel({
+  elapsedSeconds,
+  speed,
+  maxSpeed,
+  route,
+  coveredKilometres,
+  checkpoints,
+}: RideStatsPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const detailsId = useId()
 
@@ -71,6 +82,7 @@ export default function RideStatsPanel({ elapsedSeconds, speed, maxSpeed, route,
           </>
         )}
         <RideStat value={formatSpeed(maxSpeed)} label="Max km/h" />
+        {checkpoints && <CheckpointTimes {...checkpoints} />}
       </div>
     </section>
   )

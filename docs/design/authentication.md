@@ -107,6 +107,13 @@ admin superuser (`admin` / `ChangeMe123!`, overridable via the
 already exist. Future seed steps are added as another `() -> str`
 function appended to the `SEEDS` tuple in that file.
 
+## Tests
+
+`TEST_RUNNER` is `config.test_runner.FastPasswordTestRunner`, which swaps
+`PASSWORD_HASHERS` for MD5 while `manage.py test` runs. The default PBKDF2
+hasher costs ~0.5s per `create_user`, which made the suite take many minutes
+(295 tests now run in ~20s). Production keeps the default hashers.
+
 ## Not included
 
 - No token blacklist/logout endpoint (`rest_framework_simplejwt.token_blacklist`)

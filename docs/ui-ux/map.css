@@ -137,6 +137,11 @@
 .ride-panel-details .route-stat-value { font-size: var(--text-body2); overflow-wrap: anywhere; }
 .ride-panel .ride-panel-details[hidden] { display: none; }
 
+/* Checkpoint times under the stats: one row per checkpoint reached. In the stats grid they take the
+   whole row, and the list scrolls, so many checkpoints do not squeeze the map away. */
+.checkpoint-times { grid-column: 1 / -1; }
+.checkpoint-times .list { max-block-size: 30dvh; overflow-y: auto; }
+
 .ride-panel-toggle .icon { transition: rotate var(--duration-fast) var(--ease-out); }
 .ride-panel-toggle[aria-expanded="true"] .icon { rotate: 180deg; }
 

@@ -16,6 +16,8 @@ interface SaveRideSummaryOptions {
   endedAt: number | null
   /** The top speed of the ride in km/h, final once `endedAt` is set; null when the device gave none. */
   maxSpeed: number | null
+  /** When the start and then each checkpoint were reached, in milliseconds since the epoch; final once `endedAt` is set. */
+  reachedAt: readonly number[]
 }
 
 interface SaveRideSummaryHandle {
@@ -30,6 +32,7 @@ export const useSaveRideSummary = ({
   startedAt,
   endedAt,
   maxSpeed,
+  reachedAt,
 }: SaveRideSummaryOptions): SaveRideSummaryHandle => {
   const [outcome, setOutcome] = useState<'saved' | 'failed' | null>(null)
   const [attempt, setAttempt] = useState(0)
@@ -45,6 +48,7 @@ export const useSaveRideSummary = ({
           endedAt,
           isFinished: true,
           maxSpeed,
+          reachedAt,
         })
         if (!isCancelled) setOutcome('saved')
       } catch (error) {
@@ -56,7 +60,7 @@ export const useSaveRideSummary = ({
     return () => {
       isCancelled = true
     }
-  }, [routeId, groupId, startedAt, endedAt, maxSpeed, attempt])
+  }, [routeId, groupId, startedAt, endedAt, maxSpeed, reachedAt, attempt])
 
   const retry = () => {
     setOutcome(null)

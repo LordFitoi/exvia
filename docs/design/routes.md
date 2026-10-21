@@ -53,6 +53,7 @@ It inherits `TimeStampedModel` and is ordered by `-start_at`.
 | `duration` | `DurationField` | `end_at - start_at`, calculated, `editable=False` |
 | `is_finished` | `BooleanField` | Default `True`; `False` when the rider quit before the finish |
 | `max_speed` | `FloatField` | km/h, fastest GPS reading; null when unknown; `>= 0` |
+| `reached_at` | `ArrayField(DateTimeField)` | When the rider reached the start, then each checkpoint, in route order; default empty, at most 500 |
 | `participants` | M2M to `auth.User` | `related_name='route_summaries'`, optional (`blank=True`) |
 | `author` | FK to `auth.User` | `related_name='authored_route_summaries'`, `CASCADE` |
 
@@ -65,6 +66,13 @@ It inherits `TimeStampedModel` and is ordered by `-start_at`.
   sends them. They are nullable because the device may give no speed, and
   because rides saved before the fields existed have none. The server trusts
   them (it only rejects negatives): it cannot check a GPS reading.
+- **`reached_at` is measured on the phone and stored**, like the top speed: the server cannot tell when a
+  rider passed a point from a start and an end. Entry 0 is the moment the rider reached the start (they may
+  still be riding to it when ride mode opens, so it is not `start_at`) and entry `i` the moment they reached
+  checkpoint `i + 1` (the numbering of the map markers, the start being 1; the finish is `end_at`). It is
+  shorter than the route's stops when some were not reached (a ride quit early, a route without waypoints)
+  and empty for rides saved before the field existed. The server only checks that it is a list of datetimes, since
+  it cannot check a GPS fix; the time it took is the entry minus `start_at`, worked out by the reader.
 - **`end_at` after `start_at` is a database `CheckConstraint`**
   (`route_summary_end_after_start`), so a negative or zero duration cannot be
   stored by any path, including the ones that skip `save()` validation.
@@ -79,10 +87,11 @@ It inherits `TimeStampedModel` and is ordered by `-start_at`.
 `POST /api/routes/<uuid>/summaries/` (JWT) saves a finished ride of one of the
 caller's routes. The body is `{"start_at": "...", "end_at": "..."}`
 (ISO 8601 datetimes, both required), plus optional `is_finished` (default `true`), `max_speed`
-in km/h and `group` (the id of the group it was ridden in, never returned); the answer is `201` with the full ride, the shape in
+in km/h, `reached_at` (a list of datetimes, see above) and `group` (the id of the group it was ridden in, never
+returned); the answer is `201` with the full ride, the shape in
 [Reading rides](#reading-rides).
 
-Only those seven fields are writable: the route comes from the URL, and the
+Only those eight fields are writable: the route comes from the URL, and the
 caller is the `author` and always a participant, whatever the body says. The other
 participants come from `group` (see [Participants](#ride-participants)). `end_at` not after `start_at` is `400` with an `end_at` message
 (the database constraint is the backstop), and a negative speed is `400` with
@@ -125,13 +134,14 @@ A ride (the detail, and the answer to the `POST`):
   "duration": 2700,
   "is_finished": true,
   "max_speed": 31.5,
+  "reached_at": ["2026-10-15T09:12:30Z", "2026-10-15T09:27:05Z"],
   "author": 1,
   "participants": [{"id": 1, "username": "rider"}],
   "created_at": "2026-10-15T09:45:02Z"
 }
 ```
 
-`duration` and `estimated_time` are **whole seconds**; `distance` is the
+`reached_at` is only in the detail and the answer to the `POST`, not in the list rows. `duration` and `estimated_time` are **whole seconds**; `distance` is the
 route's, in km, and `route_name`, `distance` and `estimated_time` come from the
 route. The list rows (`RideSummaryListSerializer`) carry only `id`, `route`,
 `route_name`, `distance`, `start_at`, `end_at`, `duration`, `is_finished` and

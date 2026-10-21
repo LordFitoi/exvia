@@ -124,6 +124,28 @@ class RideSummaryApiTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('max_speed', response.data)
 
+    def test_saves_when_each_checkpoint_was_reached_in_order(self) -> None:
+        reached_at = ['2026-10-15T09:10:00Z', '2026-10-15T09:25:30Z']
+        response = self.client.post(self.url, {**self.body, 'reached_at': reached_at}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            RouteSummary.objects.get().reached_at,
+            [datetime(2026, 10, 15, 9, 10, tzinfo=timezone.utc), datetime(2026, 10, 15, 9, 25, 30, tzinfo=timezone.utc)],
+        )
+        self.assertEqual(response.data['reached_at'], reached_at)
+
+    def test_reached_at_is_optional_and_empty_by_default(self) -> None:
+        response = self.client.post(self.url, self.body, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['reached_at'], [])
+
+    def test_rejects_a_reached_at_that_is_not_a_list_of_datetimes(self) -> None:
+        for reached_at in ('2026-10-15T09:10:00Z', ['yesterday']):
+            with self.subTest(reached_at=reached_at):
+                response = self.client.post(self.url, {**self.body, 'reached_at': reached_at}, format='json')
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertIn('reached_at', response.data)
+
 
 class RideHistoryApiTests(TestCase):
     def setUp(self) -> None:
@@ -175,6 +197,15 @@ class RideHistoryApiTests(TestCase):
         self.assertEqual(response.data['max_speed'], 20.0)
         self.assertNotIn('min_speed', response.data)
         self.assertNotIn('avg_speed', response.data)
+
+    def test_detail_has_the_checkpoint_times_and_the_list_does_not(self) -> None:
+        summary = self._create_summary([self.rider])
+        summary.reached_at = [summary.start_at + timedelta(minutes=10)]
+        summary.save()
+        detail = self.client.get(reverse('routes:ride_summary_detail', args=[summary.pk]))
+        self.assertEqual(detail.data['reached_at'], ['2026-10-15T09:10:00Z'])
+        listing = self.client.get(reverse('routes:ride_summary_list'))
+        self.assertNotIn('reached_at', listing.data[0])
 
     def test_detail_of_a_ride_the_caller_did_not_take_is_not_found(self) -> None:
         summary = self._create_summary([self.stranger])

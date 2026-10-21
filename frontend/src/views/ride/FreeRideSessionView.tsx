@@ -99,6 +99,7 @@ export default function FreeRideSessionView({ location, rider, groupRide, onLeav
         maxSpeed={maxSpeed}
         route={null}
         coveredKilometres={0}
+        checkpoints={null}
       />
       <FinishFreeRideDialog
         isOpen={isFinishOpen}

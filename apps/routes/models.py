@@ -2,13 +2,14 @@ import uuid
 from collections.abc import Iterable
 
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MaxLengthValidator, MinValueValidator
 from django.db import models
 
 from apps.core.models import TimeStampedModel
 from apps.routes.geometry import calculate_distance_km, calculate_estimated_time
 from apps.routes.group_meta import validate_group_meta
-from apps.routes.validators import validate_points, validate_waypoints
+from apps.routes.validators import MAX_WAYPOINTS, validate_points, validate_waypoints
 
 NAME_MAX_LENGTH = 100
 DESCRIPTION_MAX_LENGTH = 255
@@ -56,6 +57,10 @@ class RouteSummary(TimeStampedModel):
     duration = models.DurationField(editable=False, help_text='Calculated as end_at - start_at.')
     is_finished = models.BooleanField(default=True, help_text='False when the rider quit before the finish.')
     max_speed = models.FloatField(**SPEED_FIELD, help_text='Fastest GPS reading, km/h.')
+    reached_at = ArrayField(
+        models.DateTimeField(), size=MAX_WAYPOINTS, default=list, blank=True,
+        help_text='When the rider reached the start, then each checkpoint, in route order; shorter if some were not reached.',
+    )
     participants = models.ManyToManyField(User, related_name='route_summaries', blank=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='authored_route_summaries')
 

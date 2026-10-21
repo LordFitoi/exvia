@@ -119,6 +119,21 @@ export const trackProgress = (
   return anywhere && anywhere.offset <= ON_TRACK_METERS ? anywhere : null
 }
 
+/** How many checkpoints a route has: its waypoints between the first (the start) and the last (the finish). */
+export const countCheckpoints = (waypoints: readonly Coordinates[]): number => Math.max(0, waypoints.length - 2)
+
+/**
+ * How far along the path, in meters, each point lies (a checkpoint of the route). They are placed in order: a point is
+ * never before the one ahead of it, so a route that passes the same street twice keeps its checkpoints in sequence.
+ */
+export const measureCheckpoints = (path: MeasuredPath, checkpoints: readonly Coordinates[]): number[] => {
+  let from = 0
+  return checkpoints.map((checkpoint) => {
+    from = locateOnPath(path, checkpoint, { from, to: getPathLength(path) })?.distance ?? from
+    return from
+  })
+}
+
 /** The part of the path between two distances, as a line from `fromPoint` to `toPoint`. */
 export const slicePath = (
   path: MeasuredPath,

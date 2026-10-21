@@ -7,6 +7,8 @@ export interface NewRideSummary {
   /** False when the rider quit before the finish. */
   readonly isFinished: boolean
   readonly maxSpeed: number | null
+  /** When the rider reached the start and then each checkpoint, in route order; shorter when some were not reached. */
+  readonly reachedAt: readonly number[]
 }
 
 /** A ride as the history list returns it; the times are ISO 8601 strings. */
@@ -38,5 +40,7 @@ export interface RideSummaryDetail extends RideSummaryListItem {
   readonly author: number
   /** The fastest GPS reading, km/h; null when the device gave no speed. */
   readonly max_speed: number | null
+  /** When the rider reached the start and then each checkpoint, in route order, as ISO 8601 strings. */
+  readonly reached_at: readonly string[]
   readonly participants: readonly Rider[]
 }

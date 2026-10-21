@@ -58,7 +58,8 @@ class RiderSerializer(serializers.ModelSerializer):
 
 class RideSummarySerializer(serializers.ModelSerializer):
     """A `RouteSummary` as exposed by the API. The client sends only `start_at`, `end_at`, the top speed
-    (km/h, optional) and the `group` it rode in (optional, never returned); `duration` is whole seconds;
+    (km/h, optional), when it `reached_at` the start and each checkpoint (optional) and the `group` it rode in (optional,
+    never returned); `duration` is whole seconds;
     `distance` and `estimated_time` are the route's."""
 
     group = serializers.PrimaryKeyRelatedField(
@@ -74,7 +75,7 @@ class RideSummarySerializer(serializers.ModelSerializer):
         model = RouteSummary
         fields = (
             'id', 'route', 'route_name', 'distance', 'estimated_time', 'start_at', 'end_at', 'duration',
-            'is_finished', 'max_speed', 'group', 'author', 'participants', 'created_at',
+            'is_finished', 'max_speed', 'reached_at', 'group', 'author', 'participants', 'created_at',
         )
         read_only_fields = ('id', 'route', 'author', 'created_at')
 
