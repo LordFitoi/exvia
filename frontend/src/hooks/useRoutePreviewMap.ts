@@ -5,7 +5,7 @@ import type { RefObject } from 'react'
 
 import { useMapInstance } from '@/hooks/useMapInstance'
 import type { BaseMap } from '@/services/baseMap'
-import { addEndpointMarkers, addRouteLine, fitPathBounds, updateRouteLine } from '@/services/routeMapLayers'
+import { addRouteLine, addRouteMarkers, fitPathBounds, updateRouteLine } from '@/services/routeMapLayers'
 import type { Coordinates } from '@/types/geolocation'
 
 const PREVIEW_ZOOM = 12
@@ -14,6 +14,8 @@ const PREVIEW_PADDING_PX = 40
 interface RoutePreviewMapOptions {
   accessToken: string | undefined
   path: readonly Coordinates[]
+  /** The points the rider chose, shown as checkpoints; empty when the route has none. */
+  waypoints: readonly Coordinates[]
 }
 
 interface RoutePreviewMapHandle {
@@ -21,10 +23,11 @@ interface RoutePreviewMapHandle {
   hasLoadFailed: boolean
 }
 
-/** A map that shows a whole route: the line, start and finish markers, framed in view. */
+/** A map that shows a whole route: the line, its start, checkpoints and finish markers, framed in view. */
 export const useRoutePreviewMap = ({
   accessToken,
   path,
+  waypoints,
 }: RoutePreviewMapOptions): RoutePreviewMapHandle => {
   const pathRef = useRef(path)
   const hasFittedRef = useRef(false)
@@ -50,9 +53,9 @@ export const useRoutePreviewMap = ({
     // The first fit is instant, because the map has just been created around the route.
     fitPathBounds(mapboxgl, map, path, { padding: PREVIEW_PADDING_PX, isAnimated: hasFittedRef.current })
     hasFittedRef.current = true
-    const markers = addEndpointMarkers(mapboxgl, map, path)
+    const markers = addRouteMarkers(mapboxgl, map, { path, waypoints })
     return () => markers.forEach((marker) => marker.remove())
-  }, [mounted, path])
+  }, [mounted, path, waypoints])
 
   return { containerRef, hasLoadFailed }
 }

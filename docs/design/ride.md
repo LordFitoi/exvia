@@ -42,8 +42,8 @@ one.
 | Quit | `views/ride/ConfirmQuitRideDialog.tsx`, `hooks/useQuitRide.ts` | "Quit this ride?" dialog opened by the X, and saving the unfinished ride before leaving |
 | Routes | `hooks/useMyRoutes.ts` | `GET /api/routes/`, with `reload` |
 | Route | `hooks/useRouteDetail.ts` | `GET /api/routes/<uuid>/` for the selected route, with `retry` |
-| Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start and finish markers, framed in view |
-| Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines, the start and finish markers and the other riders |
+| Preview map | `hooks/useRoutePreviewMap.ts` | Route line, start, checkpoint and finish markers, framed in view |
+| Ride map | `hooks/useRideMap.ts` | Pitched map with 3D buildings, the ride lines, the start, checkpoint and finish markers and the other riders |
 | Group channel | `hooks/useGroupRide.ts`, `hooks/useGroupChannel.ts`, `hooks/useSharePosition.ts`, `services/groupConnection.ts` (over the shared `services/socketConnection.ts`), `services/groupMessages.ts` | Joins the websocket of the group, sends the rider's position every 4 s and collects the others'; see [Group ride](#group-ride) |
 | Riders | `views/ride/RidersControl.tsx`, `views/ride/RidersDialog.tsx`, `views/ride/RiderRow.tsx`, `hooks/useMenuPopover.ts`, `hooks/useRiderRemoval.ts`, `views/ride/InviteRiderDialog.tsx` | The users button under the X and its dialog listing the riders of the ride: locate for the connected ones, invite and remove for the leader; see [Group ride](#group-ride) |
 | Live group | `context/LiveGroupProvider.tsx`, `hooks/useLiveGroup.ts` | The group of the ride, kept up to date while it goes on (riders invited, removed, joined); read by `useGroupRide` and `RidersControl` |
@@ -131,7 +131,8 @@ style guide's [Group rides](../ui-ux/group.html) page.
   screen, which has no exit of its own.
 - The map is pitched at 60 degrees, zoom 16.5, with the buildings of the
   Mapbox streets data extruded (`fill-extrusion`, `services/buildingsLayer.ts`)
-  and the route drawn as in the other maps, with start and finish markers.
+  and the route drawn as in the other maps, with start and finish markers and a numbered
+  checkpoint for every point the rider chose in between (see [Checkpoints](#checkpoints)).
   The grayscale and the light and dark styles are the same as the
   Map tab.
 - The camera faces along the route: the bearing points from the start towards
@@ -259,6 +260,19 @@ style guide's [Group rides](../ui-ux/group.html) page.
   at once with no dialog and no second summary. The tab bar stays hidden, as it is
   in the picker. Nothing is recorded while riding a route (no track, no turn-by-turn); the
   server keeps only the summary of the ride.
+
+## Checkpoints
+
+The points the rider chose when drawing the route (its `waypoints`, see [routes.md](routes.md#waypoints))
+are on the map the whole time, in the picker preview and in ride mode alike (`addRouteMarkers` in
+`services/routeMapLayers.ts`): the start flag, the finish flag, and between them one **numbered marker**
+per point, numbered like in the route creator (the start is 1). They are plain markers, not buttons.
+
+- **Ride mode gets them from the group**: `GroupRouteSerializer` includes `waypoints`, and
+  `RideRoute` carries them, because a member cannot read the leader's route through the route endpoint.
+- **A route without waypoints** (saved before they were stored) shows only the start and the finish.
+- **The shared page of a route** (`/routes/<id>`) does not show them: that endpoint never returned the waypoints
+  ([route-sharing.md](route-sharing.md)).
 
 ## Free ride
 

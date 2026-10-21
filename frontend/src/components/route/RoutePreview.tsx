@@ -32,7 +32,7 @@ export default function RoutePreview({ size, status, route, isFreeMode = false, 
           <span className="icon icon-lg icon-alert"></span>
         </StateView>
       ) : route ? (
-        <PreviewMap path={route.points} />
+        <PreviewMap path={route.points} waypoints={route.waypoints} />
       ) : isFreeMode ? (
         <StateView title="Free mode" description="No route to follow: ride wherever you want.">
           <span className="icon icon-lg icon-navigation"></span>

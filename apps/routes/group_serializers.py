@@ -15,10 +15,10 @@ TOO_MANY_MESSAGE = f'A group has at most {MAX_GROUP_PARTICIPANTS} riders, you in
 
 
 class GroupRouteSerializer(RouteSerializer):
-    """What a group member needs to ride the route: the path, without its author or waypoints."""
+    """What a group member needs to ride the route: the path and the checkpoints, without its author."""
 
     class Meta(RouteSerializer.Meta):
-        fields = ('id', 'name', 'distance', 'estimated_time', 'points')
+        fields = ('id', 'name', 'distance', 'estimated_time', 'points', 'waypoints')
         read_only_fields = fields
 
 

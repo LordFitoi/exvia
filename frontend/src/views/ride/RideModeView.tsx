@@ -65,6 +65,7 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
   const { containerRef, hasLoadFailed, recenter, focusOn, indicators } = useRideMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     path: route.points,
+    waypoints: route.waypoints,
     lines,
     rider,
     riders,

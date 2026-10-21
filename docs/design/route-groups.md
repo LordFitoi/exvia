@@ -108,7 +108,7 @@ has an unknown or inactive username, the caller's own name, or the group would h
 {
   "id": "5b8f...",
   "route": {"id": "2dfd...", "name": "Sunday loop", "distance": 1.2, "estimated_time": 73,
-            "points": [[-3.70, 40.41], [-3.69, 40.42]]},
+            "points": [[-3.70, 40.41], [-3.69, 40.42]], "waypoints": [[-3.70, 40.41], [-3.69, 40.42]]},
   "author": {"id": 3, "username": "owner", "avatar": "/media/avatars/x.jpg"},
   "participants": [
     {"id": 3, "username": "owner", "avatar": "/media/avatars/x.jpg", "status": "accepted"},
@@ -118,7 +118,7 @@ has an unknown or inactive username, the caller's own name, or the group would h
 }
 ```
 
-`route` is `null` in free mode. It carries the path because an invitee cannot read the
+`route` is `null` in free mode. It carries the path (and the `waypoints`, drawn as checkpoints on the ride map) because an invitee cannot read the
 author's route through `GET /api/routes/<uuid>/` (that only returns the caller's own).
 `avatar` is a site-relative URL (`/media/...`, forwarded to the backend by the frontend's
 rewrite) or `null`, which the client shows as initials. Groups the caller is not in are `404`.

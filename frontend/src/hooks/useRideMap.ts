@@ -14,7 +14,7 @@ import { addBuildingsLayer } from '@/services/buildingsLayer'
 import type { EdgeIndicator } from '@/services/edgeIndicators'
 import type { RideLines } from '@/services/rideLines'
 import { addRideLines, updateRideLines } from '@/services/rideMapLayers'
-import { addEndpointMarkers } from '@/services/routeMapLayers'
+import { addRouteMarkers } from '@/services/routeMapLayers'
 import type { RiderMarkerData } from '@/services/riderMarkers'
 import type { Coordinates } from '@/types/geolocation'
 
@@ -26,6 +26,8 @@ const LOOK_AHEAD_POINTS = 10
 interface RideMapOptions {
   accessToken: string | undefined
   path: readonly Coordinates[]
+  /** The points the rider chose, shown as checkpoints. */
+  waypoints: readonly Coordinates[]
   lines: RideLines
   /** The rider's position, or null while it is unknown. */
   rider: Coordinates | null
@@ -51,7 +53,7 @@ const getRouteBearing = (path: readonly Coordinates[]): number =>
  * rider (or the route start), facing along the route; then it follows the rider, turning to face
  * the direction they move in, until the map is dragged.
  */
-export const useRideMap = ({ accessToken, path, lines, rider, riders }: RideMapOptions): RideMapHandle => {
+export const useRideMap = ({ accessToken, path, waypoints, lines, rider, riders }: RideMapOptions): RideMapHandle => {
   const linesRef = useRef(lines)
 
   useEffect(() => {
@@ -78,9 +80,9 @@ export const useRideMap = ({ accessToken, path, lines, rider, riders }: RideMapO
 
   useEffect(() => {
     if (!mounted) return
-    const markers = addEndpointMarkers(mounted.mapboxgl, mounted.map, path)
+    const markers = addRouteMarkers(mounted.mapboxgl, mounted.map, { path, waypoints })
     return () => markers.forEach((marker) => marker.remove())
-  }, [mounted, path])
+  }, [mounted, path, waypoints])
 
   useEffect(() => {
     if (mounted) updateRideLines(mounted.map, lines)

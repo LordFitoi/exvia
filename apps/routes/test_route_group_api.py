@@ -42,6 +42,12 @@ class GroupCreateTests(GroupApiTestCase):
         self.assertEqual(data['route']['points'], EQUATOR_STRAIGHT_LINE)
         self.assertEqual(data['author']['username'], 'owner')
 
+    def test_the_route_of_the_group_carries_its_waypoints_for_the_checkpoints(self) -> None:
+        self.route.waypoints = EQUATOR_STRAIGHT_LINE
+        self.route.save()
+        data = self._create_group(route=str(self.route.id))
+        self.assertEqual(data['route']['waypoints'], EQUATOR_STRAIGHT_LINE)
+
     def test_notifies_all_the_invitees_with_one_event(self) -> None:
         data = self._create_group(route=str(self.route.id), invitees=['ana', 'ben'])
         event = NotificationEvent.objects.get()

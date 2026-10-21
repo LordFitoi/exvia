@@ -45,6 +45,6 @@ export interface DraftPoint {
   readonly path: readonly Coordinates[]
 }
 
-/** What a ride needs of its route: the path and the facts of the summary. A group member gets this
- * for the route of the group without owning it, so it has no description or waypoints. */
-export type RideRoute = Pick<RouteDetail, 'id' | 'name' | 'distance' | 'estimated_time' | 'points'>
+/** What a ride needs of its route: the path, the checkpoints and the facts of the summary. A group member
+ * gets this for the route of the group without owning it, so it has no description. */
+export type RideRoute = Pick<RouteDetail, 'id' | 'name' | 'distance' | 'estimated_time' | 'points' | 'waypoints'>

@@ -96,17 +96,41 @@ const createEndpointElement = (className: string, iconClass: string, label: stri
   return element
 }
 
-/** Start and finish markers for a path shown without its points. */
-export const addEndpointMarkers = (
+const createCheckpointElement = (number: number): HTMLSpanElement => {
+  const element = document.createElement('span')
+  element.className = POINT_MARKER_CLASS
+  element.role = 'img'
+  element.ariaLabel = `Checkpoint ${number}`
+  element.textContent = String(number)
+  return element
+}
+
+interface RouteMarkersOptions {
+  readonly path: readonly Coordinates[]
+  /** The points the rider chose; empty for a route saved before they were stored. */
+  readonly waypoints: readonly Coordinates[]
+}
+
+/**
+ * Start and finish markers, and a numbered marker for every point chosen in between (numbered like the
+ * route creator does, so the start is 1). A route without waypoints shows only the start and the finish.
+ */
+export const addRouteMarkers = (
   mapboxgl: MapboxModule,
   map: MapboxMap,
-  path: readonly Coordinates[],
+  { path, waypoints }: RouteMarkersOptions,
 ): Marker[] => {
-  const start = createEndpointElement('marker marker-start', 'icon-flag', 'Start')
-  const finish = createEndpointElement('marker marker-primary', 'icon-flag-checkered', 'Finish')
+  const checkpoints = waypoints.slice(1, -1).map((coordinates, index) => ({
+    element: createCheckpointElement(index + 2),
+    coordinates,
+  }))
   const places = [
-    { element: start, coordinates: path[0] },
-    { element: finish, coordinates: path[path.length - 1] },
+    { element: createEndpointElement('marker marker-start', 'icon-flag', 'Start'), coordinates: path[0] },
+    ...checkpoints,
+    {
+      element: createEndpointElement('marker marker-primary', 'icon-flag-checkered', 'Finish'),
+      coordinates: path[path.length - 1],
+    },
   ]
   return places.map(({ element, coordinates }) =>
     new mapboxgl.Marker({ element, anchor: 'top-left' }).setLngLat(toLngLat(coordinates)).addTo(map),

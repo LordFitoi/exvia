@@ -25,7 +25,10 @@ const parseRideRoute = (value: unknown): RideRoute | null => {
   if (typeof distance !== 'number' || typeof estimated_time !== 'number') return null
   const points = value.points.map(parseLngLat)
   if (!points.every((point) => point !== null)) return null
-  return { id, name, distance, estimated_time, points }
+  // Routes saved before waypoints were stored have none: their map shows only the start and the finish.
+  const waypoints = Array.isArray(value.waypoints) ? value.waypoints.map(parseLngLat) : []
+  if (!waypoints.every((waypoint) => waypoint !== null)) return null
+  return { id, name, distance, estimated_time, points, waypoints }
 }
 
 /** Reads a group from the API; null when it is not shaped as expected. `route` is null in free mode. */
