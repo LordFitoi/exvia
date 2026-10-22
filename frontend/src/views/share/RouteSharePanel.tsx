@@ -1,5 +1,6 @@
 import { formatDistance, formatDuration, formatShortDate } from '@/services/formatRoute'
 import type { SharedRoute } from '@/types/sharedRoute'
+import RouteShareActions from '@/views/share/RouteShareActions'
 
 interface RouteSharePanelProps {
   route: SharedRoute
@@ -43,6 +44,7 @@ export default function RouteSharePanel({ route }: RouteSharePanelProps) {
         <RouteFact value={formatDuration(estimated_time)} label="Est. time" />
         <RouteFact value={formatShortDate(created_at)} label="Created" />
       </div>
+      <RouteShareActions path={route.points} />
     </section>
   )
 }

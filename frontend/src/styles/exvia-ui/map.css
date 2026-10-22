@@ -157,6 +157,9 @@
   box-shadow: var(--shadow-sheet);
 }
 
+/* Holds the room of the panel's one action button while it is not known yet, so the map does not resize */
+.share-actions-placeholder { block-size: var(--tap-target); }
+
 .map-panel-header {
   display: flex;
   align-items: center;

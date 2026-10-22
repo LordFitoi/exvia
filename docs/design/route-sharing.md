@@ -26,7 +26,9 @@ given. The page is `noindex` for the same reason (see
 | Page | `app/routes/[id]/page.tsx` | `generateMetadata`, and the page behind `<Suspense>` |
 | Preview image | `app/routes/[id]/opengraph-image.ts` | The picture a link preview shows |
 | View | `views/share/RouteShareView.tsx` | Map on top, panel below |
-| Panel | `views/share/RouteSharePanel.tsx` | Name, author, distance, estimated time, date, description |
+| Panel | `views/share/RouteSharePanel.tsx` | Name, author, distance, estimated time, date, description, and the action button |
+| Action | `views/share/RouteShareActions.tsx` | Close for a signed-in rider, Open in Google Maps for anyone else |
+| Google Maps link | `services/googleMapsUrl.ts` | Builds the directions link from the path |
 | Map | `components/route/PreviewMap.tsx` | The route map, shared with the route list and the ride picker |
 | Image URL | `services/staticMapUrl.ts`, `polyline.ts`, `simplifyPath.ts` | Builds the Mapbox Static Images URL |
 | Site URL | `services/siteConfig.ts` | `SITE_URL`, the base of every absolute URL in the metadata |
@@ -76,6 +78,35 @@ unchanged and still only returns the caller's own routes.
   page and its metadata from asking the API twice. A failed request throws and
   is not cached. The path is validated as a UUID first, so the URL segment
   can never change the backend path being fetched.
+
+## Actions
+
+The panel ends with one full-width button, chosen on the client from the session
+(`AuthProvider` is in the root layout, so it is available on this public page):
+
+- **Signed in: Close.** Goes back to where the rider came from (`router.back()`),
+  or Home when the link was opened directly (no history). A rider reaches the page
+  from a notice's attached route ([clans.md](clans.md#attached-route)).
+- **Anonymous: Open in Google Maps.** Opens a `google.com/maps/dir/?api=1` link in a
+  new tab, with no API key. While the session is still being restored a placeholder
+  keeps the button's height, so the map does not resize when it appears.
+
+### The Google Maps link
+
+`origin`, `destination`, `waypoints` (joined with `|`) and `travelmode=driving`, all
+as `lat,lng`. The mode is `driving` on purpose: Google has no cycling directions in many
+countries, and with `bicycling` it shows the points there but draws no line. Google Maps URLs cannot carry a path, only places to pass through, and
+take at most **9 waypoints, or 3 on mobile browsers** (checked against the
+[Maps URLs docs](https://developers.google.com/maps/documentation/urls/get-started)).
+So the stored path (thousands of points) is reduced with `simplifyPath`
+(Douglas-Peucker) to the start, the finish and the points that stray farthest from a
+straight line, searching for the smallest tolerance that fits the limit. Mobile is
+detected from the user agent when the button is tapped.
+
+**It is an approximation.** Google plans the streets between those points itself, so
+the route passes through the same corners but may take other streets, most so on a
+long route with 3 waypoints. The `waypoints` the rider chose are not used because
+this endpoint deliberately does not expose them (see [API](#api)).
 
 ## Metadata
 
