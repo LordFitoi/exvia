@@ -136,17 +136,18 @@
   --blur-bar: blur(6px);
   --blur-overlay: blur(20px);
 
-  /* Map surfaces: monochrome, only neutral greys. The ground is a light neutral and the streets
-     are darker than it so they read first; parks, water and buildings are slight shifts of the
-     ground, so the route is the only color */
-  --map-land: light-dark(var(--color-grey-300), color-mix(in srgb, var(--color-grey-700) 60%, var(--color-grey-800)));
+  /* Map surfaces: monochrome, built from the UI's own neutrals so the map reads as part of the
+     theme. The ground is a mid neutral, a step apart from the sheets and bars above it; the streets
+     are the darkest thing on it, so they read first; parks, water and buildings are slight shifts
+     of the ground, and the route is the only color */
+  --map-land: light-dark(var(--color-grey-300), color-mix(in srgb, var(--color-grey-700) 60%, var(--color-surface)));
   --map-building: color-mix(in srgb, var(--color-grey-500) var(--tint-soft), var(--map-land));
-  --map-park: color-mix(in srgb, var(--color-grey-900) 6%, var(--map-land));
+  --map-park: color-mix(in srgb, var(--color-bg) 8%, var(--map-land));
   --map-water: color-mix(in srgb, var(--color-grey-900) 28%, var(--map-land));
-  --map-road: light-dark(var(--color-grey-500), var(--color-grey-900));
-  --map-road-casing: color-mix(in srgb, var(--map-road) 70%, #000000);
-  --map-road-major: light-dark(var(--color-grey-600), color-mix(in srgb, var(--color-grey-900) 55%, #000000));
-  --map-label: light-dark(var(--color-grey-700), var(--color-grey-200));
+  --map-road: light-dark(var(--color-grey-600), color-mix(in srgb, var(--color-bg) 70%, #000000));
+  --map-road-casing: color-mix(in srgb, var(--map-road) 60%, #000000);
+  --map-road-major: light-dark(var(--color-grey-700), color-mix(in srgb, var(--color-bg) 40%, #000000));
+  --map-label: light-dark(var(--color-grey-800), var(--color-grey-200));
 
   /* Typography: Public Sans body, Barlow display (h1 to h3), mono for plates */
   --font-sans: "Public Sans Variable", "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto,

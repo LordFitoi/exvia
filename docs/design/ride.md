@@ -250,8 +250,8 @@ style guide's [Group rides](../ui-ux/group.html) page.
   needs a secure context (HTTPS or localhost).
 - **Locate button placement.** The recenter button is the one control a rider
   needs while moving, so it sits **centered above the stats strip** (`map-control-bottom-center`,
-  a filled primary round button, since the raised, translucent one blends into
-  the map), within reach of either thumb whichever hand is on the
+  a `map-controls` block of one, so it is the same translucent button as the
+  other map controls), within reach of either thumb whichever hand is on the
   throttle. The rarely used **X** stays at the top right, out of the way of
   accidental taps.
 - **X** (top right, `Quit ride`) asks first while the ride is in progress:

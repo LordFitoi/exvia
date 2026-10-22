@@ -93,7 +93,8 @@
 }
 
 /* A lone control centered at the bottom of the map, right above the strip under
-   it: the one a rider needs mid-ride, reachable with either thumb */
+   it: the one a rider needs mid-ride, reachable with either thumb. It is a
+   `map-controls` block of one, so it matches the other map buttons */
 .map-control-bottom-center {
   position: absolute;
   inset-inline-start: 50%;

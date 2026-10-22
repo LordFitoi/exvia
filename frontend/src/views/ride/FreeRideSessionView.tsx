@@ -84,14 +84,16 @@ export default function FreeRideSessionView({ location, rider, groupRide, onLeav
             <ChangeRouteControl rider={rider} />
           </div>
         </div>
-        <button
-          className="icon-button icon-button-primary map-control-bottom-center"
-          type="button"
-          aria-label="Center on my location"
-          onClick={recenter}
-        >
-          <span className="icon icon-locate" aria-hidden="true"></span>
-        </button>
+        <div className="map-controls map-control-bottom-center">
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="Center on my location"
+            onClick={recenter}
+          >
+            <span className="icon icon-locate" aria-hidden="true"></span>
+          </button>
+        </div>
       </div>
       <RideStatsPanel
         elapsedSeconds={elapsedSeconds}
