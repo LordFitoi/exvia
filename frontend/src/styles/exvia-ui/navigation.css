@@ -92,7 +92,6 @@
   border-radius: var(--radius-full);
   background: var(--color-primary);
   color: var(--color-on-primary);
-  box-shadow: var(--shadow-primary);
 }
 
 .tab-bar-action[aria-current="page"] .tab-bar-action-icon {
