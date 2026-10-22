@@ -60,7 +60,7 @@ one.
 | Stats strip | `views/ride/RideStatsPanel.tsx` | The time and current speed under the map, and a button for all the other stats of the ride |
 | Summary | `views/ride/RideSummarySheet.tsx` | The "You've arrived!" modal sheet with time, distance and average speed |
 | Wake lock | `hooks/useWakeLock.ts` | Keeps the screen on while riding (Screen Wake Lock API) |
-| Way to start | `hooks/useApproachPath.ts` | Street path from the rider to the route start (Directions API) |
+| Way to start | `hooks/useStreetRoute.ts` | Street route (path, distance, duration) from the rider to a point, asked again every 50 m: the way to the route start here, the way to the place in a [ride to a place](map.md#riding-to-a-place) (Directions API) |
 | Track maths | `services/routeProgress.ts`, `services/rideLines.ts` | Distance along the track, and the split of the track |
 | Ride layers | `services/rideMapLayers.ts` | The Mapbox line layers of a ride |
 | API | `services/routesApi.ts`, `services/rideSummariesApi.ts` | `fetchRoutes`, `fetchRoute` (and `createRoute`); `createRideSummary` |
@@ -332,6 +332,12 @@ by arrival along the track (`useRideArrival`).
 - **Saved with the ride.** The times go as `reached_at` in the save at the finish (`useSaveRideSummary`) and in the
   unfinished one of a quit (`useQuitRide`, with the checkpoints reached so far); see
   [routes.md](routes.md#route-summaries). A free ride has no checkpoints.
+
+## Riding to a place
+
+The Map tab's search starts a ride to a picked place with the screen of ride mode but no route, group or
+summary: the path is recalculated from the rider's current position. See
+[map.md](map.md#riding-to-a-place).
 
 ## Free ride
 

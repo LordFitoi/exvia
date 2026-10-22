@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 
 import Toast from '@/components/feedback/Toast'
+import DestinationRideView from '@/views/map/DestinationRideView'
 import RideSummariesView from '@/views/history/RideSummariesView'
 import MapStatusView from '@/views/map/MapStatusView'
 import UserMap from '@/views/map/UserMap'
@@ -13,6 +14,7 @@ import { useStreetPosition } from '@/hooks/useStreetPosition'
 import { formatDistance, formatDuration } from '@/services/formatRoute'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { GeolocationStatus, StreetPositionStatus } from '@/types/geolocation'
+import type { Place } from '@/types/place'
 import type { SavedRoute } from '@/types/route'
 
 interface StatusMessage {
@@ -69,6 +71,7 @@ export default function MapOverview() {
   })
 
   const [mode, setMode] = useState<MapMode>('browse')
+  const [destination, setDestination] = useState<Place | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
 
   const dismissSavedMessage = useCallback(() => setSavedMessage(null), [])
@@ -78,6 +81,17 @@ export default function MapOverview() {
     setMode('browse')
   }
 
+  if (street.coordinates && destination) {
+    return (
+      <DestinationRideView
+        key={destination.id}
+        destination={destination}
+        location={location}
+        rider={street.coordinates}
+        onQuit={() => setDestination(null)}
+      />
+    )
+  }
   if (mode === 'history') return <RideSummariesView onClose={() => setMode('browse')} />
   if (mode === 'list') {
     return <RouteListView onClose={() => setMode('browse')} onCreateRoute={() => setMode('create')} />
@@ -98,6 +112,7 @@ export default function MapOverview() {
         onCreateRoute={() => setMode('create')}
         onPreviewRoutes={() => setMode('list')}
         onViewHistory={() => setMode('history')}
+        onSelectPlace={setDestination}
       >
         {savedMessage && <Toast message={savedMessage} onDismiss={dismissSavedMessage} />}
       </UserMap>

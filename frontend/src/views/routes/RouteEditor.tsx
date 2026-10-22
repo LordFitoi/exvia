@@ -100,7 +100,7 @@ export default function RouteEditor({
       <h1 className="visually-hidden">{title}</h1>
       <div ref={containerRef} className="map-canvas"></div>
       <div className="map-overlay">
-        <PlaceSearch proximity={userPosition ?? center} onSelect={handlePlaceSelect} />
+        <PlaceSearch proximity={userPosition ?? center} label="Search a place to add" onSelect={handlePlaceSelect} />
         <div className="map-controls">
           <button className="icon-button" type="button" aria-label={cancelLabel} onClick={onClose}>
             <span className="icon icon-x" aria-hidden="true"></span>

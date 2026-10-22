@@ -17,6 +17,8 @@ const CATEGORY_HINT = 'Category · nearest first'
 interface PlaceSearchProps {
   /** Places near this spot are offered first. */
   proximity: Coordinates
+  /** What the field is for, for screen readers: the visible placeholder only names what can be typed. */
+  label: string
   onSelect: (place: Place) => void
 }
 
@@ -52,7 +54,7 @@ const handlePlaceKey = (event: KeyboardEvent<HTMLInputElement>, completion: Plac
  * The search field over the map: places, addresses and categories (gas stations, restaurants) that
  * match what is typed are offered under it (WAI-ARIA combobox). Picking a category lists its places.
  */
-export default function PlaceSearch({ proximity, onSelect }: PlaceSearchProps) {
+export default function PlaceSearch({ proximity, label, onSelect }: PlaceSearchProps) {
   const listId = useId()
   const completion = usePlaceCompletion({ accessToken: MAPBOX_ACCESS_TOKEN, proximity, onSelect })
   const { activeSuggestion } = completion
@@ -66,7 +68,7 @@ export default function PlaceSearch({ proximity, onSelect }: PlaceSearchProps) {
         className="input input-search"
         type="search"
         role="combobox"
-        aria-label="Search a place to add"
+        aria-label={label}
         placeholder="Address, place or category"
         aria-expanded={completion.isVisible}
         aria-controls={listId}

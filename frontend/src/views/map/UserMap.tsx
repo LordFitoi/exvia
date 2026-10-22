@@ -6,15 +6,19 @@ import type { ReactNode } from 'react'
 
 import MapStatusView from '@/views/map/MapStatusView'
 import RouteMenu from '@/views/map/RouteMenu'
+import PlaceSearch from '@/views/routes/PlaceSearch'
 import { useUserMap } from '@/hooks/useUserMap'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { Coordinates } from '@/types/geolocation'
+import type { Place } from '@/types/place'
 
 interface UserMapProps {
   coordinates: Coordinates
   onCreateRoute: () => void
   onPreviewRoutes: () => void
   onViewHistory: () => void
+  /** A place was picked in the search: the rider wants to ride there. */
+  onSelectPlace: (place: Place) => void
   /** Floating notices, rendered at the top of the map. */
   children?: ReactNode
 }
@@ -24,6 +28,7 @@ export default function UserMap({
   onCreateRoute,
   onPreviewRoutes,
   onViewHistory,
+  onSelectPlace,
   children,
 }: UserMapProps) {
   const { containerRef, hasLoadFailed, recenter } = useUserMap({
@@ -45,6 +50,7 @@ export default function UserMap({
       <h1 className="visually-hidden">Map</h1>
       <div ref={containerRef} className="map-canvas"></div>
       <div className="map-overlay">
+        <PlaceSearch proximity={coordinates} label="Search a place to ride to" onSelect={onSelectPlace} />
         {children}
         <div className="map-controls">
           <button className="icon-button" type="button" aria-label="Center on my location" onClick={recenter}>

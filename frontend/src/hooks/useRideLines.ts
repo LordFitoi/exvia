@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 
-import { useApproachPath } from '@/hooks/useApproachPath'
+import { useStreetRoute } from '@/hooks/useStreetRoute'
 import type { RideProgress } from '@/hooks/useRideProgress'
 import { splitTrack } from '@/services/rideLines'
 import type { RideLines } from '@/services/rideLines'
@@ -24,7 +24,7 @@ export const useRideLines = ({ accessToken, path, progress, rider }: RideLinesOp
   const { measured, reached } = progress
 
   const isApproaching = rider !== null && reached === null
-  const approach = useApproachPath({
+  const { path: approach } = useStreetRoute({
     accessToken,
     from: isApproaching ? rider : null,
     to: path[0],

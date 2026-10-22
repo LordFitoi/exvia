@@ -96,6 +96,15 @@ const createEndpointElement = (className: string, iconClass: string, label: stri
   return element
 }
 
+const createFinishElement = (): HTMLSpanElement =>
+  createEndpointElement('marker marker-primary', 'icon-flag-checkered', 'Finish')
+
+/** The checkered-flag marker alone, for a destination that has no start or checkpoints. */
+export const addFinishMarker = (mapboxgl: MapboxModule, map: MapboxMap, coordinates: Coordinates): Marker =>
+  new mapboxgl.Marker({ element: createFinishElement(), anchor: 'top-left' })
+    .setLngLat(toLngLat(coordinates))
+    .addTo(map)
+
 const createCheckpointElement = (number: number): HTMLSpanElement => {
   const element = document.createElement('span')
   element.className = POINT_MARKER_CLASS
@@ -127,10 +136,7 @@ export const addRouteMarkers = (
   const places = [
     { element: createEndpointElement('marker marker-start', 'icon-flag', 'Start'), coordinates: path[0] },
     ...checkpoints,
-    {
-      element: createEndpointElement('marker marker-primary', 'icon-flag-checkered', 'Finish'),
-      coordinates: path[path.length - 1],
-    },
+    { element: createFinishElement(), coordinates: path[path.length - 1] },
   ]
   return places.map(({ element, coordinates }) =>
     new mapboxgl.Marker({ element, anchor: 'top-left' }).setLngLat(toLngLat(coordinates)).addTo(map),

@@ -3,7 +3,7 @@
 The Map tab in [frontend/](../../frontend/): a full-bleed grayscale
 [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/) map centered on the
 rider, with a dot and a "You" label at their current position, always
-snapped to the nearest street, and a button that opens the
+snapped to the nearest street, a [place search](#riding-to-a-place) at the top and a button that opens the
 [route creator](#route-creator). The shell and
 tab bar are described in [frontend-screens.md](frontend-screens.md); the map
 components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
@@ -22,6 +22,8 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 | Position | `hooks/useGeolocation.ts` | `watchPosition` state: `pending`, `ready`, `denied`, `unavailable` |
 | Street snap | `hooks/useStreetPosition.ts` | Snaps each GPS fix to the nearest street; keeps the last street position |
 | Snap request | `services/streetSnapApi.ts` | Mapbox Directions call that returns the snapped point, or `null` |
+| Search | `views/routes/PlaceSearch.tsx` | The same place search as the route creator, at the top of the map; picking a place starts a [ride to it](#riding-to-a-place) |
+| Destination ride | `views/map/DestinationRideView.tsx`, `hooks/useDestinationMap.ts`, `hooks/useDestinationArrival.ts` | Ride mode towards the picked place and its arrival summary (`views/map/DestinationSummarySheet.tsx`) |
 | Mapbox | `hooks/useUserMap.ts` | Creates the map and the "You" marker, keeps the marker on the latest position |
 | Map instance | `hooks/useMapInstance.ts` | Creates a map once the token is known, keeps it sized to its container, removes it on unmount; used by the creator and the [Ride](ride.md) maps |
 | Base map | `services/baseMap.ts` | Shared by both maps: dynamic `mapbox-gl` import, style following the color scheme, 401 handling, the "You" marker element |
@@ -62,6 +64,40 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 - Failures: a rejected import or a 401 from Mapbox (bad token) shows "Map
   unavailable"; a missing token logs to the console and shows the same
   message. Other tile errors are ignored (Mapbox retries them).
+
+## Riding to a place
+
+The search field of the [route creator](#route-creator) (`PlaceSearch`, same services, same 100 km
+nearest-first list and categories) is also at the top of the map, over the controls, searching near the
+rider's street position. Picking a **place** (a category row only lists its places, as there) does not add a point:
+it opens **ride mode towards that place** in place of the map (`MapOverview` keeps the picked `Place`;
+`key` is the place id, so a new pick restarts the ride).
+
+- **The path is never stored or drawn from a saved route.** `useStreetRoute` asks Mapbox Directions for the
+  street route (`fetchStreetRoute`: path, distance and duration) **from the rider's current position to the
+  place**, and asks again once the rider has moved 50 m from the spot it was last asked for, so the line follows
+  them when they take another street. The previous route stays until the new one arrives; with no street route
+  it is empty. The destination is not snapped by the app:
+  Directions puts it on the nearest street, so the line ends there.
+- **Same screen as [ride mode](ride.md#ride-mode)**: pitched 3D map with buildings that follows the rider and turns
+  to their heading (it starts facing the place), the path in the remaining-track color, a checkered finish flag on
+  the place, the stats strip, the
+  locate button, the screen kept on and the tab bar hidden. It is **solo and not recorded**, like a
+  [free ride](ride.md#free-ride): no group, no websocket, no ride summary saved.
+- **Stats** (`RideStatsPanel` with `isToGo`; there are no checkpoints): the strip shows time and speed, and the
+  expanded grid **Distance left** and **Time left** (the Directions distance and duration of the current route,
+  so exact to the 50 m between requests), **Avg km/h** and **Max km/h**. The average is the kilometres the rider has
+  covered over the elapsed time. `useRideDistance` adds up the rider's street-position moves of at least 10 m,
+  ignoring smaller ones as GPS noise, so a detour counts and standing still does not. At the place the distance
+  and time left read 0.
+- **Arrival** (`useDestinationArrival`): within 50 m, in a straight line, of the end of the path (or of the place
+  while the path has not loaded) the phone vibrates, the clock, the distance covered and the top speed freeze, and
+  `DestinationSummarySheet` opens: the "You've arrived!" modal sheet of [ride mode](ride.md#ride-mode) with the
+  place name and four `route-stats`: **Time**, **Distance** (the kilometres covered, which stop counting at the
+  arrival, so they fall up to 50 m short of the place), **Avg km/h** and **Max km/h**. **Done**, the X and Esc all
+  close it **and leave the ride, back to the map**. The summary is only shown: a ride to a place has no route, so
+  there is nothing to save it against, and it is lost once closed. The X on the map (**Quit ride**) leaves at any
+  time with no confirmation and no summary.
 
 ## Route creator
 

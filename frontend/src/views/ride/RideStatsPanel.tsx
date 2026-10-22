@@ -36,6 +36,8 @@ interface RideStatsPanelProps {
   maxSpeed: number | null
   /** The route being ridden, or null in free mode, which has no route stats. */
   route: Pick<RideRoute, 'distance' | 'estimated_time'> | null
+  /** True when `route` holds what is left to the destination, not a whole route's figures. */
+  isToGo?: boolean
   /** The kilometres covered so far, which the average speed of the ride is worked out from. */
   coveredKilometres: number
   /** The checkpoints of the route and when each was reached so far; null in free mode, which has none. */
@@ -51,6 +53,7 @@ export default function RideStatsPanel({
   speed,
   maxSpeed,
   route,
+  isToGo = false,
   coveredKilometres,
   checkpoints,
 }: RideStatsPanelProps) {
@@ -76,8 +79,8 @@ export default function RideStatsPanel({
       <div className="ride-panel-details route-stats" id={detailsId} hidden={!isExpanded}>
         {route && (
           <>
-            <RideStat value={formatDistance(route.distance)} label="Distance" />
-            <RideStat value={formatDuration(route.estimated_time)} label="Estimated" />
+            <RideStat value={formatDistance(route.distance)} label={isToGo ? 'Distance left' : 'Distance'} />
+            <RideStat value={formatDuration(route.estimated_time)} label={isToGo ? 'Time left' : 'Estimated'} />
             <RideStat value={formatAverageSpeed(coveredKilometres, elapsedSeconds)} label="Avg km/h" />
           </>
         )}
