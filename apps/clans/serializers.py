@@ -4,10 +4,13 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 from apps.clans.models import ClanGroup, ClanInvitation, ClanNotice
+from apps.routes.models import Route
+from apps.routes.serializers import RouteSerializer
 
 UNKNOWN_USER_MESSAGE = 'No user with this username.'
 ALREADY_MEMBER_MESSAGE = 'This user is already a member of the clan.'
 ALREADY_INVITED_MESSAGE = 'This user already has a pending invitation to the clan.'
+NOT_YOUR_ROUTE_MESSAGE = 'You can only attach a route you drew.'
 
 
 class MemberSerializer(serializers.ModelSerializer):
@@ -36,16 +39,35 @@ class ClanDetailSerializer(ClanSerializer):
         fields = (*ClanSerializer.Meta.fields, 'members')
 
 
+class NoticeRouteSerializer(RouteSerializer):
+    """The route attached to a notice: what a list row shows, without its path."""
+
+    class Meta(RouteSerializer.Meta):
+        fields = ('id', 'name', 'distance', 'estimated_time')
+        read_only_fields = fields
+
+
 class NoticeSerializer(serializers.ModelSerializer):
-    """A clan notice; the client sends only `title` and `description`."""
+    """A clan notice; the client sends `title`, `description` and optionally `route_id`, one of its own routes."""
 
     clan_name = serializers.CharField(source='clan.name', read_only=True)
     author = MemberSerializer(read_only=True)
+    route = NoticeRouteSerializer(read_only=True)
+    route_id = serializers.PrimaryKeyRelatedField(
+        source='route', queryset=Route.objects.all(), write_only=True, required=False, allow_null=True,
+    )
 
     class Meta:
         model = ClanNotice
-        fields = ('id', 'clan', 'clan_name', 'author', 'title', 'description', 'created_at')
+        fields = (
+            'id', 'clan', 'clan_name', 'author', 'title', 'description', 'route', 'route_id', 'created_at',
+        )
         read_only_fields = ('id', 'clan', 'created_at')
+
+    def validate_route_id(self, route: Route | None) -> Route | None:
+        if route is not None and route.author_id != self.context['request'].user.pk:
+            raise serializers.ValidationError(NOT_YOUR_ROUTE_MESSAGE)
+        return route
 
 
 class InvitationCreateSerializer(serializers.Serializer):

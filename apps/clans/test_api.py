@@ -5,8 +5,10 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.clans.models import ClanGroup, ClanInvitation, ClanNotice
+from apps.routes.models import Route
 
 PASSWORD = 's3cr3t-pass'
+ROUTE_POINTS = [[-3.7038, 40.4168], [-3.6912, 40.4221]]
 
 
 def create_clan(owner: User, name: str = 'Night Riders') -> ClanGroup:
@@ -104,6 +106,117 @@ class NoticeApiTests(ClanApiTestCase):
         response = self.client.get(reverse('clans:feed_notice_list'))
 
         self.assertEqual([notice['title'] for notice in response.data], ['Dawn Patrol', 'Night Riders'])
+
+
+class NoticeRouteTests(ClanApiTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.route = Route.objects.create(name='Sunday loop', points=ROUTE_POINTS, author=self.member)
+        self.foreign_route = Route.objects.create(name='Theirs', points=ROUTE_POINTS, author=self.outsider)
+        self.list_url = reverse('clans:clan_notice_list', args=[self.clan.pk])
+
+    def test_member_attaches_own_route_when_posting(self) -> None:
+        response = self.client.post(
+            self.list_url, {'title': 'Ride', 'description': 'Join.', 'route_id': str(self.route.pk)}, format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(ClanNotice.objects.get().route, self.route)
+        self.assertEqual(response.data['route']['name'], 'Sunday loop')
+        self.assertEqual(set(response.data['route']), {'id', 'name', 'distance', 'estimated_time'})
+
+    def test_cannot_attach_a_route_of_someone_else(self) -> None:
+        response = self.client.post(
+            self.list_url,
+            {'title': 'Ride', 'description': 'Join.', 'route_id': str(self.foreign_route.pk)}, format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('route_id', response.data)
+        self.assertFalse(ClanNotice.objects.exists())
+
+    def test_notice_without_route_has_none(self) -> None:
+        response = self.client.post(self.list_url, {'title': 'Hi', 'description': 'All.'}, format='json')
+
+        self.assertIsNone(response.data['route'])
+
+    def test_deleting_the_route_keeps_the_notice(self) -> None:
+        notice = ClanNotice.objects.create(
+            clan=self.clan, author=self.member, title='Ride', description='x', route=self.route,
+        )
+
+        self.route.delete()
+
+        notice.refresh_from_db()
+        self.assertIsNone(notice.route)
+
+
+class NoticeUpdateTests(ClanApiTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.notice = ClanNotice.objects.create(
+            clan=self.clan, author=self.member, title='Old', description='Old text.',
+        )
+        self.route = Route.objects.create(name='Sunday loop', points=ROUTE_POINTS, author=self.member)
+        self.url = reverse('clans:clan_notice_update', args=[self.clan.pk, self.notice.pk])
+
+    def test_author_edits_text_and_attaches_a_route(self) -> None:
+        response = self.client.patch(
+            self.url, {'title': 'New', 'description': 'New text.', 'route_id': str(self.route.pk)}, format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.notice.refresh_from_db()
+        self.assertEqual((self.notice.title, self.notice.description), ('New', 'New text.'))
+        self.assertEqual(self.notice.route, self.route)
+        self.assertEqual(response.data['route']['id'], str(self.route.pk))
+
+    def test_author_detaches_the_route_with_null(self) -> None:
+        self.notice.route = self.route
+        self.notice.save()
+
+        response = self.client.patch(self.url, {'route_id': None}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.notice.refresh_from_db()
+        self.assertIsNone(self.notice.route)
+
+    def test_edit_cannot_move_the_notice_or_change_its_author(self) -> None:
+        other_clan = create_clan(self.member, name='Other')
+
+        self.client.patch(self.url, {'clan': other_clan.pk, 'author': self.outsider.pk}, format='json')
+
+        self.notice.refresh_from_db()
+        self.assertEqual((self.notice.clan, self.notice.author), (self.clan, self.member))
+
+    def test_other_member_cannot_edit(self) -> None:
+        self.clan.users.add(self.outsider)
+        self.client.force_authenticate(self.outsider)
+
+        response = self.client.patch(self.url, {'title': 'Hijacked'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.notice.refresh_from_db()
+        self.assertEqual(self.notice.title, 'Old')
+
+    def test_non_member_gets_404(self) -> None:
+        self.client.force_authenticate(self.outsider)
+
+        response = self.client.patch(self.url, {'title': 'Hijacked'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_notice_of_another_clan_is_404_under_this_clan(self) -> None:
+        other_clan = create_clan(self.member, name='Other')
+        url = reverse('clans:clan_notice_update', args=[other_clan.pk, self.notice.pk])
+
+        response = self.client.patch(url, {'title': 'x'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_notice_is_not_deletable_or_replaceable(self) -> None:
+        self.assertEqual(self.client.delete(self.url).status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(self.client.put(self.url, {}, format='json').status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class InvitationApiTests(ClanApiTestCase):

@@ -36,7 +36,7 @@ class ClanNoticeAdmin(admin.ModelAdmin):
     list_filter = ('clan',)
     search_fields = ('title', 'description', 'author__username', 'clan__name')
     readonly_fields = ('created_at', 'updated_at')
-    autocomplete_fields = ('clan', 'author', 'ride')
+    autocomplete_fields = ('clan', 'author', 'ride', 'route')
 
 
 @admin.register(ClanInvitation)

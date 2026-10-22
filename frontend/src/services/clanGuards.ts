@@ -1,4 +1,4 @@
-import { isRecord } from '@/services/typeGuards'
+import { isRecord, isSavedRoute } from '@/services/typeGuards'
 import type { Clan, ClanDetail, ClanInvitation, ClanMember, ClanNotice } from '@/types/clan'
 
 export const isClanMember = (value: unknown): value is ClanMember =>
@@ -23,6 +23,7 @@ export const isClanNotice = (value: unknown): value is ClanNotice =>
   isClanMember(value.author) &&
   typeof value.title === 'string' &&
   typeof value.description === 'string' &&
+  (value.route === null || isSavedRoute(value.route)) &&
   typeof value.created_at === 'string'
 
 export const isClanInvitation = (value: unknown): value is ClanInvitation =>

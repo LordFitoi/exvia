@@ -1,3 +1,5 @@
+import type { SavedRoute } from '@/types/route'
+
 export interface ClanMember {
   readonly id: number
   readonly username: string
@@ -29,12 +31,16 @@ export interface ClanNotice {
   readonly author: ClanMember
   readonly title: string
   readonly description: string
+  /** One of the author's routes, shown as a link; null when none is attached. */
+  readonly route: SavedRoute | null
   readonly created_at: string
 }
 
 export interface NewClanNotice {
   readonly title: string
   readonly description: string
+  /** Id of one of the caller's routes to attach, or null for none. */
+  readonly route_id: string | null
 }
 
 /** A pending invitation to join a clan, as its invitee sees it. */

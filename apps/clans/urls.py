@@ -5,6 +5,7 @@ from apps.clans.views import (
     ClanInvitationCreateView,
     ClanListCreateView,
     ClanNoticeListCreateView,
+    ClanNoticeUpdateView,
     FeedNoticeListView,
     InvitationAcceptView,
     InvitationDeclineView,
@@ -21,5 +22,6 @@ urlpatterns = [
     path('invitations/<int:pk>/accept/', InvitationAcceptView.as_view(), name='invitation_accept'),
     path('<int:pk>/', ClanDetailView.as_view(), name='clan_detail'),
     path('<int:pk>/notices/', ClanNoticeListCreateView.as_view(), name='clan_notice_list'),
+    path('<int:pk>/notices/<int:notice_pk>/', ClanNoticeUpdateView.as_view(), name='clan_notice_update'),
     path('<int:pk>/invitations/', ClanInvitationCreateView.as_view(), name='clan_invitation_create'),
 ]

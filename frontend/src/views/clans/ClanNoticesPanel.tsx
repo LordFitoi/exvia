@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 
+import NoticeFormDialog from '@/components/clan/NoticeFormDialog'
 import NoticeList from '@/components/clan/NoticeList'
 import { useClanNotices } from '@/hooks/useClanNotices'
-import CreateNoticeDialog from '@/views/clans/CreateNoticeDialog'
 
 interface ClanNoticesPanelProps {
   clanId: number
@@ -15,7 +15,7 @@ export default function ClanNoticesPanel({ clanId }: ClanNoticesPanelProps) {
   const [isPosting, setIsPosting] = useState(false)
   const notices = useClanNotices(clanId)
 
-  const handleCreated = () => {
+  const handleSaved = () => {
     setIsPosting(false)
     notices.reload()
   }
@@ -32,9 +32,10 @@ export default function ClanNoticesPanel({ clanId }: ClanNoticesPanelProps) {
         emptyTitle="No notices yet"
         emptyDescription="Post the first notice for the members of this clan."
         onRetry={notices.reload}
+        onEdited={notices.reload}
       />
       {isPosting && (
-        <CreateNoticeDialog clanId={clanId} onClose={() => setIsPosting(false)} onCreated={handleCreated} />
+        <NoticeFormDialog clanId={clanId} onClose={() => setIsPosting(false)} onSaved={handleSaved} />
       )}
     </section>
   )

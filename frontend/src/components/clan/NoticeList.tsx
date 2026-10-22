@@ -1,4 +1,9 @@
+'use client'
+
+import { useState } from 'react'
+
 import NoticeCard from '@/components/clan/NoticeCard'
+import NoticeFormDialog from '@/components/clan/NoticeFormDialog'
 import LoadFailedState from '@/components/feedback/LoadFailedState'
 import StateView from '@/components/feedback/StateView'
 import type { ClanNotice } from '@/types/clan'
@@ -12,6 +17,8 @@ interface NoticeListProps {
   emptyTitle: string
   emptyDescription: string
   onRetry: () => void
+  /** Called after the author saved an edit, to load the list again. */
+  onEdited: () => void
 }
 
 function NoticeSkeleton() {
@@ -38,7 +45,15 @@ export default function NoticeList({
   emptyTitle,
   emptyDescription,
   onRetry,
+  onEdited,
 }: NoticeListProps) {
+  const [editing, setEditing] = useState<ClanNotice | null>(null)
+
+  const handleSaved = () => {
+    setEditing(null)
+    onEdited()
+  }
+
   if (status === 'loading') return <NoticeSkeleton />
   if (status === 'failed') return <LoadFailedState title="Could not load the notices" onRetry={onRetry} />
 
@@ -53,8 +68,16 @@ export default function NoticeList({
   return (
     <div className="stack">
       {notices.map((notice) => (
-        <NoticeCard key={notice.id} notice={notice} isClanShown={isClanShown} />
+        <NoticeCard key={notice.id} notice={notice} isClanShown={isClanShown} onEdit={setEditing} />
       ))}
+      {editing && (
+        <NoticeFormDialog
+          clanId={editing.clan}
+          notice={editing}
+          onClose={() => setEditing(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   )
 }

@@ -78,6 +78,7 @@ export default function HomeScreen() {
           emptyTitle="Nothing new yet"
           emptyDescription="Notices from your clans will appear in this feed."
           onRetry={feed.reload}
+          onEdited={feed.reload}
         />
       </section>
       {isNotificationsOpen && (

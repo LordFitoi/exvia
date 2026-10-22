@@ -1,13 +1,14 @@
 from django.db import transaction
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from rest_framework import permissions, status
 from rest_framework.generics import (
     CreateAPIView,
     DestroyAPIView,
     ListAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
+    UpdateAPIView,
 )
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -68,10 +69,29 @@ class ClanNoticeListCreateView(MemberClanMixin, ListCreateAPIView):
     serializer_class = NoticeSerializer
 
     def get_queryset(self) -> QuerySet[ClanNotice]:
-        return self.clan.notices.select_related('clan', 'author').order_by('-created_at', '-id')
+        return self.clan.notices.select_related('clan', 'author', 'route').order_by('-created_at', '-id')
 
     def perform_create(self, serializer: BaseSerializer) -> None:
         serializer.save(clan=self.clan, author=self.request.user)
+
+
+class IsNoticeAuthor(permissions.BasePermission):
+    """Only the member who posted a notice may change it."""
+
+    def has_object_permission(self, request: Request, view: APIView, obj: ClanNotice) -> bool:
+        return obj.author_id == request.user.pk
+
+
+class ClanNoticeUpdateView(MemberClanMixin, UpdateAPIView):
+    """Edits a notice of one of the caller's clans; only its author may, other members get 403."""
+
+    serializer_class = NoticeSerializer
+    permission_classes = (permissions.IsAuthenticated, IsNoticeAuthor)
+    http_method_names = ('patch', 'options')
+    lookup_url_kwarg = 'notice_pk'
+
+    def get_queryset(self) -> QuerySet[ClanNotice]:
+        return self.clan.notices.select_related('clan', 'author', 'route')
 
 
 class FeedNoticeListView(ListAPIView):
@@ -81,7 +101,7 @@ class FeedNoticeListView(ListAPIView):
 
     def get_queryset(self) -> QuerySet[ClanNotice]:
         notices = ClanNotice.objects.filter(clan__users=self.request.user)
-        return notices.select_related('clan', 'author').order_by('-created_at', '-id')[:FEED_LIMIT]
+        return notices.select_related('clan', 'author', 'route').order_by('-created_at', '-id')[:FEED_LIMIT]
 
 
 class ClanInvitationCreateView(MemberClanMixin, CreateAPIView):

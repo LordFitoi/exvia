@@ -47,6 +47,20 @@ export const createClanNotice = async (clanId: number, notice: NewClanNotice): P
   return created
 }
 
+/** Changes the text and the attached route of a notice the caller posted. */
+export const updateClanNotice = async (
+  clanId: number,
+  noticeId: number,
+  notice: NewClanNotice,
+): Promise<ClanNotice> => {
+  const updated = await requestJsonAuthorized(`${CLANS_PATH}${clanId}/notices/${noticeId}/`, {
+    method: 'PATCH',
+    body: notice,
+  })
+  if (!isClanNotice(updated)) throw unexpectedResponse()
+  return updated
+}
+
 /** The latest notices of every clan the caller belongs to, newest first. */
 export const fetchFeedNotices = async (): Promise<ClanNotice[]> =>
   readList(await requestJsonAuthorized(FEED_PATH), isClanNotice)

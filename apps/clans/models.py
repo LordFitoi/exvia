@@ -52,7 +52,7 @@ class ClanRide(TimeStampedModel):
 
 
 class ClanNotice(TimeStampedModel):
-    """Community post or announcement, optionally tied to a ride."""
+    """Community post or announcement, optionally tied to a ride and carrying one of its author's routes."""
 
     clan = models.ForeignKey(ClanGroup, on_delete=models.CASCADE, related_name='notices')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='clan_notices')
@@ -61,6 +61,9 @@ class ClanNotice(TimeStampedModel):
     attachment = models.ImageField(upload_to=NOTICE_ATTACHMENT_UPLOAD_DIR, blank=True)
     ride = models.ForeignKey(
         ClanRide, on_delete=models.SET_NULL, null=True, blank=True, related_name='notices'
+    )
+    route = models.ForeignKey(
+        'routes.Route', on_delete=models.SET_NULL, null=True, blank=True, related_name='clan_notices'
     )
 
     def clean(self) -> None:

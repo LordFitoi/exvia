@@ -79,6 +79,16 @@
   margin-block-end: var(--space-3);
 }
 
+/* Edit button of the author: pushed to the end of the author row */
+.notice-author .icon-button { margin-inline-start: auto; }
+
+/* Route attached to a notice: a bordered row that opens the route */
+.notice-route {
+  margin-block-start: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
 .notice-image {
   aspect-ratio: 16 / 9;
   margin-block-start: var(--space-3);
