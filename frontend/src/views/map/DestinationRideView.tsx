@@ -42,10 +42,13 @@ export default function DestinationRideView({ destination, location, rider, onQu
     from: rider,
     to: destination.coordinates,
   })
+  // The ride ends on arrival or when the rider quits; both stop the clock and the stats.
+  const [quitAt, setQuitAt] = useState<number | null>(null)
+  // A rider who quit has left the ride, so riding up to the place afterwards is not an arrival.
   const arrivedAt = useDestinationArrival({
     rider,
     destination: path[path.length - 1] ?? destination.coordinates,
-    fixTime: location.timestamp,
+    fixTime: quitAt === null ? location.timestamp : null,
   })
   const [startedAt] = useState(() => Date.now())
   // The route is asked again every 50 m, so what is left is exact to that; at the place it is nothing.
@@ -53,12 +56,13 @@ export default function DestinationRideView({ destination, location, rider, onQu
     distance: arrivedAt === null ? distance / METERS_PER_KILOMETER : 0,
     estimated_time: arrivedAt === null ? duration : 0,
   }
-  const coveredKilometres = useRideDistance(rider, arrivedAt === null)
-  const elapsedSeconds = useRideElapsed(startedAt, arrivedAt)
+  const endedAt = arrivedAt ?? quitAt
+  const coveredKilometres = useRideDistance(rider, endedAt === null)
+  const elapsedSeconds = useRideElapsed(startedAt, endedAt)
   const maxSpeed = useRideMaxSpeed({
     speed: location.speed,
     fixTime: location.timestamp,
-    isRiding: arrivedAt === null,
+    isRiding: endedAt === null,
   })
   const { containerRef, hasLoadFailed, recenter, indicators } = useDestinationMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
@@ -88,7 +92,7 @@ export default function DestinationRideView({ destination, location, rider, onQu
         <EdgeIndicators indicators={indicators} />
         <div className="map-overlay">
           <div className="map-controls">
-            <button className="icon-button" type="button" aria-label="Quit ride" onClick={onQuit}>
+            <button className="icon-button" type="button" aria-label="Quit ride" onClick={() => setQuitAt(Date.now())}>
               <span className="icon icon-x" aria-hidden="true"></span>
             </button>
           </div>
@@ -111,9 +115,10 @@ export default function DestinationRideView({ destination, location, rider, onQu
         coveredKilometres={coveredKilometres}
         checkpoints={null}
       />
-      {arrivedAt !== null && (
+      {endedAt !== null && (
         <DestinationSummarySheet
           placeName={destination.name}
+          isFinished={arrivedAt !== null}
           rideSeconds={elapsedSeconds}
           kilometres={coveredKilometres}
           maxSpeed={maxSpeed}

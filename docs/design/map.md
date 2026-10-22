@@ -96,8 +96,11 @@ it opens **ride mode towards that place** in place of the map (`MapOverview` kee
   place name and four `route-stats`: **Time**, **Distance** (the kilometres covered, which stop counting at the
   arrival, so they fall up to 50 m short of the place), **Avg km/h** and **Max km/h**. **Done**, the X and Esc all
   close it **and leave the ride, back to the map**. The summary is only shown: a ride to a place has no route, so
-  there is nothing to save it against, and it is lost once closed. The X on the map (**Quit ride**) leaves at any
-  time with no confirmation and no summary.
+  there is nothing to save it against, and it is lost once closed.
+- **Quitting** (the X, **Quit ride**, top right) asks nothing: it ends the ride on the spot, freezing the clock and
+  the stats, and opens the same summary as **Ride ended**, with a "Not finished" warning badge (as in the
+  [history](ride-history.md)) and "You stopped before reaching ...". Closing it returns to the map. It is not saved
+  either. Once the rider has quit, riding up to the place is no arrival.
 
 ## Route creator
 
