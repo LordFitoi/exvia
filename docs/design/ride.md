@@ -336,7 +336,8 @@ by arrival along the track (`useRideArrival`).
 ## Riding to a place
 
 The Map tab's search starts a ride to a picked place with the screen of ride mode but no route, group or
-summary: the path is recalculated from the rider's current position. See
+summary of a route: the path is recalculated from the rider's current position, and the summary saved at the end
+is a `destination` one. See
 [map.md](map.md#riding-to-a-place).
 
 ## Free ride

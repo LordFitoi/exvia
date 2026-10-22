@@ -22,8 +22,9 @@ class RouteAdmin(admin.ModelAdmin):
 
 @admin.register(RouteSummary)
 class RouteSummaryAdmin(admin.ModelAdmin):
-    list_display = ('route', 'author', 'start_at', 'end_at', 'duration')
-    search_fields = ('route__name', 'participants__username')
+    list_display = ('route', 'route_type', 'destination_name', 'author', 'start_at', 'end_at', 'duration')
+    list_filter = ('route_type',)
+    search_fields = ('route__name', 'destination_name', 'participants__username')
     readonly_fields = ('duration', 'created_at', 'updated_at')
     autocomplete_fields = ('route', 'author', 'participants')
 

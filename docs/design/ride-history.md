@@ -72,6 +72,16 @@ for these rides the list row has no average and carries a **Not finished** badge
 and the summary shows a dash for Distance and Avg km/h and the badge next to the
 day. Time, the top GPS speed and the checkpoint times (the ones reached) are real, so they stay.
 
+## Rides to a place
+
+A ride to a searched place ([map.md](map.md#riding-to-a-place), `route_type` `destination`) is listed with the others, with
+the place in the row's title. The two kinds are told apart (`services/rideMode.ts`): the row's tile is the checkered flag
+for a ride of a route and a **pin** for a ride to a place, and the summary carries a flag next to the day,
+**Ride mode** (checkered flag, primary badge) or **Destination mode** (pin, info badge). It has no route, so its summary has **no preview and no checkpoint times** and no
+estimated time, and its distance is the kilometres the rider covered, so it is shown (with the average speed) even
+when the ride was quit before reaching the place (`isDistanceCovered`); it still carries the **Not finished** badge
+then.
+
 ## Delete
 
 The summary screen ends with **Delete ride**, a soft error button. It opens the

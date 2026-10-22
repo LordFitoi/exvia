@@ -16,8 +16,9 @@ from rest_framework.serializers import BaseSerializer
 
 from apps.routes import group_service
 from apps.routes.group_meta import ParticipantStatus
-from apps.routes.models import Route, RouteSummary
+from apps.routes.models import Route, RouteSummary, RouteType
 from apps.routes.serializers import (
+    DestinationSummarySerializer,
     RideSummaryListSerializer,
     RideSummarySerializer,
     RouteSerializer,
@@ -82,6 +83,17 @@ class RideSummaryCreateView(CreateAPIView):
         summary.participants.add(self.request.user)
         if group is not None and group.route_id == self.route.pk:
             summary.participants.add(*group_service.connected_riders(group, timezone.now()))
+
+
+class DestinationSummaryCreateView(CreateAPIView):
+    """Saves the summary of a ride to a searched place, which has no route. The caller is its author and
+    its only participant."""
+
+    serializer_class = DestinationSummarySerializer
+
+    def perform_create(self, serializer: BaseSerializer) -> None:
+        summary = serializer.save(route_type=RouteType.DESTINATION, author=self.request.user)
+        summary.participants.add(self.request.user)
 
 
 class MyRideSummariesMixin:

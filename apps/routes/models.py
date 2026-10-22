@@ -14,6 +14,7 @@ from apps.routes.validators import MAX_WAYPOINTS, validate_points, validate_wayp
 NAME_MAX_LENGTH = 100
 DESCRIPTION_MAX_LENGTH = 255
 MAX_GROUP_PARTICIPANTS = 10
+DESTINATION_NAME_MAX_LENGTH = 255
 SPEED_FIELD = {'null': True, 'blank': True, 'validators': [MinValueValidator(0)]}
 
 
@@ -48,10 +49,27 @@ class Route(TimeStampedModel):
         return self.name
 
 
-class RouteSummary(TimeStampedModel):
-    """One ride of a route: when it started and ended, how long it took, and who rode it."""
+class RouteType(models.TextChoices):
+    RIDE = 'ride', 'Ride'
+    DESTINATION = 'destination', 'Destination'
 
-    route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='summaries')
+
+class RouteSummary(TimeStampedModel):
+    """One ride: when it started and ended, how long it took, and who rode it. A `ride` follows one of
+    the saved routes; a `destination` ride went to a searched place and has no route."""
+
+    route_type = models.CharField(max_length=16, choices=RouteType.choices, default=RouteType.RIDE)
+    route = models.ForeignKey(
+        Route, on_delete=models.CASCADE, null=True, blank=True, related_name='summaries',
+        help_text='Empty for a destination ride.',
+    )
+    destination_name = models.CharField(
+        max_length=DESTINATION_NAME_MAX_LENGTH, blank=True, help_text='The place a destination ride went to.',
+    )
+    distance = models.FloatField(
+        null=True, blank=True, validators=[MinValueValidator(0)],
+        help_text='Kilometres covered; set for destination rides, which have no route to take the length from.',
+    )
     start_at = models.DateTimeField()
     end_at = models.DateTimeField()
     duration = models.DurationField(editable=False, help_text='Calculated as end_at - start_at.')
@@ -72,6 +90,13 @@ class RouteSummary(TimeStampedModel):
                 condition=models.Q(end_at__gt=models.F('start_at')),
                 name='route_summary_end_after_start',
             ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(route_type=RouteType.RIDE, route__isnull=False)
+                    | models.Q(route_type=RouteType.DESTINATION, route__isnull=True, distance__isnull=False)
+                ),
+                name='route_summary_type_matches_route',
+            ),
         ]
 
     def save(self, *args: object, update_fields: Iterable[str] | None = None, **kwargs: object) -> None:
@@ -81,7 +106,7 @@ class RouteSummary(TimeStampedModel):
         super().save(*args, update_fields=update_fields, **kwargs)
 
     def __str__(self) -> str:
-        return f'{self.route} ({self.start_at:%Y-%m-%d %H:%M})'
+        return f'{self.route or self.destination_name} ({self.start_at:%Y-%m-%d %H:%M})'
 
 
 class RouteGroup(TimeStampedModel):

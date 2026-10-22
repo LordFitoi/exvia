@@ -39,15 +39,19 @@ first (`Meta.ordering = ('-created_at',)`).
 
 ## Route summaries
 
-`RouteSummary` records one ride of a route. The Ride tab saves one when a ride
-finishes (see [Saving a ride](#saving-a-ride)) and the [ride
+`RouteSummary` records one ride. A `route_type` of `ride` follows one of the saved routes; `destination`
+is a ride to a place found with the Map tab's search, which has no route ([map.md](map.md#riding-to-a-place)).
+The Ride tab saves a `ride` when it finishes (see [Saving a ride](#saving-a-ride)) and the [ride
 history](ride-history.md) reads them back (see [Reading rides](#reading-rides)).
 
 It inherits `TimeStampedModel` and is ordered by `-start_at`.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `route` | FK to `Route` | `related_name='summaries'`, `CASCADE`; a UUID, like the route's `id` |
+| `route_type` | `CharField` | `RouteType` choices `ride` (default) or `destination` |
+| `route` | FK to `Route` | `related_name='summaries'`, `CASCADE`; a UUID, like the route's `id`; **null for a destination ride** |
+| `destination_name` | `CharField` | At most 255; the place a destination ride went to, blank for a `ride` |
+| `distance` | `FloatField` | Kilometres covered, `>= 0`; set for a destination ride (null for a `ride`, whose distance is the route's) |
 | `start_at` | `DateTimeField` | |
 | `end_at` | `DateTimeField` | Must be after `start_at` |
 | `duration` | `DurationField` | `end_at - start_at`, calculated, `editable=False` |
@@ -76,6 +80,9 @@ It inherits `TimeStampedModel` and is ordered by `-start_at`.
 - **`end_at` after `start_at` is a database `CheckConstraint`**
   (`route_summary_end_after_start`), so a negative or zero duration cannot be
   stored by any path, including the ones that skip `save()` validation.
+- **`route_type` and `route` agree, by a database `CheckConstraint`** (`route_summary_type_matches_route`): a
+  `ride` has a route; a `destination` has none and has its `distance`. The two kinds share one table so the
+  [ride history](ride-history.md) lists them together, ordered and filtered the same way.
 - **`CASCADE` on the route**: deleting a route deletes its summaries.
   Deleting the `author` deletes their summaries (same as `Route.author`); participants
   are a plain M2M, so deleting a participant only removes the link.
@@ -109,6 +116,16 @@ Invited riders, riders who left and riders who dropped more than 30 seconds ago 
 longer on this route (the leader changed it) adds nobody, so the ride is still saved. Each rider saves their
 own ride when they arrive, so every rider has their own copy, listing the riders connected when they saved it.
 
+### Saving a ride to a place
+
+`POST /api/routes/summaries/destination/` (JWT) saves a ride to a searched place. The body is
+`{"start_at", "end_at", "destination_name", "distance"}` (all required; `distance` in km, `>= 0`), plus optional
+`is_finished` (default `true`) and `max_speed` (km/h, `>= 0`); the answer is `201` with the full ride, as in
+[Reading rides](#reading-rides). Only those six fields are writable: `route_type` is always `destination`, the route
+is none, and the caller is the `author` and the only participant. An empty `destination_name`, a negative number or an
+`end_at` not after `start_at` is `400` with that field's message; unauthenticated calls are `401`.
+`DestinationSummarySerializer` validates the body and answers with `RideSummarySerializer`.
+
 ### Reading rides
 
 Both endpoints need a JWT and only see the rides the caller took part in
@@ -125,6 +142,7 @@ A ride (the detail, and the answer to the `POST`):
 ```json
 {
   "id": 3,
+  "route_type": "ride",
   "route": "2dfd2b39-b5ba-4389-b76d-25adf7a15414",
   "route_name": "Sunday loop",
   "distance": 12.3,
@@ -141,9 +159,10 @@ A ride (the detail, and the answer to the `POST`):
 }
 ```
 
-`reached_at` is only in the detail and the answer to the `POST`, not in the list rows. `duration` and `estimated_time` are **whole seconds**; `distance` is the
+For a destination ride `route` is `null`, `route_name` is the place, `distance` the kilometres covered, `estimated_time`
+`null` and `reached_at` empty. `reached_at` is only in the detail and the answer to the `POST`, not in the list rows. `duration` and `estimated_time` are **whole seconds**; `distance` is the
 route's, in km, and `route_name`, `distance` and `estimated_time` come from the
-route. The list rows (`RideSummaryListSerializer`) carry only `id`, `route`,
+route. The list rows (`RideSummaryListSerializer`) carry only `id`, `route_type`, `route`,
 `route_name`, `distance`, `start_at`, `end_at`, `duration`, `is_finished` and
 `created_at`, so the row can be drawn without the participants or the top speed.
 

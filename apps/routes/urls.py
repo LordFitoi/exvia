@@ -13,6 +13,7 @@ from apps.routes.group_views import (
     GroupRouteView,
 )
 from apps.routes.views import (
+    DestinationSummaryCreateView,
     RideSummaryCreateView,
     RideSummaryDetailView,
     RideSummaryListView,
@@ -36,6 +37,7 @@ urlpatterns = [
     path('groups/<uuid:pk>/route/', GroupRouteView.as_view(), name='group_route'),
     path('groups/<uuid:pk>/leave/', GroupLeaveView.as_view(), name='group_leave'),
     path('summaries/', RideSummaryListView.as_view(), name='ride_summary_list'),
+    path('summaries/destination/', DestinationSummaryCreateView.as_view(), name='destination_summary_create'),
     path('summaries/<int:pk>/', RideSummaryDetailView.as_view(), name='ride_summary_detail'),
     path('<uuid:pk>/', RouteDetailView.as_view(), name='route_detail'),
     path('<uuid:pk>/shared/', SharedRouteView.as_view(), name='route_shared'),

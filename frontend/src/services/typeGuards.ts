@@ -34,7 +34,8 @@ const isRider = (value: unknown): value is Rider =>
 export const isRideSummaryListItem = (value: unknown): value is RideSummaryListItem =>
   isRecord(value) &&
   typeof value.id === 'number' &&
-  typeof value.route === 'string' &&
+  (value.route_type === 'ride' || value.route_type === 'destination') &&
+  (typeof value.route === 'string' || value.route === null) &&
   typeof value.route_name === 'string' &&
   typeof value.distance === 'number' &&
   typeof value.start_at === 'string' &&
@@ -49,7 +50,7 @@ export const isRideSummaryDetail = (value: unknown): value is RideSummaryDetail 
   Array.isArray(value.participants) &&
   value.participants.every(isRider) &&
   'estimated_time' in value &&
-  typeof value.estimated_time === 'number' &&
+  isNumberOrNull(value.estimated_time) &&
   'author' in value &&
   typeof value.author === 'number' &&
   'max_speed' in value &&

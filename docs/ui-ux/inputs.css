@@ -224,12 +224,15 @@
 }
 
 /* In a box that scrolls or clips (a dialog) the list goes to the top layer, like the action menu's
-   panel: fixed, with `top`, `left` and `width` set by the app from the input's rectangle */
+   panel: fixed, with `top`, `left`, `width` and `max-height` set by the app from the input's rectangle
+   and the part of the screen the keyboard leaves free. It shows what fits and scrolls inside itself,
+   without passing the scroll on to the page */
 .suggestion-list[popover] {
   position: fixed;
   inset: auto;
   border: 0;
-  overflow: visible;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   color: var(--color-text);
 }
 

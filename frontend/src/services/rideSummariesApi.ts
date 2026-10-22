@@ -1,7 +1,12 @@
 import { ApiError } from '@/services/apiClient'
 import { requestJsonAuthorized } from '@/services/authorizedRequest'
 import { isRecord, isRideSummaryDetail, isRideSummaryListItem } from '@/services/typeGuards'
-import type { NewRideSummary, RideSummaryDetail, RideSummaryListItem } from '@/types/rideSummary'
+import type {
+  NewDestinationSummary,
+  NewRideSummary,
+  RideSummaryDetail,
+  RideSummaryListItem,
+} from '@/types/rideSummary'
 
 const ROUTES_PATH = '/api/routes/'
 const SUMMARIES_PATH = `${ROUTES_PATH}summaries/`
@@ -25,6 +30,29 @@ export const createRideSummary = async (
       is_finished: isFinished,
       max_speed: maxSpeed,
       reached_at: reachedAt.map((moment) => new Date(moment).toISOString()),
+    },
+  })
+  if (!isRecord(saved) || typeof saved.id !== 'number') throw unexpectedResponse()
+}
+
+/** Saves a ride to a searched place, which has no route; the server makes the caller its rider. */
+export const createDestinationSummary = async ({
+  destinationName,
+  startedAt,
+  endedAt,
+  isFinished,
+  maxSpeed,
+  kilometres,
+}: NewDestinationSummary): Promise<void> => {
+  const saved = await requestJsonAuthorized(`${SUMMARIES_PATH}destination/`, {
+    method: 'POST',
+    body: {
+      destination_name: destinationName,
+      start_at: new Date(startedAt).toISOString(),
+      end_at: new Date(Math.max(endedAt, startedAt + MIN_RIDE_MS)).toISOString(),
+      is_finished: isFinished,
+      max_speed: maxSpeed,
+      distance: kilometres,
     },
   })
   if (!isRecord(saved) || typeof saved.id !== 'number') throw unexpectedResponse()

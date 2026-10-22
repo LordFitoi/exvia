@@ -197,8 +197,15 @@ Exvia changes the following on purpose:
   and pressing an option does not blur the input. Typing a whole name without
   picking stays valid. In a dialog the list is `popover="manual"` (top layer,
   `suggestion-list[popover]`): the app sets `top`, `left` and `width` from the
-  input's rectangle, below it or flipped above when there is no room, and closes
-  it on scroll and resize, like the action menu's panel.
+  input's rectangle, below it or flipped above when there is more room there, and
+  `max-height` from the part of the screen the phone keyboard leaves free
+  (`visualViewport`, since the keyboard covers the page without resizing it). The
+  list shows the options that fit and **scrolls inside itself**
+  (`overflow-y: auto`, `overscroll-behavior: contain`); while it is open the page
+  under it cannot be scrolled or panned (`touchmove` outside the list is
+  prevented). It follows the input when the window or the visual viewport resizes
+  or scrolls (the keyboard opening or closing) and closes when anything else
+  scrolls, like the action menu's panel.
 - **Action menu.** `menu` and `menu-panel` give an icon button a small popover
   of actions (`menuitem`s), aligned to the button's right edge so it opens
   inward. It follows the WAI-ARIA menu button pattern: `aria-haspopup`,

@@ -77,13 +77,21 @@ it opens **ride mode towards that place** in place of the map (`MapOverview` kee
   street route (`fetchStreetRoute`: path, distance and duration) **from the rider's current position to the
   place**, and asks again once the rider has moved 50 m from the spot it was last asked for, so the line follows
   them when they take another street. The previous route stays until the new one arrives; with no street route
-  it is empty. The destination is not snapped by the app:
+  it is empty.
+- **The fastest route, traffic included.** The request (`isFastest`) uses the `driving-traffic` profile, whose
+  durations include the live traffic, with `alternatives=true`; `fetchStreetRoute` parses every route Mapbox
+  returns and keeps the one with the **lowest duration**, so the rider is sent the way that takes the least time
+  now, which is not always the shortest. Traffic changes on the way, so the route is also asked again **every
+  minute** (`TRAFFIC_REFRESH_MS`) even when the rider has not moved 50 m, and the line switches if a quicker way
+  has appeared. The distance and time left shown are those of the chosen route, and the time left therefore
+  counts the traffic. The route creator and the way to a route's start keep the plain `driving` profile and one
+  route, since a saved route must not depend on today's traffic. The destination is not snapped by the app:
   Directions puts it on the nearest street, so the line ends there.
 - **Same screen as [ride mode](ride.md#ride-mode)**: pitched 3D map with buildings that follows the rider and turns
   to their heading (it starts facing the place), the path in the remaining-track color, a checkered finish flag on
   the place, the stats strip, the
-  locate button, the screen kept on and the tab bar hidden. It is **solo and not recorded**, like a
-  [free ride](ride.md#free-ride): no group, no websocket, no ride summary saved.
+  locate button, the screen kept on and the tab bar hidden. It is **solo**: no group and no websocket, and
+  no track is recorded; only the [summary](#riding-to-a-place) at the end is saved.
 - **Stats** (`RideStatsPanel` with `isToGo`; there are no checkpoints): the strip shows time and speed, and the
   expanded grid **Distance left** and **Time left** (the Directions distance and duration of the current route,
   so exact to the 50 m between requests), **Avg km/h** and **Max km/h**. The average is the kilometres the rider has
@@ -93,14 +101,16 @@ it opens **ride mode towards that place** in place of the map (`MapOverview` kee
 - **Arrival** (`useDestinationArrival`): within 50 m, in a straight line, of the end of the path (or of the place
   while the path has not loaded) the phone vibrates, the clock, the distance covered and the top speed freeze, and
   `DestinationSummarySheet` opens: the "You've arrived!" modal sheet of [ride mode](ride.md#ride-mode) with the
-  place name and four `route-stats`: **Time**, **Distance** (the kilometres covered, which stop counting at the
-  arrival, so they fall up to 50 m short of the place), **Avg km/h** and **Max km/h**. **Done**, the X and Esc all
-  close it **and leave the ride, back to the map**. The summary is only shown: a ride to a place has no route, so
-  there is nothing to save it against, and it is lost once closed.
+  place name and four `route-stats` in two rows of two (`route-stats-pair`, as the history does, since four in the usual row of three leave one alone): **Time**, **Distance** (the kilometres covered, which stop counting at the
+  arrival, so they fall up to 50 m short of the place), **Avg km/h** and **Max km/h**. **Done** **saves the ride**
+  (`POST /api/routes/summaries/destination/`, [routes.md](routes.md#saving-a-ride-to-a-place), by
+  `useSaveDestinationSummary`) **and then leaves, back to the map**. While it saves the button shows the loading
+  state; if it fails an alert appears and the button reads **Try again**. The X and Esc leave **without saving**.
+  The sheet carries no status label: whether the ride was finished is only stored, and shown in the
+  [ride history](ride-history.md#rides-to-a-place).
 - **Quitting** (the X, **Quit ride**, top right) asks nothing: it ends the ride on the spot, freezing the clock and
-  the stats, and opens the same summary as **Ride ended**, with a "Not finished" warning badge (as in the
-  [history](ride-history.md)) and "You stopped before reaching ...". Closing it returns to the map. It is not saved
-  either. Once the rider has quit, riding up to the place is no arrival.
+  the stats, and opens the same summary as **Ride ended**, and "You stopped before reaching ...". **Done** saves it with `is_finished` false, and the history marks it
+  "Not finished". Once the rider has quit, riding up to the place is no arrival.
 
 ## Route creator
 

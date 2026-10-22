@@ -1,5 +1,7 @@
 import StateView from '@/components/feedback/StateView'
 import { formatAverageSpeed, formatClock, formatRideDate } from '@/services/formatRoute'
+import { isDistanceCovered } from '@/services/rideDistance'
+import { RIDE_MODES } from '@/services/rideMode'
 import type { RideSummaryListItem } from '@/types/rideSummary'
 
 const SKELETON_ROW_IDS = [1, 2, 3] as const
@@ -27,7 +29,35 @@ function RideSummarySkeleton() {
   )
 }
 
-/** The rides, one row each: route name, then the day, the time it took and the average speed (a ride quit early has no average and is marked). */
+interface RideSummaryRowProps {
+  summary: RideSummaryListItem
+  onSelect: (id: number) => void
+}
+
+function RideSummaryRow({ summary, onSelect }: RideSummaryRowProps) {
+  const { id, route_type, route_name, start_at, duration, distance, is_finished } = summary
+
+  return (
+    <li>
+      <button className="list-item" type="button" onClick={() => onSelect(id)}>
+        <span className="list-item-icon" aria-hidden="true">
+          <span className={`icon ${RIDE_MODES[route_type].iconClass}`}></span>
+        </span>
+        <span className="list-item-body">
+          <span className="list-item-title">{route_name}</span>
+          <span className="list-item-meta">
+            {formatRideDate(start_at)} · {formatClock(duration)}
+            {isDistanceCovered(summary) && ` · ${formatAverageSpeed(distance, duration)} km/h`}
+          </span>
+        </span>
+        {!is_finished && <span className="badge badge-warning">Not finished</span>}
+        <span className="icon icon-chevron-right" aria-hidden="true"></span>
+      </button>
+    </li>
+  )
+}
+
+/** The rides, one row each: route name, then the day, the time it took and the average speed (a ride of a route quit early has no average, and any ride quit early is marked). */
 export default function RideSummaryList({ status, summaries, onSelect, onRetry }: RideSummaryListProps) {
   if (status === 'loading') return <RideSummarySkeleton />
 
@@ -60,23 +90,8 @@ export default function RideSummaryList({ status, summaries, onSelect, onRetry }
 
   return (
     <ul className="list">
-      {summaries.map(({ id, route_name, start_at, duration, distance, is_finished }) => (
-        <li key={id}>
-          <button className="list-item" type="button" onClick={() => onSelect(id)}>
-            <span className="list-item-icon" aria-hidden="true">
-              <span className="icon icon-flag-checkered"></span>
-            </span>
-            <span className="list-item-body">
-              <span className="list-item-title">{route_name}</span>
-              <span className="list-item-meta">
-                {formatRideDate(start_at)} · {formatClock(duration)}
-                {is_finished && ` · ${formatAverageSpeed(distance, duration)} km/h`}
-              </span>
-            </span>
-            {!is_finished && <span className="badge badge-warning">Not finished</span>}
-            <span className="icon icon-chevron-right" aria-hidden="true"></span>
-          </button>
-        </li>
+      {summaries.map((summary) => (
+        <RideSummaryRow key={summary.id} summary={summary} onSelect={onSelect} />
       ))}
     </ul>
   )

@@ -41,6 +41,7 @@ export default function DestinationRideView({ destination, location, rider, onQu
     accessToken: MAPBOX_ACCESS_TOKEN,
     from: rider,
     to: destination.coordinates,
+    isFastest: true,
   })
   // The ride ends on arrival or when the rider quits; both stop the clock and the stats.
   const [quitAt, setQuitAt] = useState<number | null>(null)
@@ -117,11 +118,14 @@ export default function DestinationRideView({ destination, location, rider, onQu
       />
       {endedAt !== null && (
         <DestinationSummarySheet
-          placeName={destination.name}
-          isFinished={arrivedAt !== null}
-          rideSeconds={elapsedSeconds}
-          kilometres={coveredKilometres}
-          maxSpeed={maxSpeed}
+          summary={{
+            destinationName: destination.name,
+            startedAt,
+            endedAt,
+            isFinished: arrivedAt !== null,
+            maxSpeed,
+            kilometres: coveredKilometres,
+          }}
           onClose={onQuit}
         />
       )}

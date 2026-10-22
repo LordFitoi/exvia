@@ -10,6 +10,7 @@ import { useRideSummaryDetail } from '@/hooks/useRideSummaryDetail'
 import { useRouteLegs } from '@/hooks/useRouteLegs'
 import { useRouteDetail } from '@/hooks/useRouteDetail'
 import { formatRideDate } from '@/services/formatRoute'
+import { RIDE_MODES } from '@/services/rideMode'
 import { countCheckpoints } from '@/services/routeProgress'
 import RideStatsGrid from '@/views/history/RideStatsGrid'
 import type { RideSummaryDetail } from '@/types/rideSummary'
@@ -46,6 +47,7 @@ function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
   const route = useRouteDetail(summary.route)
   const reachedAt = summary.reached_at.map((moment) => Date.parse(moment))
   const legKilometres = useRouteLegs(route.shownRoute)
+  const mode = RIDE_MODES[summary.route_type]
 
   return (
     <>
@@ -53,18 +55,26 @@ function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
         <h2 className="text-subtitle">{summary.route_name}</h2>
         <p className="cluster text-small text-muted">
           {formatRideDate(summary.start_at)}
+          <span className={`badge ${mode.badgeClass}`}>
+            <span className={`icon icon-sm ${mode.iconClass}`} aria-hidden="true"></span>
+            {mode.label}
+          </span>
           {!summary.is_finished && <span className="badge badge-warning">Not finished</span>}
         </p>
       </div>
-      <RoutePreview size="compact" status={route.status} route={route.shownRoute} onRetry={route.retry} />
+      {summary.route_type === 'ride' && (
+        <RoutePreview size="compact" status={route.status} route={route.shownRoute} onRetry={route.retry} />
+      )}
       <RideStatsGrid summary={summary} />
-      <CheckpointTimes
-        startedAt={Date.parse(summary.start_at)}
-        count={Math.max(countCheckpoints(route.shownRoute?.waypoints ?? []), reachedAt.length - 1)}
-        reachedAt={reachedAt}
-        finishedAt={summary.is_finished ? Date.parse(summary.end_at) : null}
-        legKilometres={legKilometres}
-      />
+      {summary.route_type === 'ride' && (
+        <CheckpointTimes
+          startedAt={Date.parse(summary.start_at)}
+          count={Math.max(countCheckpoints(route.shownRoute?.waypoints ?? []), reachedAt.length - 1)}
+          reachedAt={reachedAt}
+          finishedAt={summary.is_finished ? Date.parse(summary.end_at) : null}
+          legKilometres={legKilometres}
+        />
+      )}
       <ParticipantList summary={summary} />
     </>
   )
