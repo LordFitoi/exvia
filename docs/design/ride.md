@@ -320,10 +320,14 @@ by arrival along the track (`useRideArrival`).
   (`At 09:12 · 24.5 km/h`) and, on the right, **the time it took** from the moment ride mode opened as a
   stopwatch (`8:41`). The speed of a leg is its length along the route over the time between the two stops:
   `measureLegs` (`services/routeProgress.ts`) measures each leg, from the start to the first checkpoint and on
-  to the finish, and `useRouteLegs` hands the lengths to `CheckpointTimes` as `legKilometres`. The start has
-  no leg, and a stop shows no speed when the route has no stored waypoints (old routes), or when it and the stop
-  before it were marked at the same moment (passing several checkpoints at once marks them together, so there
-  is no time between them) The start shows the flag, the finish shows the checkered
+  to the finish, and `useRouteLegs` hands the lengths to `CheckpointTimes` as `legKilometres`. The **start's leg
+  is the ride to it**: from the moment ride mode opened until the rider got there, over the straight-line
+  distance from their first known position to the start (`useApproachKilometres`, passed as
+  `approachKilometres`; the real path is not recorded, so this is a lower bound). A rider who opens ride mode
+  already at the start (within 40 m) has no such leg, and the history's summary does not keep where the ride
+  began, so the start shows no speed there. A stop shows no speed when the route has no stored waypoints (old
+  routes), or when it and the stop before it were marked at the same moment (passing several checkpoints at
+  once marks them together, so there is no time between them). The start shows the flag, the finish shows the checkered
   flag and is reached on arrival; the checkpoints show their number (the first is 2, like the markers) and their
   count is the route's waypoints between the first and the last (`countCheckpoints`). It is in the expanded ride
   stats, in the "You've arrived!" sheet and in the history's ride summary ([ride-history.md](ride-history.md)).

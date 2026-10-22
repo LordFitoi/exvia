@@ -9,7 +9,7 @@ import type { Coordinates } from '@/types/geolocation'
 
 // Within this many meters of a stop, along the track or in a straight line, the rider has reached it; GPS is
 // never exact.
-const CHECKPOINT_METERS = 40
+export const CHECKPOINT_METERS = 40
 const START_DISTANCE = 0
 
 interface CheckpointTimesOptions {

@@ -6,6 +6,7 @@ import { useState } from 'react'
 
 import Toast from '@/components/feedback/Toast'
 import type { GroupRide } from '@/hooks/useGroupRide'
+import { useApproachKilometres } from '@/hooks/useApproachKilometres'
 import { useCheckpointTimes } from '@/hooks/useCheckpointTimes'
 import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useLiveGroup } from '@/hooks/useLiveGroup'
@@ -67,12 +68,14 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
   })
   const [startedAt] = useState(() => Date.now())
   const legKilometres = useRouteLegs(route)
+  const approachKilometres = useApproachKilometres(rider, route.points[0])
   const checkpoints = {
     startedAt,
     count: countCheckpoints(route.waypoints),
     reachedAt: checkpointTimes,
     finishedAt: arrivedAt,
     legKilometres,
+    approachKilometres,
   }
   const elapsedSeconds = useRideElapsed(startedAt, arrivedAt)
   const maxSpeed = useRideMaxSpeed({

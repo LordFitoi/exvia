@@ -60,7 +60,8 @@ The **checkpoint times** list the start, every checkpoint of the route and the f
 The start and each checkpoint the ride reached are colored (entry 0 of `reached_at` is the start), and so is the
 finish when the ride is finished (`end_at`). A colored stop shows the hour, the average speed since the stop before it (the leg's length from the
 route the preview loads, over the time between the two stops) and the time it took (the moment minus
-`start_at`); the rest are gray and "Not reached yet" (a ride quit early, or a ride saved before they were recorded).
+`start_at`). The start shows no speed here: the ride to it is measured live in ride mode from where the rider
+opened it, and that position is not saved. The rest are gray and "Not reached yet" (a ride quit early, or a ride saved before they were recorded).
 The number of checkpoints
 comes from the route's waypoints (the route the preview loads), or from `reached_at` if the route is not loaded.
 

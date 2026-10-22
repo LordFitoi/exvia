@@ -15,6 +15,12 @@ export interface CheckpointTimesProps {
   finishedAt: number | null
   /** The kilometres of each leg of the route, from the start to the first checkpoint and so on to the finish; empty when unknown. */
   legKilometres: readonly number[]
+  /**
+   * The straight-line kilometres from where the rider was when ride mode opened to the start, which the speed
+   * of the start is worked out from; null or omitted when unknown (the rider began at the start, or the ride is
+   * from the history, which does not keep where it began).
+   */
+  approachKilometres?: number | null
 }
 
 interface Stop {
@@ -42,21 +48,36 @@ const buildBaseStops = ({ count, reachedAt, finishedAt }: CheckpointTimesProps):
   { key: 'finish', title: 'Finish', iconClass: 'icon-flag-checkered', reachedAt: finishedAt },
 ]
 
+/** The leg that ends at a stop: when the rider set out on it and how long it is, or undefined when unknown. */
+interface Leg {
+  readonly setOutAt: number | null
+  readonly kilometres: number | undefined
+}
+
 /**
- * The average speed over the leg that ends at `stop`: the leg's length over the time since the stop before it.
- * Unknown when either stop is not reached, the leg has no length, or both were marked at the same moment
- * (riding past several checkpoints at once marks them together).
+ * The leg ending at the stop at `index`. The leg to the start begins when ride mode opened; each of the others
+ * begins at the stop before it.
  */
-const getLegSpeed = (stop: StopBase, previous: StopBase | undefined, legKilometres: number | undefined): string | null => {
-  if (!previous || previous.reachedAt === null || stop.reachedAt === null || legKilometres === undefined) return null
-  const speed = formatAverageSpeed(legKilometres, (stop.reachedAt - previous.reachedAt) / MS_PER_SECOND)
+const getLeg = (index: number, stops: readonly StopBase[], props: CheckpointTimesProps): Leg =>
+  index === 0
+    ? { setOutAt: props.startedAt, kilometres: props.approachKilometres ?? undefined }
+    : { setOutAt: stops[index - 1].reachedAt, kilometres: props.legKilometres[index - 1] }
+
+/**
+ * The average speed over a leg: its length over the time since the rider set out on it. Unknown when the
+ * stop is not reached, the leg has no length, or both ends were marked at the same moment (riding past several
+ * checkpoints at once marks them together).
+ */
+const getLegSpeed = (stop: StopBase, { setOutAt, kilometres }: Leg): string | null => {
+  if (setOutAt === null || stop.reachedAt === null || kilometres === undefined) return null
+  const speed = formatAverageSpeed(kilometres, (stop.reachedAt - setOutAt) / MS_PER_SECOND)
   return speed === NO_VALUE ? null : speed
 }
 
 const buildStops = (props: CheckpointTimesProps): Stop[] =>
   buildBaseStops(props).map((stop, index, stops) => ({
     ...stop,
-    legSpeed: getLegSpeed(stop, stops[index - 1], props.legKilometres[index - 1]),
+    legSpeed: getLegSpeed(stop, getLeg(index, stops, props)),
   }))
 
 /** "At 09:12", with the average speed of the leg that led here when it is known: "At 09:12 · 24.5 km/h". */
@@ -86,8 +107,8 @@ function StopRow({ stop, startedAt }: { stop: Stop; startedAt: number }) {
 
 /**
  * The start, every checkpoint and the finish of the route, one row each. A stop not reached yet is gray; once
- * reached it is colored and shows the hour it was reached at, the average speed since the stop before it and the
- * time it took from the start.
+ * reached it is colored and shows the hour it was reached at, the average speed since the stop before it (for the
+ * start, since ride mode opened) and the time it took from the start.
  */
 export default function CheckpointTimes(props: CheckpointTimesProps) {
   return (
