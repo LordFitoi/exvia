@@ -1,6 +1,6 @@
 # Map
 
-The Map tab in [frontend/](../../frontend/): a full-bleed grayscale
+The Map tab in [frontend/](../../frontend/): a full-bleed, monochrome
 [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/) map centered on the
 rider, with a dot and a "You" label at their current position, always
 snapped to the nearest street, a [place search](#riding-to-a-place) at the top and a button that opens the
@@ -52,12 +52,23 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
   `marker-label` reading "You" below it. It is a plain DOM element handed to
   `mapboxgl.Marker`, anchored top-left because `marker-me` centers itself with
   `translate: -50% -50%`.
-- Grayscale: `services/grayscaleStyle.ts` grays the colors of the loaded
-  style's own layers (on every `style.load`, before the app adds its layers),
-  so the route lines, the green dot, the label and the controls keep their
-  colors. The style is `light-v11` or `dark-v11` following
-  `prefers-color-scheme`, switched live with `setStyle`; the marker survives
-  because it is not part of the style.
+- Colors: `services/mapTheme.ts` repaints the loaded style's own layers with
+  the style guide's map tokens (`--map-land`, `--map-building`, `--map-park`,
+  `--map-water`, `--map-road`, `--map-road-casing`, `--map-road-major`,
+  `--map-label`), on every `style.load` before the app
+  adds its layers, so the route lines, the green dot, the label and the controls
+  keep their colors. Layers are matched by type and id (background, water,
+  park/landuse, `road-*`/`bridge-*`/`tunnel-*` with `-case` casings and
+  motorway/trunk/primary as major roads, symbol text and halos). The tokens are
+  read from the page (a probe element plus a one pixel canvas, since the
+  browser may report `color-mix` as `color(srgb ...)`, which Mapbox cannot
+  parse), so they follow the theme. The map is monochrome on purpose: only the
+  palette's neutral greys, no green parks or blue water, so the route is the
+  only color. The ground is a light neutral and lighter
+  than the UI in dark mode, and the streets are darker than the ground in both
+  themes, because a street matters more than a place. The base style is
+  `light-v11` or `dark-v11` following `prefers-color-scheme`, switched live
+  with `setStyle`; the marker survives because it is not part of the style.
 - `mapbox-gl` is loaded with a dynamic `import()` after mount: it touches
   `window` on import, and the page is still prerendered. This also keeps it
   out of the other screens' bundles. Its CSS is imported by `UserMap.tsx`.
@@ -275,11 +286,11 @@ the Mapbox dashboard, since it is visible to the browser.
   The `driving` profile is the definition of "street"; change
   `STREET_PROFILE` to allow cycleways or footpaths.
 
-- **Graying the style's colors over a CSS filter**: Mapbox's stock styles are
-  near-gray but not exactly, and a custom style would need a Mapbox Studio
-  account. A `filter: grayscale(1)` on the canvas would also gray the route
-  lines, since they are drawn in the same canvas, so the style's paint colors
-  are converted to gray of the same luminance instead.
+- **Repainting the style's colors over a custom style**: a custom style would
+  need a Mapbox Studio account and would not follow the theme tokens. A CSS
+  filter on the canvas would also tint the route lines, since they are drawn in
+  the same canvas, so the stock style's own paint colors are replaced with the
+  style guide's map tokens instead.
 - **No `react-map-gl`**: one map, one marker; the imperative API is a few
   lines and avoids another dependency.
 - **Service worker untouched**: tiles and the style come from Mapbox origins,

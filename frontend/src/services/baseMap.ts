@@ -1,7 +1,7 @@
 import type mapboxgl from 'mapbox-gl'
 import type { Map as MapboxMap } from 'mapbox-gl'
 
-import { grayscaleStyle } from '@/services/grayscaleStyle'
+import { applyMapTheme } from '@/services/mapTheme'
 import type { Coordinates } from '@/types/geolocation'
 
 const LIGHT_MAP_STYLE = 'mapbox://styles/mapbox/light-v11'
@@ -49,7 +49,8 @@ export const createUserMarkerElement = (): HTMLDivElement => {
 }
 
 // mapbox-gl touches `window` on import, so it is loaded only in the browser, after mount. The
-// style follows the color scheme live and is always grayed. Resolves to null when `signal` aborts during the import.
+// style follows the color scheme live and is always repainted with the style guide's map colors.
+// Resolves to null when `signal` aborts during the import.
 export const createBaseMap = async ({
   container,
   accessToken,
@@ -73,7 +74,7 @@ export const createBaseMap = async ({
     pitch,
     bearing,
   })
-  map.on('style.load', () => grayscaleStyle(map))
+  map.on('style.load', () => applyMapTheme(map))
   map.on('error', ({ error }) => {
     if (isUnauthorizedMapError(error)) onUnauthorized()
   })

@@ -135,7 +135,7 @@ style guide's [Group rides](../ui-ux/group.html) page.
   Mapbox streets data extruded (`fill-extrusion`, `services/buildingsLayer.ts`)
   and the route drawn as in the other maps, with start and finish markers and a numbered
   checkpoint for every point the rider chose in between (see [Checkpoints](#checkpoints)).
-  The grayscale and the light and dark styles are the same as the
+  The map colors and the light and dark styles are the same as the
   Map tab.
 - The camera faces along the route: the bearing points from the start towards
   the point 10 positions ahead (`services/bearing.ts`), so the first view is
@@ -251,7 +251,7 @@ style guide's [Group rides](../ui-ux/group.html) page.
 - **Locate button placement.** The recenter button is the one control a rider
   needs while moving, so it sits **centered above the stats strip** (`map-control-bottom-center`,
   a filled primary round button, since the raised, translucent one blends into
-  the grayscale map), within reach of either thumb whichever hand is on the
+  the map), within reach of either thumb whichever hand is on the
   throttle. The rarely used **X** stays at the top right, out of the way of
   accidental taps.
 - **X** (top right, `Quit ride`) asks first while the ride is in progress:
