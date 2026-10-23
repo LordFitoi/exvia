@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import type { RefObject } from 'react'
 
 import { useMapInstance } from '@/hooks/useMapInstance'
+import { useSavedPlaceMarkers } from '@/hooks/useSavedPlaceMarkers'
 import { createUserMarkerElement, toLngLat } from '@/services/baseMap'
 import type { BaseMap } from '@/services/baseMap'
 import { flattenRoutePath } from '@/services/routePath'
@@ -14,6 +15,7 @@ import {
   updateRouteLine,
 } from '@/services/routeMapLayers'
 import type { Coordinates } from '@/types/geolocation'
+import type { PlaceLocation } from '@/types/placeLocation'
 import type { DraftPoint } from '@/types/route'
 
 const ROUTE_ZOOM = 15
@@ -30,6 +32,8 @@ interface RouteMapOptions {
   points: readonly DraftPoint[]
   onMapClick: (coordinates: Coordinates) => void
   onPointRemove: (id: number) => void
+  /** A saved place of the rider was tapped on the map. */
+  onPlaceSelect: (place: PlaceLocation) => void
 }
 
 interface RouteMapHandle {
@@ -48,6 +52,7 @@ export const useRouteMap = ({
   points,
   onMapClick,
   onPointRemove,
+  onPlaceSelect,
 }: RouteMapOptions): RouteMapHandle => {
   const centerRef = useRef(center)
   const userPositionRef = useRef(userPosition)
@@ -83,6 +88,8 @@ export const useRouteMap = ({
     view: { center, zoom: ROUTE_ZOOM },
     onReady: handleReady,
   })
+
+  useSavedPlaceMarkers(mounted, onPlaceSelect)
 
   useEffect(() => {
     if (!mounted || !fitPathRef.current) return

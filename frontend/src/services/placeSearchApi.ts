@@ -8,7 +8,7 @@ import {
   parseBusinessResult,
 } from '@/services/placeParsing'
 import { hasFullMatch, keepMatching, rankPlaces } from '@/services/placeRanking'
-import { SEARCH_RADIUS_KM } from '@/services/placeSearchConfig'
+import { MAX_SUGGESTIONS, PHOTON_URL, SEARCH_RADIUS_KM } from '@/services/placeSearchConfig'
 import { normalizeText } from '@/services/placeText'
 import { isRecord } from '@/services/typeGuards'
 import { fetchUnnamedPlaces } from '@/services/unnamedPlacesApi'
@@ -20,13 +20,11 @@ import type { PlaceResult, PlaceSuggestion } from '@/types/place'
 // two answer together.
 const MAPBOX_GEOCODING_URL = 'https://api.mapbox.com/search/geocode/v6/forward'
 const ADDRESS_TYPES = 'address,street,neighborhood,locality,place'
-const PHOTON_URL = 'https://photon.komoot.io'
 const KM_PER_DEGREE = 111.32
 // Both services only lean towards the rider, so as many matches as they give are asked for (Mapbox
 // answers 10 at most, Photon 50) and the best are kept: with fewer, the nearest place is often missing.
 const MAPBOX_LIMIT = 10
 const PHOTON_LIMIT = 50
-const MAX_PLACES = 8
 const DUPLICATE_METERS = 100
 // A service that does not answer is a failure, so the list never waits on it for good.
 const REQUEST_TIMEOUT_MS = 10_000
@@ -83,7 +81,7 @@ const isRepeated = (place: PlaceResult, index: number, all: readonly PlaceResult
 const pickBest = (text: string, places: readonly PlaceResult[]): PlaceResult[] =>
   rankPlaces(text, places)
     .filter((place, index, all) => !isRepeated(place, index, all))
-    .slice(0, MAX_PLACES)
+    .slice(0, MAX_SUGGESTIONS)
 
 const fetchAddresses = async (
   query: string,

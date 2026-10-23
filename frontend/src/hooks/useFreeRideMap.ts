@@ -4,6 +4,7 @@ import type { RefObject } from 'react'
 
 import { useEdgeIndicators } from '@/hooks/useEdgeIndicators'
 import { useMapInstance } from '@/hooks/useMapInstance'
+import { useSavedPlaceMarkers } from '@/hooks/useSavedPlaceMarkers'
 import { useRiderMarkers } from '@/hooks/useRiderMarkers'
 import { useRiderFollow } from '@/hooks/useRiderFollow'
 import { useRiderHeading } from '@/hooks/useRiderHeading'
@@ -49,6 +50,7 @@ export const useFreeRideMap = ({ accessToken, rider, riders }: FreeRideMapOption
     onReady: handleReady,
   })
 
+  useSavedPlaceMarkers(mounted)
   useRiderMarkers(mounted, riders)
   const indicators = useEdgeIndicators(mounted, rider, riders)
 

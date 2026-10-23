@@ -127,20 +127,21 @@
         </div>
         <div class="specimen">
           <span class="specimen-title">Suggestions with an address (open)</span>
-          <p class="text-small text-muted">When the options are places, each row has a title and under it the address and the distance, in the list item's body. A category row says so and opens its places instead of choosing one.</p>
+          <p class="text-small text-muted">When the options are places, each row has a title and under it the address and the distance, in the list item's body. A category row says so and opens its places instead of choosing one. The places the rider saved come first (<code>suggestion-option-saved</code>: their kind's icon at the end of the row, in the muted color of the details, and "Saved" in the details), since they are the likeliest answer; they are matched in the browser, so they are never dimmed while the others load.</p>
           <div class="suggestions">
           <div class="input-group">
             <span class="icon icon-search" aria-hidden="true"></span>
-            <input class="input input-search" type="search" role="combobox" aria-label="Search a place to add" aria-expanded="true" aria-controls="in-place-list" aria-autocomplete="list" aria-activedescendant="in-place-category" autocomplete="off" value="gas">
+            <input class="input input-search" type="search" role="combobox" aria-label="Search a place to add" aria-expanded="true" aria-controls="in-place-list" aria-autocomplete="list" aria-activedescendant="in-place-saved" autocomplete="off" value="gas">
           </div>
           <ul class="suggestion-list" id="in-place-list" role="listbox" aria-label="Place suggestions">
-            <li class="suggestion-option" id="in-place-category" role="option" aria-selected="true"><span class="list-item-body"><span class="list-item-title">Gas Station</span><span class="list-item-meta">Category · nearest first</span></span></li>
+            <li class="suggestion-option suggestion-option-saved" id="in-place-saved" role="option" aria-selected="true"><span class="list-item-body"><span class="list-item-title">Gas Shell Ruta 5</span><span class="list-item-meta">Saved · Gas station · 350 m</span></span><span class="icon icon-lg icon-fuel" aria-hidden="true"></span></li>
+            <li class="suggestion-option" id="in-place-category" role="option" aria-selected="false"><span class="list-item-body"><span class="list-item-title">Gas Station</span><span class="list-item-meta">Category · nearest first</span></span></li>
             <li class="suggestion-option" role="option" aria-selected="false"><span class="list-item-body"><span class="list-item-title">Repsol</span><span class="list-item-meta">Av. de Alfonso XIII, 28016 Madrid, Spain · 1.2 km</span></span></li>
           </ul>
           </div>
           <div class="dropdown-spacer"></div>
         </div>
-pho        <div class="specimen">
+        <div class="specimen">
           <span class="specimen-title">Suggestions with nothing to offer (open)</span>
           <p class="text-small text-muted">While the search runs, when nothing matches and when it fails, the list says so in one row that is not an option (<code>suggestion-status</code>), and a live region says it aloud. A list that stays silent looks broken.</p>
           <div class="suggestions">
@@ -153,6 +154,28 @@ pho        <div class="specimen">
           </ul>
           </div>
           <div class="dropdown-spacer"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="guide-section" id="category-picker" aria-labelledby="category-picker-title">
+      <h2 id="category-picker-title">Category picker</h2>
+      <p>A short, fixed list of kinds, each with its own icon, picked in one tap (Hick, Miller): a radio group drawn as icon tiles. The icon is the same glyph the saved place wears on the map. Use it instead of a select when there are fewer than a dozen kinds and the picture helps (Jakob, Fitts: the whole tile is the target).</p>
+      <div class="specimen-grid">
+        <div class="specimen">
+          <span class="specimen-title">Radio tiles</span>
+          <fieldset class="category-grid">
+            <legend class="field-label">Category</legend>
+            <label class="category-option"><input type="radio" name="place-category" value="gas_station"><span class="icon icon-lg icon-fuel" aria-hidden="true"></span>Gas station</label>
+            <label class="category-option"><input type="radio" name="place-category" value="restaurant"><span class="icon icon-lg icon-utensils" aria-hidden="true"></span>Restaurant</label>
+            <label class="category-option"><input type="radio" name="place-category" value="cafe" checked><span class="icon icon-lg icon-coffee" aria-hidden="true"></span>Cafe</label>
+            <label class="category-option"><input type="radio" name="place-category" value="mechanic"><span class="icon icon-lg icon-wrench" aria-hidden="true"></span>Mechanic</label>
+            <label class="category-option"><input type="radio" name="place-category" value="hotel"><span class="icon icon-lg icon-bed" aria-hidden="true"></span>Hotel</label>
+            <label class="category-option"><input type="radio" name="place-category" value="camping"><span class="icon icon-lg icon-tent" aria-hidden="true"></span>Camping</label>
+            <label class="category-option"><input type="radio" name="place-category" value="viewpoint"><span class="icon icon-lg icon-mountain" aria-hidden="true"></span>Viewpoint</label>
+            <label class="category-option"><input type="radio" name="place-category" value="rest_stop"><span class="icon icon-lg icon-parking" aria-hidden="true"></span>Rest stop</label>
+            <label class="category-option"><input type="radio" name="place-category" value="other"><span class="icon icon-lg icon-star" aria-hidden="true"></span>Other</label>
+          </fieldset>
         </div>
       </div>
     </section>

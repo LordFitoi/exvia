@@ -27,4 +27,18 @@ export interface CategoryResult {
   readonly title: string
 }
 
-export type PlaceSuggestion = PlaceResult | CategoryResult
+/** A row of the search list that adds one of the rider's saved places. */
+export interface SavedPlaceResult {
+  readonly kind: 'saved'
+  readonly id: string
+  readonly title: string
+  /** The kind of place it was saved as, such as "Gas station". */
+  readonly address: string
+  /** Meters from the rider. */
+  readonly distanceMeters: number
+  /** The icon of the kind it was saved as. */
+  readonly iconClass: string
+  readonly place: Place
+}
+
+export type PlaceSuggestion = PlaceResult | SavedPlaceResult | CategoryResult

@@ -23,6 +23,7 @@ urlpatterns = [
     path('api/auth/', include('apps.users.urls')),
     path('api/routes/', include('apps.routes.urls')),
     path('api/clans/', include('apps.clans.urls')),
+    path('api/places/', include('apps.places.urls')),
     path('api/notifications/', include('apps.notifications.urls')),
 ]
 

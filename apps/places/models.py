@@ -1,10 +1,11 @@
 from django.contrib.auth.models import User
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxLengthValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 
 from apps.core.models import TimeStampedModel
 
 NAME_MAX_LENGTH = 100
+NOTES_MAX_LENGTH = 500
 CATEGORY_MAX_LENGTH = 32
 COORDINATE_MAX_DIGITS = 9
 COORDINATE_DECIMAL_PLACES = 6
@@ -29,7 +30,10 @@ class PlaceLocation(TimeStampedModel):
 
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='place_locations')
     name = models.CharField(max_length=NAME_MAX_LENGTH)
-    notes = models.TextField(blank=True, help_text='Personal notes, only meaningful to the author.')
+    notes = models.TextField(
+        blank=True, validators=[MaxLengthValidator(NOTES_MAX_LENGTH)],
+        help_text='Personal notes, only meaningful to the author.',
+    )
     category = models.CharField(
         max_length=CATEGORY_MAX_LENGTH, choices=PlaceCategory.choices, default=PlaceCategory.OTHER,
     )
@@ -44,6 +48,7 @@ class PlaceLocation(TimeStampedModel):
 
     class Meta:
         ordering = ['name']
+        indexes = [models.Index(fields=['author', 'lat', 'lng'], name='place_author_lat_lng_idx')]
 
     def __str__(self) -> str:
         return self.name

@@ -2,12 +2,16 @@
 
 import { useCallback, useReducer } from 'react'
 
+import { useFavoritePlaces } from '@/hooks/useFavoritePlaces'
 import { usePlaceSuggestions } from '@/hooks/usePlaceSuggestions'
 import type { SuggestionStatus } from '@/hooks/usePlaceSuggestions'
 import { listCategories } from '@/services/placeCategories'
+import { MAX_SUGGESTIONS } from '@/services/placeSearchConfig'
+import { findSavedPlaces, putSavedPlacesFirst } from '@/services/savedPlaceSuggestions'
 import { NO_ACTIVE_OPTION, stepActiveOption } from '@/services/suggestionCursor'
 import type { Coordinates } from '@/types/geolocation'
 import type { Place, PlaceSuggestion } from '@/types/place'
+import type { PlaceLocation } from '@/types/placeLocation'
 
 // With nothing typed, the kinds of place are offered, so a rider can start without knowing a name.
 const KIND_SUGGESTIONS: readonly PlaceSuggestion[] = listCategories()
@@ -79,12 +83,28 @@ const reduceCompletion = (state: CompletionState, action: CompletionAction): Com
 const hasMessage = (status: SuggestionStatus, rowCount: number): boolean =>
   status === 'failed' || (status !== 'idle' && rowCount === 0)
 
+interface ListedSuggestions {
+  text: string
+  categoryId: string | null
+  found: readonly PlaceSuggestion[]
+  favorites: readonly PlaceLocation[]
+  proximity: Coordinates
+}
+
+/** The kinds of place with nothing typed; else the places found, with the rider's saved places that match the text first, in at most 8 rows. */
+const listSuggestions = ({ text, categoryId, found, favorites, proximity }: ListedSuggestions): readonly PlaceSuggestion[] => {
+  if (text === '') return KIND_SUGGESTIONS
+  if (categoryId !== null) return found
+  return putSavedPlacesFirst(findSavedPlaces(text, favorites, proximity), found).slice(0, MAX_SUGGESTIONS)
+}
+
 /** The state of the place search: what is typed, the category being browsed, and which row is active. */
 export const usePlaceCompletion = ({ accessToken, proximity, onSelect }: PlaceCompletionOptions): PlaceCompletion => {
   const [state, dispatch] = useReducer(reduceCompletion, INITIAL_STATE)
   const { value, categoryId, isOpen, activeIndex, attempt } = state
   const found = usePlaceSuggestions({ accessToken, query: value, categoryId, proximity, attempt })
-  const suggestions = value.trim() === '' ? KIND_SUGGESTIONS : found.suggestions
+  const favorites = useFavoritePlaces(isOpen)
+  const suggestions = listSuggestions({ text: value.trim(), categoryId, found: found.suggestions, favorites, proximity })
   const isVisible = isOpen && (suggestions.length > 0 || hasMessage(found.status, suggestions.length))
   const close = useCallback(() => dispatch({ type: 'closed' }), [])
 

@@ -4,10 +4,11 @@ import type { RefObject } from 'react'
 
 import type { PlaceCompletion } from '@/hooks/usePlaceCompletion'
 import type { SuggestionStatus } from '@/hooks/usePlaceSuggestions'
+import { formatMeters } from '@/services/formatRoute'
 import type { PlaceSuggestion } from '@/types/place'
 
-const METERS_PER_KILOMETER = 1000
 const CATEGORY_HINT = 'Category · nearest first'
+const SAVED_HINT = 'Saved'
 const FAILED_MESSAGE = "Couldn't search places. Check your connection and try again."
 // Said while there is no row to show: nothing is said before a search starts or while rows are listed.
 const STATUS_MESSAGES: Readonly<Record<SuggestionStatus, string | null>> = {
@@ -25,14 +26,10 @@ interface PlaceSuggestionListProps {
 
 export const getOptionId = (listId: string, { kind, id }: PlaceSuggestion): string => `${listId}-${kind}-${id}`
 
-const formatDistance = (meters: number): string =>
-  meters < METERS_PER_KILOMETER
-    ? `${Math.round(meters)} m`
-    : `${(meters / METERS_PER_KILOMETER).toFixed(1)} km`
-
 const describeSuggestion = (suggestion: PlaceSuggestion): string => {
   if (suggestion.kind === 'category') return CATEGORY_HINT
-  return [suggestion.address, formatDistance(suggestion.distanceMeters)].filter(Boolean).join(' · ')
+  const details = [suggestion.address, formatMeters(suggestion.distanceMeters)].filter(Boolean)
+  return (suggestion.kind === 'saved' ? [SAVED_HINT, ...details] : details).join(' · ')
 }
 
 /** What the list says in place of rows, so a search that finds nothing never looks broken. */
@@ -49,11 +46,18 @@ interface PlaceOptionProps {
 }
 
 const PlaceOption = ({ id, suggestion, isActive, onPick }: PlaceOptionProps) => (
-  <li id={id} className="suggestion-option" role="option" aria-selected={isActive} onClick={() => onPick(suggestion)}>
+  <li
+    id={id}
+    className={suggestion.kind === 'saved' ? 'suggestion-option suggestion-option-saved' : 'suggestion-option'}
+    role="option"
+    aria-selected={isActive}
+    onClick={() => onPick(suggestion)}
+  >
     <span className="list-item-body">
       <span className="list-item-title">{suggestion.title}</span>
       <span className="list-item-meta">{describeSuggestion(suggestion)}</span>
     </span>
+    {suggestion.kind === 'saved' && <span className={`icon icon-lg ${suggestion.iconClass}`} aria-hidden="true"></span>}
   </li>
 )
 

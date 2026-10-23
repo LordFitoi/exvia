@@ -1,8 +1,13 @@
 const SECONDS_PER_MINUTE = 60
 const MINUTES_PER_HOUR = 60
 const MINUTE_DIGITS = 2
+const METERS_PER_KILOMETER = 1000
 
 export const formatDistance = (kilometres: number): string => `${kilometres.toFixed(1)} km`
+
+/** "120 m" below a kilometre, "1.4 km" from there. */
+export const formatMeters = (meters: number): string =>
+  meters < METERS_PER_KILOMETER ? `${Math.round(meters)} m` : formatDistance(meters / METERS_PER_KILOMETER)
 
 /** "42 min", or "1 h 05 min" from an hour up; never less than a minute. */
 export const formatDuration = (seconds: number): string => {

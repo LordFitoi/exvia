@@ -72,6 +72,7 @@ export default function RouteEditor({
     points: draft.points,
     onMapClick: draft.addPoint,
     onPointRemove: draft.removePoint,
+    onPlaceSelect: ({ coordinates, name }) => draft.addPoint(coordinates, name),
   })
   const { title, cancelLabel, recenterLabel } = COPY[mode]
 

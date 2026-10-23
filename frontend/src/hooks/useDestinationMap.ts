@@ -5,6 +5,7 @@ import type { RefObject } from 'react'
 
 import { useEdgeIndicators } from '@/hooks/useEdgeIndicators'
 import { useMapInstance } from '@/hooks/useMapInstance'
+import { useSavedPlaceMarkers } from '@/hooks/useSavedPlaceMarkers'
 import { useRiderFollow } from '@/hooks/useRiderFollow'
 import { useRiderHeading } from '@/hooks/useRiderHeading'
 import { calculateBearing } from '@/services/bearing'
@@ -71,6 +72,8 @@ export const useDestinationMap = ({
     },
     onReady: handleReady,
   })
+
+  useSavedPlaceMarkers(mounted)
 
   useEffect(() => {
     if (!mounted) return

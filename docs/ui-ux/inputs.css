@@ -81,14 +81,15 @@
   resize: vertical;
 }
 
-/* Input with a leading icon */
+/* Input with a leading icon. Only the group's own icon is pinned to the field: a suggestion list can be
+   inside the group (the map search), and its icons are laid out by their rows */
 .input-group {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.input-group .icon {
+.input-group > .icon {
   position: absolute;
   inset-inline-start: var(--space-4);
   color: var(--color-text-muted);
@@ -262,7 +263,13 @@
 
 /* Options that belong to the text before the one typed stay while the new ones load, dimmed so they
    do not pass for the answer */
-.suggestion-list[aria-busy="true"] .suggestion-option { opacity: 0.6; }
+.suggestion-list[aria-busy="true"] .suggestion-option:not(.suggestion-option-saved) { opacity: 0.6; }
+
+/* A saved place of the rider: first in the list, with its kind's icon at the end of the row in the
+   muted color of the details under the title, bare (no disc), after the text, which takes the row's width. It is matched in the browser as
+   the text is typed, so it is always the answer to the current text and is never dimmed while the
+   other places load */
+.suggestion-option-saved > .icon { color: var(--color-text-muted); }
 
 .suggestion-option[aria-selected="true"] { background: var(--color-surface-selected); }
 .suggestion-option:active { background: var(--color-surface-sunken); }

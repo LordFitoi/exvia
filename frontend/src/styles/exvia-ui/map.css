@@ -53,6 +53,14 @@
 /* Mapbox GL sets position: relative on its container; keep the canvas full-bleed */
 .map-canvas.mapboxgl-map { position: absolute; }
 
+/* A press and hold on the map drops a pin, so the browser's own long-press (text selection, the
+   callout of a touch) is off on the canvas */
+.map-canvas {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 /* Floating layer: search at the top, controls on the right */
 .map-overlay {
   position: absolute;
@@ -187,6 +195,17 @@
 
 .marker-primary { background: var(--color-primary); color: var(--color-on-primary); }
 .marker-start { background: var(--color-surface); color: var(--color-text); }
+
+/* A place the rider saved: its kind's glyph on a solid green disc, fully opaque so the map never
+   shows through it. The pseudo-element widens the 36px disc to the 44px hit area without changing
+   how it looks */
+.marker-place { background: var(--color-primary); color: var(--color-on-primary); }
+.marker-place::after { content: ""; position: absolute; inset: -0.25rem; }
+
+/* A saved place shown while drawing a route or riding: only a landmark, so it takes no taps and the map
+   under it keeps every gesture (a tap there still adds a route point) */
+.marker-passive { pointer-events: none; }
+.marker-passive::after { content: none; }
 
 .marker-label {
   position: absolute;
@@ -417,3 +436,37 @@
 }
 
 .route-stat-value { font-size: var(--text-h4); line-height: var(--leading-normal); }
+
+/* Place card: the spot a rider pressed on the map (coordinates, the nearest business) or a place they
+   saved, with what to do next. It is a child of the map, so it rests above the tab bar, and it
+   has a visible X, so it is never a trap. It floats like a sheet but is not modal: the map stays live
+   behind it, and tapping the map closes it */
+.place-card {
+  position: relative;
+  z-index: var(--z-sheet);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0 var(--space-3) var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-z16);
+  animation: sheet-in var(--duration-base) var(--ease-out);
+}
+
+.place-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Personal notes of a saved place: they keep their line breaks, and a long one scrolls inside the card
+   instead of pushing the card up over the map */
+.place-card-notes {
+  max-block-size: 6rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-size: var(--text-body2);
+}

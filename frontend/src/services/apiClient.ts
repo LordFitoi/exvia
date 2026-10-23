@@ -21,6 +21,8 @@ export interface RequestOptions {
   readonly method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   readonly body?: unknown
   readonly accessToken?: string
+  /** Cancels the request, for answers that stop mattering (the map moved on). */
+  readonly signal?: AbortSignal
 }
 
 export const isUnauthorizedError = (error: unknown): boolean =>
@@ -57,7 +59,7 @@ const toApiError = (status: number, payload: unknown): ApiError => {
 
 export const requestJson = async (
   path: string,
-  { method = 'GET', body, accessToken }: RequestOptions = {},
+  { method = 'GET', body, accessToken, signal }: RequestOptions = {},
 ): Promise<unknown> => {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`
@@ -68,9 +70,10 @@ export const requestJson = async (
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: AbortSignal.any([AbortSignal.timeout(REQUEST_TIMEOUT_MS), ...(signal ? [signal] : [])]),
     })
   } catch (error) {
+    if (signal?.aborted) throw error
     console.error(`Request ${method} ${path} failed`, error)
     const isTimeout = error instanceof DOMException && error.name === 'TimeoutError'
     throw new ApiError(0, isTimeout ? TIMEOUT_ERROR_MESSAGE : NETWORK_ERROR_MESSAGE)

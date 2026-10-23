@@ -24,7 +24,8 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 | Snap request | `services/streetSnapApi.ts` | Mapbox Directions call that returns the snapped point, or `null` |
 | Search | `views/routes/PlaceSearch.tsx` | The same place search as the route creator, at the top of the map; picking a place starts a [ride to it](#riding-to-a-place) |
 | Destination ride | `views/map/DestinationRideView.tsx`, `hooks/useDestinationMap.ts`, `hooks/useDestinationArrival.ts` | Ride mode towards the picked place and its arrival summary (`views/map/DestinationSummarySheet.tsx`) |
-| Mapbox | `hooks/useUserMap.ts` | Creates the map and the "You" marker, keeps the marker on the latest position |
+| Mapbox | `hooks/useUserMap.ts` | Creates the map (through `useMapInstance`) and the "You" marker, keeps the marker on the latest position, and hands the created map to the places hooks |
+| Places | `hooks/useMapPlaces.ts` and the [saved places](#saved-places) pieces | A press and hold drops a pin with a card; the rider's saved places show as icons |
 | Map instance | `hooks/useMapInstance.ts` | Creates a map once the token is known, keeps it sized to its container, removes it on unmount; used by the creator and the [Ride](ride.md) maps |
 | Base map | `services/baseMap.ts` | Shared by both maps: dynamic `mapbox-gl` import, style following the color scheme, 401 handling, the "You" marker element |
 | Token | `services/mapboxConfig.ts` | Reads `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` for the map and the snap request |
@@ -75,6 +76,94 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 - Failures: a rejected import or a 401 from Mapbox (bad token) shows "Map
   unavailable"; a missing token logs to the console and shows the same
   message. Other tile errors are ignored (Mapbox retries them).
+
+## Saved places
+
+A rider can save any spot as a favorite place ([places.md](places.md)) and sees their saved places on
+the map. `UserMap` calls `useMapPlaces(mounted)`, which composes the pieces below and returns the
+`selection` (what the place card describes), `addPlace` and `clearSelection`.
+
+| Piece | File | Job |
+|-------|------|-----|
+| Long press | `hooks/useMapLongPress.ts` | Tells a press and hold from a tap and a drag |
+| Pin and card | `hooks/usePinMarker.ts`, `views/map/PinPlaceCard.tsx`, `views/map/PlaceCard.tsx` | The pin on the pressed spot and its card |
+| Nearest business | `hooks/useNearestCommerce.ts`, `services/nearestCommerceApi.ts` | The business closest to the spot |
+| Saved place | `views/map/SavedPlaceCard.tsx`, `hooks/usePlaceMarkers.ts`, `services/placeLocationMarkers.ts` | One icon marker per saved place, and its card |
+| Save sheet | `views/map/SavePlaceSheet.tsx`, `components/form/CategoryField.tsx` | Name, category and notes |
+| Viewport | `hooks/usePlaceLocations.ts`, `services/viewport.ts`, `services/placeLocationsApi.ts` | Loads only the saved places in view |
+| Categories | `services/placeLocationCategories.ts` | The fixed kinds, each with its label and icon |
+| Camera | `hooks/useSelectionFocus.ts` | Centers the selected spot above the card |
+
+- **Press and hold** (`useMapLongPress`): 500 ms on the map without moving more than 8 px (a finger
+  never stays perfectly still) drops a pin at that spot and opens its card. A drag, a pinch (a second
+  finger), a zoom, a rotation or releasing early cancels it. A press that lands on a marker is left to
+  the marker. A tap on the map closes the card, but **the click the browser sends when a long press
+  ends is ignored**, or the card would close the moment it opened; after a touch, the compatibility
+  `mousedown` and `click` the browser adds are not taken as a new press either (a window of 1 s after
+  `touchend`). The map's `contextmenu` is cancelled, since Android Chrome opens its own menu on a long
+  press.
+- **The pin card** (`PinPlaceCard`, mounted with a `key` per spot so it asks again for a new one): the
+  title "Dropped pin", the coordinates, and **the nearest business** from Photon `/reverse`
+  (`fetchNearestCommerce`: within 500 m, the 15 nearest places filtered to the OpenStreetMap keys `shop`,
+  `amenity`, `tourism`, `craft` and `office`, the nearest of those, with its distance), "No business
+  within 500 m." when there is none, or "Couldn't look up nearby businesses." when the lookup fails. The
+  card shows its buttons while that loads. Two buttons: **Ride here**, which starts the [ride to a place](#riding-to-a-place) with the
+  same "Dropped pin" `Place` a pasted coordinate gives, and **Save place**.
+- **Save place** opens `SavePlaceSheet`, a `FormSheet`: **Name** (required, 100; it starts as the nearest
+  business's name when that is within 50 m, so the rider only confirms), **Category** (the icon tiles
+  of `CategoryField`, "Other" chosen to start) and **Notes** (optional, 500). `POST /api/places/` with the
+  coordinates rounded to 6 decimals, which the server demands. Field errors show under their field.
+  On success the sheet and card close, the place is added to the map without another request and a
+  toast says "<name> saved".
+- **Saved places on the map** are `marker marker-place` buttons (a solid, opaque green disc) with the icon of their category
+  (`icon-fuel` gas station, `icon-utensils` restaurant, `icon-coffee` cafe, `icon-wrench` mechanic,
+  `icon-bed` hotel, `icon-tent` camping, `icon-mountain` viewpoint, `icon-parking` rest stop, `icon-star`
+  other). Tapping one opens `SavedPlaceCard`: name, category, coordinates, the notes, and **Ride here**.
+  `usePlaceMarkers` keeps one marker per place id: a place that is still in the list keeps its marker, so
+  panning does not rebuild them.
+- **Only the view is fetched** (`usePlaceLocations`): on every `moveend` (and once at the start) the
+  hook sends the camera's bounds as `GET /api/places/?bbox=west,south,east,north`, so a place out of
+  view is never read, sent or drawn. Mapbox keeps counting longitudes past ±180, so `readViewport`
+  wraps them (and clamps the latitudes); a box over the antimeridian goes with `west > east`, and a view
+  of the whole world as -180 to 180. A request still in flight is aborted when the camera stops again,
+  and **no request is made while the view stays inside the area of the last complete answer**
+  (`containsViewport`; an answer of 200 places, the server's limit, may have left some out, so it does not
+  count). A failed request is only logged and the places on screen stay; the next move asks again.
+- **The camera** (`useSelectionFocus`): selecting a spot, by pressing and holding it or tapping a saved place,
+  eases the map to it at a **default zoom of 16** (street level, wherever the rider had zoomed to) so the spot sits in the part the
+  card leaves free (260 px of bottom padding). Closing the card gives the room back and keeps the zoom.
+- **On the other maps** (`useSavedPlaceMarkers`): the [route creator and editor](#route-creator) and every
+  ride map (a [ride to a place](#riding-to-a-place), a route ride and a free ride, see
+  [ride.md](ride.md#ride-mode)) also show the saved places in view, so a rider can plan around and ride past
+  their favorites. In the **route creator and editor** a saved place is a button: **tapping it adds it as a route
+  point**, as picking it in the search would (snapped to the nearest street within 50 m, joined to the previous
+  point by a street leg, titled with the place's name; taps are ignored while another point is being routed, and
+  a place with no street nearby shows the same "No street here" alert). The tap does not also reach the map, so
+  no second point is added. Once it is a point, the numbered point marker sits on top of the place, and tapping that
+  removes the point, like any point. On the **ride maps** the places are **landmarks only** (`marker-passive`):
+  nothing there takes a tap. A landmark is a `span` inside an empty,
+  zero-size `div`, because Mapbox sets `pointer-events` on the element it positions and would undo the
+  CSS on the marker itself. These maps keep moving the camera (a rider is followed, so `moveend` fires
+  with every fix), so the viewport sent is **grown by half its size on every side** (`expandViewport`,
+  `MOVING_MAP_MARGIN_RATIO`): one request covers a while of riding instead of one per fix. The route
+  preview maps (static frames) show none.
+- **Saved places in the search** (`PlaceSearch`, on the map and in the route creator): the rider's saved places that
+  answer the text are the **primary suggestions, listed first**, and everything the services find (Mapbox, Photon,
+  Overpass) follows as auxiliary. `useFavoritePlaces` loads all the rider's places (`GET /api/places/all/`,
+  [places.md](places.md#api)) each time the field is opened, so one saved a moment ago is there. They are matched **in the
+  browser** (`services/savedPlaceSuggestions.ts`) with the same tolerant matching as the other places (case, accents,
+  partly typed words, a typing mistake), against the place's name and its kind ("gas station" finds the saved gas
+  stations), so they appear at once, before any service answers, and are never dimmed while the rest loads. At most 4
+  are listed, best match first, nearest first among equals, and a place the services list again at a saved place's spot
+  (same name, within 100 m) is dropped. A saved row (`SavedPlaceResult`, `suggestion-option-saved`) shows its kind's icon at the
+  **end of the row** (bare, no disc, in the muted color of the details) and "Saved · Gas station · 350 m". Picking one hands over its name and coordinates like any place: a
+  ride to it on the map, a route point in the creator. With nothing typed the list is still the kinds of place, and
+  browsing a kind lists that kind's places from the services only. If the saved places cannot be loaded, the error is
+  logged and the search answers without them.
+- **At most 8 rows** (`MAX_SUGGESTIONS`) are listed while typing, saved places and kinds of place included: the saved
+  places first, then the best of the others until the list is full. The list of kinds shown with nothing typed is not a
+  completion and keeps all of them.
+- Not built: editing or deleting a saved place, and listing them outside the map.
 
 ## Riding to a place
 
@@ -175,7 +264,7 @@ Behavior:
     covers them. If one service fails the other still answers.
   The OpenStreetMap credit is already in the map's attribution.
   Photon is a free public instance: the typed text and the rider's approximate
-  position are sent to it. Swap `PHOTON_URL` in `services/placeSearchApi.ts` for
+  position are sent to it. Swap `PHOTON_URL` in `services/placeSearchConfig.ts` for
   a self-hosted Photon (the same API) if its usage limits are ever a problem.
 - **Ranked by relevance, then nearest**: both requests carry the rider's position
   (or the route's center when editing, where the rider's position is not known)

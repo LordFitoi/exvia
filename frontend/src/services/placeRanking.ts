@@ -1,5 +1,11 @@
 import { isWordFound, tokenize } from '@/services/placeText'
-import type { PlaceResult } from '@/types/place'
+
+/** What the ranking reads of a place: its words and how far it is. */
+interface RankablePlace {
+  readonly title: string
+  readonly address: string
+  readonly distanceMeters: number
+}
 
 // How well a place answers the text typed, best first. Within a tier the nearest place goes first.
 const TIER_NAME_STARTS = 5
@@ -18,7 +24,7 @@ const isStartOfName = (typedWords: readonly string[], nameWords: readonly string
   typedWords.every((word, position) => position < nameWords.length && isWordFound(word, [nameWords[position]]))
 
 /** The name alone answering the text is better than the name and the address together, which beats a part of it. */
-const rateTier = (typedWords: readonly string[], { title, address }: PlaceResult): number => {
+const rateTier = (typedWords: readonly string[], { title, address }: RankablePlace): number => {
   const nameWords = tokenize(title)
   if (countFound(typedWords, nameWords) === typedWords.length) {
     return isStartOfName(typedWords, nameWords) ? TIER_NAME_STARTS : TIER_NAME
@@ -28,14 +34,14 @@ const rateTier = (typedWords: readonly string[], { title, address }: PlaceResult
   return foundInPlace / typedWords.length >= MIN_PARTIAL_SHARE ? TIER_PARTIAL : TIER_NONE
 }
 
-const byDistance = (a: PlaceResult, b: PlaceResult): number => a.distanceMeters - b.distanceMeters
+const byDistance = (a: RankablePlace, b: RankablePlace): number => a.distanceMeters - b.distanceMeters
 
 /**
  * The places ordered by how well they answer `text`, then by distance. Nothing is dropped: the
  * services found these places for the text with more than their names and addresses (other names,
  * other languages), so a place that does not read like the text is only listed last.
  */
-export const rankPlaces = (text: string, places: readonly PlaceResult[]): PlaceResult[] => {
+export const rankPlaces = <TPlace extends RankablePlace>(text: string, places: readonly TPlace[]): TPlace[] => {
   const typedWords = tokenize(text)
   if (typedWords.length === 0) return [...places].sort(byDistance)
   return places
@@ -45,13 +51,13 @@ export const rankPlaces = (text: string, places: readonly PlaceResult[]): PlaceR
 }
 
 /** The places whose name and address answer at least half of `text`: for places nobody searched for by it. */
-export const keepMatching = (text: string, places: readonly PlaceResult[]): PlaceResult[] => {
+export const keepMatching = <TPlace extends RankablePlace>(text: string, places: readonly TPlace[]): TPlace[] => {
   const typedWords = tokenize(text)
   return places.filter((place) => rateTier(typedWords, place) >= TIER_PARTIAL)
 }
 
 /** Whether a place has every word of `text` in its name or address. */
-export const hasFullMatch = (text: string, places: readonly PlaceResult[]): boolean => {
+export const hasFullMatch = (text: string, places: readonly RankablePlace[]): boolean => {
   const typedWords = tokenize(text)
   return places.some((place) => rateTier(typedWords, place) >= TIER_NAME_AND_ADDRESS)
 }
