@@ -298,8 +298,16 @@ between the first and the last, in route order. A stop counts as reached in any 
   off it (`trackPassing`): the spot of the track closest to them, only forward and only up to 400 m ahead of the
   last one, and only while they are within 100 m of the track (`PASSING_METERS`). Riding down a parallel street
   marks each checkpoint as the rider draws level with it. This is kept apart from `useRideProgress`, so it does
-  not move the route line or the arrival at the finish, which still need the rider on the track.
-- **Near it, wherever the rider is.** The rider's position is within 40 m of the stop in a straight line.
+  not move the route line or the arrival at the finish, which still need the rider on the track. Until anything is
+  known of how far the rider has got, the stretch ahead is the whole track once the first 400 m have found nothing:
+  a rider who closes the app and joins the group back (see [Join back](#picker)) starts with no progress, and
+  may be on a parallel street anywhere along the route, so the checkpoint they draw level with is marked.
+- **Near it, wherever the rider is.** The rider's position is within 40 m of the stop in a straight line. Once it
+  is known how far the rider has got, this only counts for a stop that is no more than 100 m ahead of them along
+  the track (`PASSING_METERS`). A route that comes back past itself, or a checkpoint next to the start, puts the
+  rider in a straight line from stops far ahead of them, and marking those (and every stop before them) was what
+  showed the first checkpoint as 0:00 as soon as ride mode opened. Until the progress is known (the rider is
+  still away from the track, or has just joined back) any stop near them counts.
 
 Reaching a stop reaches all those before it (the furthest one reached decides), like the route line colors the
 whole stretch behind the rider: a checkpoint skipped by taking another street is marked as soon as the rider
@@ -309,8 +317,9 @@ The start counts once the rider is there, not when ride mode opens, as they may 
 kept is that of the first GPS fix that showed it. A stop is recorded once, and the times are only ever added to:
 the group reloads the route as new arrays whenever someone joins or leaves, and that must not erase them. They
 freeze when the rider arrives, since the ride is saved with them then. A new route (the leader changed it)
-remounts the ride (`key` on the route id) and starts them over, as the other stats. The finish is still reached
-by arrival along the track (`useRideArrival`).
+remounts the ride (`key` on the route id) and starts them over, as the other stats, and so does joining the group
+back: the ride mode of the new screen knows nothing of the one before. The finish is still reached by arrival along
+the track (`useRideArrival`).
 
 - **Where they show.** `CheckpointTimes` (`components/route/`), a flat `list` with **the start, every checkpoint
   of the route and the finish**, one row each, in route order, so a route with no points in between still lists
@@ -327,7 +336,15 @@ by arrival along the track (`useRideArrival`).
   already at the start (within 40 m) has no such leg, and the history's summary does not keep where the ride
   began, so the start shows no speed there. A stop shows no speed when the route has no stored waypoints (old
   routes), or when it and the stop before it were marked at the same moment (passing several checkpoints at
-  once marks them together, so there is no time between them). The start shows the flag, the finish shows the checkered
+  once marks them together, so there is no time between them). A stop marked late, because the rider only came
+  beside it after a detour or after joining the group back, has the time of the fix that showed it, so the speed of
+  the leg that begins there is overstated.
+  **The next stop, still gray, shows the speed so far** of the leg the rider is on (`Not reached yet · 24.5 km/h so
+  far`): the distance from the last stop reached to the rider's latest fix over the time between them
+  (`currentLeg`, from `useCheckpointTimes`). The distance is how far the rider has got along the track from that
+  stop or the straight line to it, whichever is longer, so a rider on another street still has a speed. It shows
+  nothing before the rider reaches the start, or at the same fix that marked the last stop, and the history does
+  not have it (a finished ride has no position). The start shows the flag, the finish shows the checkered
   flag and is reached on arrival; the checkpoints show their number (the first is 2, like the markers) and their
   count is the route's waypoints between the first and the last (`countCheckpoints`). It is in the expanded ride
   stats, in the "You've arrived!" sheet and in the history's ride summary ([ride-history.md](ride-history.md)).

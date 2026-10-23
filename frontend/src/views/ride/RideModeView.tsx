@@ -59,7 +59,7 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
   const arrivedAt = useRideArrival({ progress, fixTime: location.timestamp })
   // The finish counts as covered once the rider has arrived, like the summary does.
   const coveredKilometres = arrivedAt === null ? (progress.reached?.distance ?? 0) / METERS_PER_KILOMETER : route.distance
-  const checkpointTimes = useCheckpointTimes({
+  const { reachedAt: checkpointTimes, currentLeg } = useCheckpointTimes({
     progress,
     waypoints: route.waypoints,
     rider,
@@ -76,6 +76,7 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
     finishedAt: arrivedAt,
     legKilometres,
     approachKilometres,
+    currentLeg,
   }
   const elapsedSeconds = useRideElapsed(startedAt, arrivedAt)
   const maxSpeed = useRideMaxSpeed({

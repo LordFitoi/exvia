@@ -10,7 +10,7 @@ const ON_TRACK_METERS = 40
 // near the start is not mistaken for the start.
 const SEARCH_AHEAD_METERS = 400
 // A rider on another street this close to the track still passes what is beside them along it.
-const PASSING_METERS = 100
+export const PASSING_METERS = 100
 // GPS jitter can place the rider a little behind the last fix; that is not a move backwards.
 const JITTER_BACK_METERS = 30
 
@@ -162,15 +162,24 @@ export const measureLegs = (path: MeasuredPath, waypoints: readonly Coordinates[
   return stops.slice(1).map((distance, index) => (distance - stops[index]) / METERS_PER_KILOMETER)
 }
 
+const locatePassing = (path: MeasuredPath, position: Coordinates, range: SearchRange): number | null => {
+  const closest = locateOnPath(path, position, range)
+  return closest && closest.offset <= PASSING_METERS ? closest.distance : null
+}
+
 /**
  * How far along the track the rider is when they are beside it on another street: the spot of the track
  * closest to `position`, moving only forward from `passed` (the distance reached so far) and only as far as
  * `PASSING_METERS` away from it. Returns null when the rider is not beside the stretch ahead.
+ * With `passed` null nothing is known yet (the rider came back to a ride in progress), so the stretch ahead is
+ * the whole track once the first 400 m have found nothing: they may be anywhere along it.
  */
-export const trackPassing = (path: MeasuredPath, position: Coordinates, passed: number): number | null => {
-  const from = Math.max(0, passed - JITTER_BACK_METERS)
-  const ahead = locateOnPath(path, position, { from, to: passed + SEARCH_AHEAD_METERS })
-  return ahead && ahead.offset <= PASSING_METERS ? ahead.distance : null
+export const trackPassing = (path: MeasuredPath, position: Coordinates, passed: number | null): number | null => {
+  const reached = passed ?? 0
+  const from = Math.max(0, reached - JITTER_BACK_METERS)
+  const ahead = locatePassing(path, position, { from, to: reached + SEARCH_AHEAD_METERS })
+  if (ahead !== null || passed !== null) return ahead
+  return locatePassing(path, position, { from, to: getPathLength(path) })
 }
 
 /** The part of the path between two distances, as a line from `fromPoint` to `toPoint`. */

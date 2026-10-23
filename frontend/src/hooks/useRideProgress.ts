@@ -33,7 +33,10 @@ export const useRideProgress = ({ path, rider }: RideProgressOptions): RideProgr
   if (progress.rider !== rider || progress.measured !== measured) {
     const previous = progress.measured === measured ? progress.reached : null
     const found = rider && trackProgress(measured, rider, previous?.distance ?? 0)
-    setProgress({ measured, rider, reached: found || previous })
+    const updated = { measured, rider, reached: found || previous }
+    setProgress(updated)
+    // The hooks that read this one in the same render must see where the rider is now, not at the last fix.
+    return updated
   }
   return progress
 }

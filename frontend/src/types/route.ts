@@ -50,3 +50,11 @@ export interface DraftPoint {
 /** What a ride needs of its route: the path, the checkpoints and the facts of the summary. A group member
  * gets this for the route of the group without owning it, so it has no description. */
 export type RideRoute = Pick<RouteDetail, 'id' | 'name' | 'distance' | 'estimated_time' | 'points' | 'waypoints'>
+
+/** How far the rider has got on the leg they are on, from the last stop (the start or a checkpoint) they reached. */
+export interface CurrentLeg {
+  /** The kilometres from that stop to where the rider is. */
+  readonly kilometres: number
+  /** When the rider was there, in milliseconds since the epoch. */
+  readonly at: number
+}
