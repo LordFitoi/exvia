@@ -15,6 +15,8 @@ interface MapPlaces {
   readonly selection: PlaceSelection | null
   /** Shows a place that was just saved. */
   addPlace: (place: PlaceLocation) => void
+  /** Hides a place that was just deleted. */
+  removePlace: (placeId: number) => void
   clearSelection: () => void
 }
 
@@ -23,7 +25,7 @@ interface MapPlaces {
  * which of them the place card describes. A tap on the map, or on nothing, closes the card.
  */
 export const useMapPlaces = (mounted: BaseMap | null): MapPlaces => {
-  const { places, addPlace } = usePlaceLocations(mounted)
+  const { places, addPlace, removePlace } = usePlaceLocations(mounted)
   const [selection, setSelection] = useState<PlaceSelection | null>(null)
 
   const clearSelection = () => setSelection(null)
@@ -36,5 +38,5 @@ export const useMapPlaces = (mounted: BaseMap | null): MapPlaces => {
   usePinMarker(mounted, selection?.kind === 'pin' ? selection.coordinates : null)
   useSelectionFocus(mounted, selection)
 
-  return { selection, addPlace, clearSelection }
+  return { selection, addPlace, removePlace, clearSelection }
 }

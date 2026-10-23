@@ -43,17 +43,23 @@ export default function UserMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     coordinates,
   })
-  const { selection, addPlace, clearSelection } = useMapPlaces(mounted)
+  const { selection, addPlace, removePlace, clearSelection } = useMapPlaces(mounted)
   const [saveRequest, setSaveRequest] = useState<SavePlaceRequest | null>(null)
-  const [savedMessage, setSavedMessage] = useState<string | null>(null)
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(null)
 
-  const dismissSavedMessage = useCallback(() => setSavedMessage(null), [])
+  const dismissNoticeMessage = useCallback(() => setNoticeMessage(null), [])
 
   const handleSaved = (place: PlaceLocation) => {
     addPlace(place)
     clearSelection()
     setSaveRequest(null)
-    setSavedMessage(`${place.name} saved`)
+    setNoticeMessage(`${place.name} saved`)
+  }
+
+  const handleDeleted = (place: PlaceLocation) => {
+    removePlace(place.id)
+    clearSelection()
+    setNoticeMessage(`${place.name} deleted`)
   }
 
   if (hasLoadFailed) {
@@ -72,7 +78,7 @@ export default function UserMap({
       <div className="map-overlay">
         <PlaceSearch proximity={coordinates} label="Search a place to ride to" onSelect={onSelectPlace} />
         {children}
-        {savedMessage && <Toast message={savedMessage} onDismiss={dismissSavedMessage} />}
+        {noticeMessage && <Toast message={noticeMessage} onDismiss={dismissNoticeMessage} />}
         <div className="map-controls">
           <button className="icon-button" type="button" aria-label="Center on my location" onClick={recenter}>
             <span className="icon icon-locate" aria-hidden="true"></span>
@@ -94,6 +100,7 @@ export default function UserMap({
           key={selection.place.id}
           place={selection.place}
           onRide={onSelectPlace}
+          onDeleted={handleDeleted}
           onClose={clearSelection}
         />
       )}

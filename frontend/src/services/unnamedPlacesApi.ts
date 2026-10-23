@@ -6,8 +6,12 @@ import type { PlaceResult } from '@/types/place'
 
 // Photon only has places that OpenStreetMap has named, and many gas stations are drawn without a
 // name. Overpass reads the same data by tag, so it finds them. It is a free public service that is
-// often slow or busy, which is why it only completes an answer that is already on screen.
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter'
+// often slow or busy, which is why it only completes an answer that is already on screen. When one
+// server is too slow the next one is asked, since each runs on its own machines.
+const OVERPASS_URLS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+]
 const SERVER_TIMEOUT_SECONDS = 10
 const REQUEST_TIMEOUT_MS = 12_000
 const METERS_PER_KILOMETER = 1000
@@ -36,12 +40,33 @@ const buildQuery = (osmTag: string, { longitude, latitude }: Coordinates): strin
   return `[out:json][timeout:${SERVER_TIMEOUT_SECONDS}];nwr["${key}"="${value}"][!"name"](around:${around});out center tags;`
 }
 
-const requestElements = async (osmTag: string, center: Coordinates): Promise<unknown[]> => {
-  const url = `${OVERPASS_URL}?data=${encodeURIComponent(buildQuery(osmTag, center))}`
-  const response = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) })
+const requestElementsFrom = async (serverUrl: string, query: string): Promise<unknown[]> => {
+  const response = await fetch(`${serverUrl}?data=${encodeURIComponent(query)}`, {
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  })
   if (!response.ok) throw new Error(`Unnamed place search failed with HTTP ${response.status}`)
   const payload: unknown = await response.json()
   return isRecord(payload) && Array.isArray(payload.elements) ? payload.elements : []
+}
+
+const requestElements = async (osmTag: string, center: Coordinates): Promise<unknown[]> => {
+  const query = buildQuery(osmTag, center)
+  let lastError: unknown
+  for (const serverUrl of OVERPASS_URLS) {
+    try {
+      return await requestElementsFrom(serverUrl, query)
+    } catch (error) {
+      lastError = error
+    }
+  }
+  throw lastError
+}
+
+/** A slow public service is expected now and then, so it is only noted; anything else is a real error. */
+const reportFailure = (error: unknown): void => {
+  const isTimeout = error instanceof DOMException && error.name === 'TimeoutError'
+  if (isTimeout) console.warn('Unnamed places search timed out on every server')
+  else console.error('Could not search unnamed places', error)
 }
 
 /** The request is shared by every search of the area, and never fails: without an answer there are no places. */
@@ -56,7 +81,7 @@ const loadElements = (osmTag: string, center: Coordinates): Promise<unknown[]> =
       return elements
     },
     (error: unknown) => {
-      console.error('Could not search unnamed places', error)
+      reportFailure(error)
       entry.expiresAt = Date.now() + FAILURE_CACHE_MS
       return []
     },

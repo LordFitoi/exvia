@@ -86,6 +86,13 @@
 
 .button-lg { min-block-size: var(--control-height); }
 
+/* Square: an icon-only button as wide as it is tall, for a secondary action next to a wide primary one. Needs an aria-label */
+.button-square {
+  inline-size: var(--control-height-md);
+  min-inline-size: 0;
+  padding: 0;
+}
+
 .button-block {
   display: flex;
   inline-size: 100%;

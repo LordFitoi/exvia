@@ -77,3 +77,7 @@ export const createPlaceLocation = async ({
   }
   return toPlaceLocation(expectPlaceLocation(await requestJsonAuthorized(PLACE_LOCATIONS_PATH, { method: 'POST', body })))
 }
+
+export const deletePlaceLocation = async (id: number): Promise<void> => {
+  await requestJsonAuthorized(`${PLACE_LOCATIONS_PATH}${id}/`, { method: 'DELETE' })
+}

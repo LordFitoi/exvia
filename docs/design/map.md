@@ -81,14 +81,14 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 
 A rider can save any spot as a favorite place ([places.md](places.md)) and sees their saved places on
 the map. `UserMap` calls `useMapPlaces(mounted)`, which composes the pieces below and returns the
-`selection` (what the place card describes), `addPlace` and `clearSelection`.
+`selection` (what the place card describes), `addPlace`, `removePlace` and `clearSelection`.
 
 | Piece | File | Job |
 |-------|------|-----|
 | Long press | `hooks/useMapLongPress.ts` | Tells a press and hold from a tap and a drag |
 | Pin and card | `hooks/usePinMarker.ts`, `views/map/PinPlaceCard.tsx`, `views/map/PlaceCard.tsx` | The pin on the pressed spot and its card |
 | Nearest business | `hooks/useNearestCommerce.ts`, `services/nearestCommerceApi.ts` | The business closest to the spot |
-| Saved place | `views/map/SavedPlaceCard.tsx`, `hooks/usePlaceMarkers.ts`, `services/placeLocationMarkers.ts` | One icon marker per saved place, and its card |
+| Saved place | `views/map/SavedPlaceCard.tsx`, `hooks/usePlaceMarkers.ts`, `hooks/usePlaceDeletion.ts`, `services/placeLocationMarkers.ts` | One icon marker per saved place, and its card (ride there, or delete it) |
 | Save sheet | `views/map/SavePlaceSheet.tsx`, `components/form/CategoryField.tsx` | Name, category and notes |
 | Viewport | `hooks/usePlaceLocations.ts`, `services/viewport.ts`, `services/placeLocationsApi.ts` | Loads only the saved places in view |
 | Categories | `services/placeLocationCategories.ts` | The fixed kinds, each with its label and icon |
@@ -324,8 +324,10 @@ Behavior:
   async generator) and the list is shown after the first, then updated when
   Overpass answers. The answer is asked once per cell of about 11 km and kept
   5 minutes (a failure 1 minute, so a busy service is not asked at every
-  keystroke) and fails silently. Swap `OVERPASS_URL` for a self-hosted instance
-  if it is ever a problem.
+  keystroke) and fails silently. When a server times out, the next of
+  `OVERPASS_URLS` is asked; a timeout on all of them is logged as a warning, not
+  an error (so it does not raise the Next.js dev overlay). Use a self-hosted
+  instance if it is ever a problem.
   **A place that nobody has mapped is not found by any of the services**: draw
   it in OpenStreetMap (it shows up in the app within hours to weeks, Overpass
   first), paste its coordinates, or tap the map. Full coverage would need a

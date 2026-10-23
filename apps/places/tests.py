@@ -118,6 +118,37 @@ class PlaceLocationApiTests(TestCase):
         self.assertEqual(len(response.data), 2)
 
 
+class PlaceLocationDeleteApiTests(TestCase):
+    def setUp(self) -> None:
+        self.rider = User.objects.create_user('rider', password='pw')
+        self.client = APIClient()
+        self.client.force_authenticate(self.rider)
+
+    def save_place(self, author: User) -> PlaceLocation:
+        return PlaceLocation.objects.create(author=author, name='Shell', category=PlaceCategory.CAFE, lat=0, lng=0)
+
+    def test_requires_authentication(self) -> None:
+        place = self.save_place(self.rider)
+        response = APIClient().delete(reverse('places:place_detail', args=[place.pk]))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertTrue(PlaceLocation.objects.exists())
+
+    def test_deletes_own_place(self) -> None:
+        place = self.save_place(self.rider)
+        response = self.client.delete(reverse('places:place_detail', args=[place.pk]))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(PlaceLocation.objects.exists())
+
+    def test_another_riders_place_is_not_found_and_kept(self) -> None:
+        place = self.save_place(User.objects.create_user('other', password='pw'))
+        response = self.client.delete(reverse('places:place_detail', args=[place.pk]))
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(PlaceLocation.objects.filter(pk=place.pk).exists())
+
+
 class PlaceLocationAllApiTests(TestCase):
     def setUp(self) -> None:
         self.rider = User.objects.create_user('rider', password='pw')

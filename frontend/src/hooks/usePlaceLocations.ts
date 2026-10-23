@@ -18,6 +18,8 @@ interface PlaceLocations {
   readonly places: readonly PlaceLocation[]
   /** Shows a place that was just saved. */
   addPlace: (place: PlaceLocation) => void
+  /** Hides a place that was just deleted. */
+  removePlace: (placeId: number) => void
 }
 
 /**
@@ -61,6 +63,10 @@ export const usePlaceLocations = (mounted: BaseMap | null, marginRatio = 0): Pla
   }, [mounted, marginRatio])
 
   const addPlace = useCallback((place: PlaceLocation) => setPlaces((previous) => [...previous, place]), [])
+  const removePlace = useCallback(
+    (placeId: number) => setPlaces((previous) => previous.filter((place) => place.id !== placeId)),
+    [],
+  )
 
-  return { places, addPlace }
+  return { places, addPlace, removePlace }
 }

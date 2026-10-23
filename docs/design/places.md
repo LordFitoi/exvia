@@ -38,13 +38,14 @@ An index on (`author`, `lat`, `lng`) serves the viewport query below.
 
 ## API
 
-Both endpoints need a JWT and only ever see the caller's own places.
+All endpoints need a JWT and only ever see the caller's own places.
 
 | Method | Path | Does |
 |--------|------|------|
 | `GET` | `/api/places/?bbox=west,south,east,north` | The caller's places inside the box, `id` order, at most 200 |
 | `GET` | `/api/places/all/` | Every place of the caller wherever it is, by name, at most 500: for searching them by text in the browser |
 | `POST` | `/api/places/` | Saves `name`, `notes` (optional), `category`, `lat` and `lng` as the caller's place; answers 201 with the place |
+| `DELETE` | `/api/places/<id>/` | Deletes one of the caller's places; answers 204, or 404 for a place that is not theirs |
 
 - `bbox` is **required**: a client never asks for "all my places", only for the part of the map it
   is looking at, so out-of-view places are never read or sent. A missing, malformed or
@@ -53,7 +54,7 @@ Both endpoints need a JWT and only ever see the caller's own places.
   **or** `lng <= east`.
 - A place is `{id, name, notes, category, lat, lng, created_at}`; `lat` and `lng` are JSON numbers
   (`coerce_to_string=False`), and at most 6 decimals are accepted.
-- No update or delete endpoint yet.
+- No update endpoint yet. The Map tab deletes a place from its card, after a confirm dialog ([map.md](map.md#saved-places)).
 
 ## Key decisions
 
