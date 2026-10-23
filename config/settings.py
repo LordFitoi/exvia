@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.clans',
     'apps.routes',
+    'apps.places',
     'apps.notifications',
 ]
 
