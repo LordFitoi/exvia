@@ -80,7 +80,7 @@ const readUnnamedAddress = (tags: Record<string, unknown>): string => {
 }
 
 // A way or a relation has no coordinates of its own: Overpass gives its center.
-export const readElementCoordinates = (element: Record<string, unknown>): Coordinates | null => {
+const readElementCoordinates = (element: Record<string, unknown>): Coordinates | null => {
   const point = isRecord(element.center) ? element.center : element
   const { lon, lat } = point
   return typeof lon === 'number' && typeof lat === 'number' ? { longitude: lon, latitude: lat } : null

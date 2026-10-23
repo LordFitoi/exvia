@@ -140,6 +140,20 @@
           </div>
           <div class="dropdown-spacer"></div>
         </div>
+pho        <div class="specimen">
+          <span class="specimen-title">Suggestions with nothing to offer (open)</span>
+          <p class="text-small text-muted">While the search runs, when nothing matches and when it fails, the list says so in one row that is not an option (<code>suggestion-status</code>), and a live region says it aloud. A list that stays silent looks broken.</p>
+          <div class="suggestions">
+          <div class="input-group">
+            <span class="icon icon-search" aria-hidden="true"></span>
+            <input class="input input-search" type="search" role="combobox" aria-label="Search a place to add" aria-expanded="true" aria-controls="in-empty-list" aria-autocomplete="list" autocomplete="off" value="sigma xyz">
+          </div>
+          <ul class="suggestion-list" id="in-empty-list" role="listbox" aria-label="Place suggestions">
+            <li class="suggestion-status" role="presentation">No places found. Try another spelling, or paste the coordinates.</li>
+          </ul>
+          </div>
+          <div class="dropdown-spacer"></div>
+        </div>
       </div>
     </section>
 

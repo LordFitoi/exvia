@@ -6,8 +6,8 @@
     "node": ">=22"
   },
   "devDependencies": {
-    "@railway/cli": "^5.66.0",
-    "railway": "3.15.0",
+    "@railway/cli": "^5.71.0",
+    "railway": "3.16.0",
     "typescript": "^5"
   },
   "packageManager": "pnpm@9.15.9",

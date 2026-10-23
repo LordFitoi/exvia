@@ -205,7 +205,14 @@ Exvia changes the following on purpose:
   under it cannot be scrolled or panned (`touchmove` outside the list is
   prevented). It follows the input when the window or the visual viewport resizes
   or scrolls (the keyboard opening or closing) and closes when anything else
-  scrolls, like the action menu's panel.
+  scrolls, like the action menu's panel. When a search has no options to give,
+  the list still opens with one `suggestion-status` row (not an option:
+  `role="presentation"`, muted text, 44px tall) that says the search is running,
+  found nothing or failed, and a visually hidden `role="status"` repeats it aloud;
+  a list that stays silent looks broken (Doherty). The options of the text before
+  stay while the next ones load, dimmed through `aria-busy` on the list, and Enter
+  does not pick them. A search field may also offer
+  its starting choices (the kinds of place) when it is focused empty.
 - **Action menu.** `menu` and `menu-panel` give an icon button a small popover
   of actions (`menuitem`s), aligned to the button's right edge so it opens
   inward. It follows the WAI-ARIA menu button pattern: `aria-haspopup`,

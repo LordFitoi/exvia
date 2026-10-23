@@ -188,18 +188,6 @@
 .marker-primary { background: var(--color-primary); color: var(--color-on-primary); }
 .marker-start { background: var(--color-surface); color: var(--color-text); }
 
-/* Place of interest (a gas station): a smaller, lighter disc than the ride markers, so many fit on
-   the map without competing with the route. Drawn by the app as a map symbol, not as a button, so
-   it takes no taps; its size, border and glyph size (1rem) are mirrored in gasStationIcon.ts */
-.marker-poi {
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
-  border: 2px solid var(--color-ink);
-  background: var(--color-surface);
-  color: var(--color-ink);
-  pointer-events: none;
-}
-
 .marker-label {
   position: absolute;
   inset-block-start: calc(100% + var(--space-1));

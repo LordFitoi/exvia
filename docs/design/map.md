@@ -79,7 +79,7 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 ## Riding to a place
 
 The search field of the [route creator](#route-creator) (`PlaceSearch`, same services, same 100 km
-nearest-first list and categories) is also at the top of the map, over the controls, searching near the
+ranked list and categories) is also at the top of the map, over the controls, searching near the
 rider's street position. Picking a **place** (a category row only lists its places, as there) does not add a point:
 it opens **ride mode towards that place** in place of the map (`MapOverview` keeps the picked `Place`;
 `key` is the place id, so a new pick restarts the ride).
@@ -139,7 +139,8 @@ full height and the cancel button is the way out.
 |-------|------|-----|
 | Screen | `views/routes/RouteCreatorView.tsx`, `views/routes/RouteEditor.tsx` | The creator is a thin wrapper; `RouteEditor` is the shared screen (also used to [edit a route](route-management.md#edit)): full-bleed map, cancel and locate controls, bottom sheet with the point list and the save button |
 | List | `views/routes/RoutePointList.tsx` | Numbered points, each titled with its place or address (or "Point N" when tapped) and its coordinates, and a remove button; a hint while empty |
-| Search | `views/routes/PlaceSearch.tsx`, `hooks/usePlaceCompletion.ts`, `hooks/usePlaceSuggestions.ts`, `services/placeSearchApi.ts`, `services/placeParsing.ts`, `services/placeCategories.ts` | The search field over the map: offers matching places and adds the picked one as a point |
+| Search | `views/routes/PlaceSearch.tsx`, `views/routes/PlaceSearchInput.tsx`, `views/routes/PlaceSuggestionList.tsx`, `hooks/usePlaceCompletion.ts`, `hooks/usePlaceSuggestions.ts` | The search field over the map: offers matching places and adds the picked one as a point; says when it is searching, found nothing or failed |
+| Search services | `services/placeSearchApi.ts`, `services/unnamedPlacesApi.ts`, `services/placeRanking.ts`, `services/placeText.ts`, `services/coordinateQuery.ts`, `services/placeParsing.ts`, `services/placeCategories.ts` | The two-step search, the unnamed places, ranking by relevance then distance, tolerant text matching, coordinates and links, parsing of the answers, and the kinds of place |
 | Modal | `views/routes/SaveRouteDialog.tsx` | Name (required, 100) and description (optional, 255), then saves through the `saveRoute` it is given: `POST /api/routes/` here, `PUT` when editing |
 | Points | `hooks/useRouteDraft.ts` | The ordered points; snaps each tap to a street, routes each leg, and adds, removes and moves points |
 | Sheet | `views/routes/RouteSheet.tsx`, `hooks/useSheetGrab.ts` | The floating sheet and its collapse gesture |
@@ -160,8 +161,10 @@ Behavior:
   order cannot be scrambled by slow responses; the sheet badge reads
   "Routing…" and Save is disabled meanwhile.
 - **Searching a place**: the guide's map search field (`map-search`) sits at the
-  top of the map, over the controls. After 3 characters and a 300 ms pause it
-  asks **two services at once** and merges the answers:
+  top of the map, over the controls. With nothing typed, focusing it offers the
+  kinds of place below, so a rider can start without knowing a name. After 2
+  characters and a 300 ms pause it asks **two services at once** and merges the
+  answers:
   - **Mapbox Geocoding** (v6) for addresses, streets and areas. It handles house
     numbers well ("calle alcala 50").
   - **Photon** (`photon.komoot.io`, OpenStreetMap data) for businesses and
@@ -174,21 +177,84 @@ Behavior:
   Photon is a free public instance: the typed text and the rider's approximate
   position are sent to it. Swap `PHOTON_URL` in `services/placeSearchApi.ts` for
   a self-hosted Photon (the same API) if its usage limits are ever a problem.
-- **Nearest first, and only nearby**: both requests carry the rider's position
+- **Ranked by relevance, then nearest**: both requests carry the rider's position
   (or the route's center when editing, where the rider's position is not known)
   and a bounding box of **100 km** around it, so a namesake in another country
-  never shows. The services only lean towards that position, so 10 matches are
-  asked of each and the result is **sorted by distance**, the 6 nearest kept;
-  the same place mapped twice within 100 m is shown once. The list is the guide's
-  suggestion list (WAI-ARIA combobox, like the username field: arrow keys, Enter
-  picks the active row or the first one, Escape closes the list). Each row has
-  the name, and under it the address and the distance from the rider.
+  never shows. The services only lean towards that position, so they are asked
+  for as many matches as they give (Photon 50, Mapbox 10; with 10 each, as it
+  was, the nearest place was often not among them) and `services/placeRanking.ts`
+  orders them. A place is rated by how well it answers the words typed: its
+  **name starts with them** ("sigma" for "Sigma Canastica"), its name contains
+  them, its name and address together contain them ("sigma 27 de febrero" for
+  a Sigma on that avenue), or only some of them (at least half). Better ratings
+  go first and **within a rating the nearest goes first**, so the nearest of
+  the places that match is on top. **Nothing a service returned is hidden**: it
+  may have matched on an alternative name the app cannot see, so a place that
+  does not read like the text is only listed last. The same place mapped twice
+  (same OpenStreetMap id, or same title within 100 m) is shown once, and the 8
+  best are kept. The list is the guide's suggestion list (WAI-ARIA combobox,
+  like the username field: arrow keys, Enter picks the active row or the first
+  one, Escape closes the list). Each row has the name, and under it the address
+  and the distance from the rider.
+- **Text variations** (`services/placeText.ts`), like Google Maps takes them:
+  - Case, accents and punctuation do not matter ("Av. Prolongación 27" is
+    "av prolongacion 27"), nor the order of the words, nor filler words
+    ("de", "del", "la"…): "27 febrero" finds "Avenida 27 de Febrero".
+  - A word can be partly typed ("prolon" finds "Prolongación") or abbreviated
+    ("av" is a start of "avenida"; "c/", "cll", "avda", "ctra", "sto" are
+    spelled out).
+  - A **typing mistake** is forgiven (one edit in words of 4 to 7 letters, two
+    in 8 or more; a swap of two letters counts as one: "sigam" finds "Sigma").
+    Numbers never are ("27" is not "26"). Photon itself forgives nothing, so
+    when none of its places has all the words, it is asked again with the last
+    word shortened by 2 letters ("sigam" as "sig") and the places are ranked
+    against what was typed.
+  - **Coordinates and Google Maps links** (`services/coordinateQuery.ts`):
+    `18.4745, -69.9330` (a comma or a space), `18°28'28.2"N 69°55'58.8"W`, and
+    links that carry a spot (`@lat,lng`, `?q=lat,lng`, or the exact pin `!3d…!4d…`
+    of a place link). They give one **"Dropped pin"** row with no network call,
+    so any spot, mapped or not, can be picked. Short links (`maps.app.goo.gl`)
+    cannot be read: the browser cannot follow them.
+  - **A kind of place in the text** (`splitCategoryQuery`): "gasolinera sigma",
+    "sigma gasolinera", "gas station 27 de febrero", "gasolinera cerca de mi".
+    The rest is asked of that kind alone (Photon `osm_tag`; by name, else by
+    address among the 50 nearest of the kind, since Photon only matches names),
+    and a text that is only the kind lists its nearest places. When that finds
+    nothing, the normal search runs.
+- **Places OpenStreetMap has no name for** (`services/unnamedPlacesApi.ts`):
+  Photon only has named places, and many gas stations are drawn without a name
+  (5% of the stations around Santo Domingo, among them one on Avenida 27 de
+  Febrero). Overpass, which reads the same data by tag, is asked for them:
+  `nwr[amenity=fuel][!name]` within 100 km, and the places that match the text
+  complete the list. The row is titled with the company in the `operator`,
+  `brand`, `short_name`, `name:es` or `alt_name` tag ("Sigma"), or with what it is
+  ("Gas station"), and has the address tags when there are any. Only the kinds
+  with an `unnamedTitle` in `placeCategories.ts` do this (gas stations for now).
+  Overpass is a free public service that is often slow or down, so it never
+  holds anything back: the search **answers in two steps** (`searchPlaces` is an
+  async generator) and the list is shown after the first, then updated when
+  Overpass answers. The answer is asked once per cell of about 11 km and kept
+  5 minutes (a failure 1 minute, so a busy service is not asked at every
+  keystroke) and fails silently. Swap `OVERPASS_URL` for a self-hosted instance
+  if it is ever a problem.
+  **A place that nobody has mapped is not found by any of the services**: draw
+  it in OpenStreetMap (it shows up in the app within hours to weeks, Overpass
+  first), paste its coordinates, or tap the map. Full coverage would need a
+  commercial places service; Google Places is not an option on a Mapbox map, as its
+  terms require Google's own map.
+- **What the list says when it has no rows**: "Searching…" until the first
+  answer, "No places found. Try another spelling, or paste the coordinates." when
+  nothing matches, and "Couldn't search places. Check your connection and try
+  again." when no service answered (focusing the field again asks again). A live
+  region says the same aloud. While the next text loads, the answer to the
+  earlier one keeps showing.
   - **A category row** ("Gas stations", "Restaurants", "Cafés", "Shopping malls",
-    "Supermarkets", "Pharmacies", "Hotels") appears first when the text starts to
-    name one, in English or Spanish (`services/placeCategories.ts`). It does not
-    add anything: it fills the field with the category and lists its nearest
-    places (Photon `/reverse` with the OpenStreetMap tag, such as
-    `amenity:fuel`). Typing again goes back to the normal search.
+    "Supermarkets", "Pharmacies", "Hospitals", "ATMs", "Repair shops", "Hotels")
+    appears first when the text starts to name one, in English or Spanish, even
+    misspelled (`services/placeCategories.ts`). It does not add anything: it
+    fills the field with the category and lists its nearest places (Photon
+    `/reverse` with the OpenStreetMap tag, such as `amenity:fuel`, completed
+    with the unnamed ones). Typing again goes back to the normal search.
   - **A place row** is added as a point. The camera flies to the place (clear of
     the sheet) and the point is added **as a tapped point would be**: snapped to
     the nearest street within 50 m, with the street leg from the previous point.
@@ -196,9 +262,8 @@ Behavior:
     Lincoln, Polígono Central, Santo Domingo") instead of "Point N"; points added
     by tapping keep "Point N". The field then clears, ready for the next place.
   - The title is only a draft label: it is not saved with the route, so reopening
-    a route to edit shows "Point N" again. A failed search leaves the list as it
-    was, since it is only a help. A place with no street within 50 m shows the
-    same "No street here" alert as a tap.
+    a route to edit shows "Point N" again. A place with no street within 50 m
+    shows the same "No street here" alert as a tap.
   - **Not supported**: crossings of two streets ("Alcalá & Serrano"); neither
     service searches them. Tap the map there.
 - Each point after the first also fetches the **street path from the previous
