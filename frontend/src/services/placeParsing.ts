@@ -61,6 +61,46 @@ export const parseBusinessResult = (feature: unknown, from: Coordinates): PlaceR
   return buildResult(id, { title, address: readAddress(properties, title), coordinates }, from)
 }
 
+const COORDINATE_DECIMALS = 5
+const PIN_TITLE = 'Dropped pin'
+
+/** A spot given as coordinates, which no search has to find: any point of the map can be picked this way. */
+export const buildCoordinateResult = (coordinates: Coordinates, from: Coordinates): PlaceResult => {
+  const address = `${coordinates.latitude.toFixed(COORDINATE_DECIMALS)}, ${coordinates.longitude.toFixed(COORDINATE_DECIMALS)}`
+  return buildResult(`pin-${address}`, { title: PIN_TITLE, address, coordinates }, from)
+}
+
+// The tags that say what an unnamed place is, such as the company that runs the gas station.
+const OPERATOR_KEYS: readonly string[] = ['operator', 'brand', 'short_name', 'name:es', 'alt_name']
+
+const readUnnamedAddress = (tags: Record<string, unknown>): string => {
+  const street = joinText([readText(tags, 'addr:street'), readText(tags, 'addr:housenumber')], ' ')
+  const area = readText(tags, 'addr:suburb') || readText(tags, 'addr:neighbourhood')
+  return joinText([street, area, readText(tags, 'addr:city')], ', ')
+}
+
+// A way or a relation has no coordinates of its own: Overpass gives its center.
+export const readElementCoordinates = (element: Record<string, unknown>): Coordinates | null => {
+  const point = isRecord(element.center) ? element.center : element
+  const { lon, lat } = point
+  return typeof lon === 'number' && typeof lat === 'number' ? { longitude: lon, latitude: lat } : null
+}
+
+/**
+ * An element of the Overpass answer (OpenStreetMap data) for a place that has no name, which the
+ * Photon search never has: it is titled with the company that runs it, or with what it is.
+ */
+export const parseUnnamedResult = (element: unknown, unnamedTitle: string, from: Coordinates): PlaceResult | null => {
+  if (!isRecord(element) || !isRecord(element.tags)) return null
+  const { tags } = element
+  const coordinates = readElementCoordinates(element)
+  if (!coordinates || typeof element.id !== 'number' || typeof element.type !== 'string') return null
+  const title = OPERATOR_KEYS.map((key) => readText(tags, key)).find(Boolean) ?? unnamedTitle
+  // The same id as the Photon answer gives, so a place in both is listed once.
+  const id = `${element.type.charAt(0).toUpperCase()}${element.id}`
+  return buildResult(id, { title, address: readUnnamedAddress(tags), coordinates }, from)
+}
+
 // "28014 Madrid, Madrid, Spain" is more than the row needs: the area and its parent are enough.
 const ADDRESS_PARTS = 2
 

@@ -6,6 +6,7 @@ import type { Map as MapboxMap, Marker } from 'mapbox-gl'
 
 import { createBaseMap, createUserMarkerElement, toLngLat } from '@/services/baseMap'
 import type { BaseMapOptions } from '@/services/baseMap'
+import { showGasStations } from '@/services/gasStationsLayer'
 import type { Coordinates } from '@/types/geolocation'
 
 const USER_ZOOM = 15
@@ -29,6 +30,7 @@ interface MountedMap {
 const mountMap = async (options: Omit<BaseMapOptions, 'zoom'>): Promise<MountedMap | null> => {
   const base = await createBaseMap({ ...options, zoom: USER_ZOOM })
   if (!base) return null
+  showGasStations(base.map, options.signal)
   // The marker element is positioned by its own CSS (translate -50%), so anchor at its corner.
   const marker = new base.mapboxgl.Marker({
     element: createUserMarkerElement(),
