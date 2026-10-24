@@ -1,6 +1,8 @@
 from django.urls import path
 
 from apps.clans.views import (
+    ClanEventJoinView,
+    ClanEventListCreateView,
     ClanDetailView,
     ClanInvitationCreateView,
     ClanListCreateView,
@@ -10,6 +12,7 @@ from apps.clans.views import (
     InvitationAcceptView,
     InvitationDeclineView,
     InvitationListView,
+    NextClanEventView,
 )
 
 app_name = 'clans'
@@ -20,8 +23,11 @@ urlpatterns = [
     path('invitations/', InvitationListView.as_view(), name='invitation_list'),
     path('invitations/<int:pk>/', InvitationDeclineView.as_view(), name='invitation_decline'),
     path('invitations/<int:pk>/accept/', InvitationAcceptView.as_view(), name='invitation_accept'),
+    path('events/next/', NextClanEventView.as_view(), name='next_clan_event'),
+    path('events/<int:pk>/join/', ClanEventJoinView.as_view(), name='clan_event_join'),
     path('<int:pk>/', ClanDetailView.as_view(), name='clan_detail'),
     path('<int:pk>/notices/', ClanNoticeListCreateView.as_view(), name='clan_notice_list'),
     path('<int:pk>/notices/<int:notice_pk>/', ClanNoticeUpdateView.as_view(), name='clan_notice_update'),
+    path('<int:pk>/events/', ClanEventListCreateView.as_view(), name='clan_event_list'),
     path('<int:pk>/invitations/', ClanInvitationCreateView.as_view(), name='clan_invitation_create'),
 ]

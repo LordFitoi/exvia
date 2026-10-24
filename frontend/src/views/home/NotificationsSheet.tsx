@@ -7,10 +7,12 @@ import StateView from '@/components/feedback/StateView'
 import RiderAvatar from '@/components/rider/RiderAvatar'
 import SheetHeader from '@/components/layout/SheetHeader'
 import { useModalDialog } from '@/hooks/useModalDialog'
+import type { ClanEventJoin } from '@/hooks/useClanEventJoin'
+import type { useRideNotifications } from '@/hooks/useRideNotifications'
 import type { useRouteInvitationAnswer } from '@/hooks/useRouteInvitationAnswer'
-import type { useRouteInvitations } from '@/hooks/useRouteInvitations'
 import { formatRelativeTime } from '@/services/formatRelativeTime'
 import type { RouteInvitation } from '@/types/notification'
+import StartedRideRow from '@/views/home/StartedRideRow'
 
 const FREE_MODE_LABEL = 'Free mode'
 const ANSWERED_BADGES = {
@@ -20,8 +22,9 @@ const ANSWERED_BADGES = {
 } as const
 
 interface NotificationsSheetProps {
-  invitations: ReturnType<typeof useRouteInvitations>
+  notifications: ReturnType<typeof useRideNotifications>
   answer: ReturnType<typeof useRouteInvitationAnswer>
+  rideJoin: ClanEventJoin
   onClose: () => void
 }
 
@@ -71,11 +74,12 @@ function InvitationRow({ invitation, answer }: InvitationRowProps) {
   )
 }
 
-/** A modal sheet with the invitations to ride; accepting one starts the ride at once. Mount it to open it. */
-export default function NotificationsSheet({ invitations, answer, onClose }: NotificationsSheetProps) {
+/** A modal sheet with the invitations to ride and the clan rides that started; accepting or joining one starts the ride at once. Mount it to open it. */
+export default function NotificationsSheet({ notifications, answer, rideJoin, onClose }: NotificationsSheetProps) {
   const dialogRef = useModalDialog(true)
   const titleId = useId()
-  const { status, invitations: items } = invitations
+  const { status, notifications: items } = notifications
+  const error = answer.error ?? rideJoin.error
 
   return (
     <dialog ref={dialogRef} className="sheet sheet-modal" aria-labelledby={titleId} onClose={onClose}>
@@ -86,27 +90,31 @@ export default function NotificationsSheet({ invitations, answer, onClose }: Not
         sheetRef={dialogRef}
         onClose={onClose}
       />
-      {answer.error && (
+      {error && (
         <p className="field-error" role="alert">
-          {answer.error}
+          {error}
         </p>
       )}
-      {status === 'failed' && <LoadFailedState title="Could not load your notifications" onRetry={invitations.reload} />}
+      {status === 'failed' && <LoadFailedState title="Could not load your notifications" onRetry={notifications.reload} />}
       {status === 'loading' && (
         <p className="text-small text-muted" role="status">
           Loading…
         </p>
       )}
       {status === 'ready' && items.length === 0 && (
-        <StateView title="Nothing new" description="Invitations to ride together show up here.">
+        <StateView title="Nothing new" description="Invitations to ride and clan rides that start show up here.">
           <span className="icon icon-lg icon-bell"></span>
         </StateView>
       )}
       {items.length > 0 && (
         <ul className="list">
-          {items.map((invitation) => (
-            <InvitationRow key={invitation.id} invitation={invitation} answer={answer} />
-          ))}
+          {items.map((notification) =>
+            notification.event_type === 'event_started' ? (
+              <StartedRideRow key={notification.id} ride={notification} rideJoin={rideJoin} />
+            ) : (
+              <InvitationRow key={notification.id} invitation={notification} answer={answer} />
+            ),
+          )}
         </ul>
       )}
     </dialog>

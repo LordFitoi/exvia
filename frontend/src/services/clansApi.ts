@@ -1,11 +1,23 @@
 import { ApiError } from '@/services/apiClient'
 import { requestJsonAuthorized } from '@/services/authorizedRequest'
-import { isClan, isClanDetail, isClanInvitation, isClanNotice } from '@/services/clanGuards'
-import type { Clan, ClanDetail, ClanInvitation, ClanNotice, NewClan, NewClanNotice } from '@/types/clan'
+import { isClan, isClanDetail, isClanEvent, isClanInvitation, isClanNotice } from '@/services/clanGuards'
+import { parseRouteGroup } from '@/services/routeGroupGuards'
+import type {
+  Clan,
+  ClanDetail,
+  ClanEvent,
+  ClanInvitation,
+  ClanNotice,
+  NewClan,
+  NewClanEvent,
+  NewClanNotice,
+} from '@/types/clan'
 
 const CLANS_PATH = '/api/clans/'
 const FEED_PATH = `${CLANS_PATH}notices/`
 const INVITATIONS_PATH = `${CLANS_PATH}invitations/`
+const EVENTS_PATH = `${CLANS_PATH}events/`
+const NEXT_EVENT_PATH = `${EVENTS_PATH}next/`
 const UNEXPECTED_RESPONSE_MESSAGE = 'The server sent an unexpected response. Please try again.'
 
 const unexpectedResponse = (): ApiError => new ApiError(502, UNEXPECTED_RESPONSE_MESSAGE)
@@ -31,6 +43,13 @@ export const fetchClan = async (id: number): Promise<ClanDetail> => {
   const clan = await requestJsonAuthorized(`${CLANS_PATH}${id}/`)
   if (!isClanDetail(clan)) throw unexpectedResponse()
   return clan
+}
+
+/** Changes the name and description of a clan the caller owns. */
+export const updateClan = async (id: number, clan: NewClan): Promise<ClanDetail> => {
+  const updated = await requestJsonAuthorized(`${CLANS_PATH}${id}/`, { method: 'PATCH', body: clan })
+  if (!isClanDetail(updated)) throw unexpectedResponse()
+  return updated
 }
 
 /** The notices of one clan, newest first. */
@@ -59,6 +78,32 @@ export const updateClanNotice = async (
   })
   if (!isClanNotice(updated)) throw unexpectedResponse()
   return updated
+}
+
+/** The scheduled rides of one clan, latest first. */
+export const fetchClanEvents = async (clanId: number): Promise<ClanEvent[]> =>
+  readList(await requestJsonAuthorized(`${CLANS_PATH}${clanId}/events/`), isClanEvent)
+
+/** The soonest upcoming or live ride of the caller's clans, or null when there is none. */
+export const fetchNextClanEvent = async (): Promise<ClanEvent | null> => {
+  const event = await requestJsonAuthorized(NEXT_EVENT_PATH)
+  if (event === null) return null
+  if (!isClanEvent(event)) throw unexpectedResponse()
+  return event
+}
+
+/** Schedules a ride of a clan the caller administers, with a notice that announces it. */
+export const createClanEvent = async (clanId: number, event: NewClanEvent): Promise<ClanEvent> => {
+  const created = await requestJsonAuthorized(`${CLANS_PATH}${clanId}/events/`, { method: 'POST', body: event })
+  if (!isClanEvent(created)) throw unexpectedResponse()
+  return created
+}
+
+/** Joins the group of a ride that started; answers the id of the group, ready to ride. Joining twice is harmless. */
+export const joinClanEvent = async (eventId: number): Promise<string> => {
+  const group = parseRouteGroup(await requestJsonAuthorized(`${EVENTS_PATH}${eventId}/join/`, { method: 'POST' }))
+  if (!group) throw unexpectedResponse()
+  return group.id
 }
 
 /** The latest notices of every clan the caller belongs to, newest first. */

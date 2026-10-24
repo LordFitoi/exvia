@@ -2,7 +2,7 @@
 
 Community groups of riders with announcements and ride events. Riders create
 clans, invite other users and post notices through the API and the Clans tab;
-rides (`ClanRide`) are still model and admin only.
+rides are [scheduled events](scheduled-events.md), with their own tab.
 
 ## Layout
 
@@ -22,16 +22,15 @@ All models inherit `apps.core.models.TimeStampedModel`.
 | Model | Fields | Relations |
 |-------|--------|-----------|
 | `ClanGroup` | `name`, `description`, `group_image` (optional), `social_links` (JSON list, optional) | `owner` FK to `auth.User` (`owned_clans`, `PROTECT`); `users` M2M to `auth.User` (`clans`) |
-| `ClanRide` | `title`, `description`, `schedule_at` (UTC datetime), `event_type` (`EventType`: `weekly`, `unique`), `meet_at` | `clan` FK to `ClanGroup` (`rides`, `CASCADE`) |
+| `ScheduledEvent` | `title`, `description`, `scheduled_at`, `status`, `started_at`; see [scheduled-events.md](scheduled-events.md) | `clan` FK to `ClanGroup` (`events`, `CASCADE`); `created_by` FK to `auth.User`; `route` FK to `routes.Route`; `route_group` one-to-one to `routes.RouteGroup` |
 | `ClanInvitation` | none besides the timestamps | `clan` FK to `ClanGroup` (`invitations`, `CASCADE`); `invited_by` FK to `auth.User` (`sent_clan_invitations`, `CASCADE`); `invitee` FK to `auth.User` (`clan_invitations`, `CASCADE`); unique on (`clan`, `invitee`) |
-| `ClanNotice` | `title`, `description`, `attachment` (image, optional) | `clan` FK to `ClanGroup` (`notices`, `CASCADE`); `author` FK to `auth.User` (`clan_notices`, `CASCADE`); `ride` FK to `ClanRide` (optional, `notices`, `SET_NULL`); `route` FK to `routes.Route` (optional, `clan_notices`, `SET_NULL`) |
+| `ClanNotice` | `title`, `description`, `attachment` (image, optional) | `clan` FK to `ClanGroup` (`notices`, `CASCADE`); `author` FK to `auth.User` (`clan_notices`, `CASCADE`); `event` FK to `ScheduledEvent` (optional, `notices`, `SET_NULL`); `route` FK to `routes.Route` (optional, `clan_notices`, `SET_NULL`) |
 
-`ClanGroup.notices` and `ClanGroup.rides` are the reverse managers of the
-`clan` foreign keys on `ClanNotice` and `ClanRide`. Django only allows the
+`ClanGroup.notices` and `ClanGroup.events` are the reverse managers of the
+`clan` foreign keys on `ClanNotice` and `ScheduledEvent` (`events`). Django only allows the
 `ForeignKey` on the "many" side, so they are declared as type-annotated
 attributes on `ClanGroup` (annotations only, no extra fields).
-`ClanRide.clan` is not in the original field list but is required to make
-`ClanGroup.rides` exist.
+`ScheduledEvent.clan` is required to make `ClanGroup.events` exist.
 
 ## API
 
@@ -43,11 +42,13 @@ All endpoints need a JWT. A clan the caller is not a member of is always
 | `GET /api/clans/` | any user | clans the caller belongs to, newest first |
 | `POST /api/clans/` | any user | creates a clan (`name`, `description`); the caller becomes `owner` **and** a member |
 | `GET /api/clans/<id>/` | member | the clan with its `members` |
+| `PATCH /api/clans/<id>/` | clan owner (admin) | edits `name` and `description`, returns the clan with its `members`; another member gets 403, a non-member 404 |
 | `GET /api/clans/<id>/notices/` | member | the clan's notices, newest first |
 | `POST /api/clans/<id>/notices/` | member | posts a notice (`title`, `description`, optional `route_id`) authored by the caller |
 | `PATCH /api/clans/<id>/notices/<notice id>/` | notice author | edits `title`, `description` and `route_id` (`null` detaches the route); another member gets 403, a non-member or a notice of another clan 404 |
+| `GET /api/clans/<id>/events/`, `POST /api/clans/<id>/events/`, `GET /api/clans/events/next/`, `POST /api/clans/events/<id>/join/` | member, admin to schedule | scheduled rides, see [scheduled-events.md](scheduled-events.md#api) |
 | `POST /api/clans/<id>/invitations/` | member | invites the user named by `username`; 400 if unknown, already a member or already invited |
-| `GET /api/clans/notices/` | any user | the home feed: latest 50 notices of every clan the caller belongs to, newest first |
+| `GET /api/clans/notices/` | any user | the home feed: latest 50 notices of every clan the caller belongs to, newest first, without the notices that announce a scheduled event (Home shows those in Next ride) |
 | `GET /api/clans/invitations/` | any user | invitations addressed to the caller |
 | `POST /api/clans/invitations/<id>/accept/` | invitee | joins the clan, deletes the invitation, returns the clan |
 | `DELETE /api/clans/invitations/<id>/` | invitee | declines (deletes) the invitation |
@@ -56,7 +57,8 @@ Lists are not paginated, like the routes API; the feed is capped by
 `FEED_LIMIT`. Images (`group_image`, `ClanNotice.attachment`) are not exposed
 by the API yet: the client has no upload flow and media is only served in
 `DEBUG`. Notices are not deletable through the API yet (`PUT` and `DELETE` on
-the edit URL are 405), and there is no leave or remove-member endpoint.
+the edit URL are 405), a clan is not deletable or replaceable either, and there is no leave or
+remove-member endpoint.
 
 ### Attached route
 
@@ -77,7 +79,7 @@ the name row alone. Deleting the route keeps the notice and clears `route`.
 
 The Clans tab ([ClansScreen.tsx](../../frontend/src/views/clans/ClansScreen.tsx))
 shows pending invitations (Decline / Join), the caller's clans and a "New
-clan" sheet. Opening a clan shows `ClanView`: description plus a Notices tab
+clan" sheet. Opening a clan shows `ClanView`, with Notices, Events ([scheduled-events.md](scheduled-events.md#frontend)) and Members tabs: an Edit button in its header for the clan's admin (the owner, `user.id === clan.owner`) that opens `EditClanDialog` (name and description, filled in; on save the open clan and the list are refreshed), the description plus a Notices tab
 (read, "New notice" sheet, and an Edit button on the caller's own notices that opens the same sheet filled in) and a Members tab (list, "Invite a rider" sheet,
 which takes a username and completes it with riders whose name starts with what is typed, via
 `GET /api/auth/users/search/`, see [authentication.md](authentication.md)). Home lists the feed under "From your clans" with the
@@ -104,8 +106,8 @@ serializers, not on a bare `save()`.
 
 | Admin | Notes |
 |-------|-------|
-| `ClanGroupAdmin` | `owner` autocomplete, `users` as a `filter_horizontal` widget, `ClanRideInline` to edit the clan's rides in place |
-| `ClanRideAdmin` | filters by `event_type` and clan, `date_hierarchy` on `schedule_at`, `clan` autocomplete |
+| `ClanGroupAdmin` | `owner` autocomplete, `users` as a `filter_horizontal` widget, `ScheduledEventInline` to edit the clan's events in place |
+| `ScheduledEventAdmin` | filters by `status` and clan, `date_hierarchy` on `scheduled_at`, `clan`, `created_by` and `route` autocomplete; `status`, `started_at` and `route_group` are read-only (the start command sets them) |
 | `ClanNoticeAdmin` | filter by clan, `clan`, `author` and `ride` autocomplete |
 
 Notices are not inlined in `ClanGroupAdmin`: each needs an author and an
@@ -126,6 +128,9 @@ there.
   pending invitation is a row, and accepting or declining deletes it.
 - **`group_image` is optional**: the API and the app have no image upload
   yet, and a required image would block creating a clan from the app.
+- **The owner is the clan admin**: there is no separate role, so only the owner
+  edits the clan (`IsClanOwner`), while every member reads it. `owner` is read-only,
+  so an edit cannot hand the clan over.
 - **Edit is `PATCH`-only and author-only**: `clan` and `author` are read-only, so an
   edit can neither move a notice nor change who wrote it. Being a member is not
   enough, since the notice speaks in the author's name.

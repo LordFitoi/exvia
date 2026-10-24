@@ -97,14 +97,14 @@ screen).
 ## Placeholder content
 
 Home has a **bell** at the right of its title (`icon-button-badged`): its badge counts the
-invitations to ride waiting for an answer, and the button's label says it ("Notifications, 2
-waiting for an answer"). It opens `NotificationsSheet`, a modal sheet listing the invitations
+invitations to ride waiting for an answer plus the started clan rides the rider can still join ([scheduled-events.md](scheduled-events.md#frontend)), and the button's label says it ("Notifications, 2
+waiting for you"). It opens `NotificationsSheet`, a modal sheet listing the invitations
 (`GET /api/notifications/`, see [notifications.md](notifications.md#api)): who invited you, the
 route (or "Free mode") and how long ago, with **Reject** and **Accept**; an answered one keeps
 its row with an **Accepted** or **Rejected** badge for good, even if the same rider is invited again to that group; one never answered shows **Expired** once it is an hour old, after the rider accepted another invitation, or when it was replaced. A new invitation that arrives while the app is open also appears as a toast and refreshes the list ([live channel](notifications.md#live-channel)). **Accept** goes straight to
 `/ride/<group id>`, where the ride starts at once; **Reject** only refreshes the list. The list
 loads when Home opens and again whenever the app comes back to the foreground
-(`useRouteInvitations`, which keeps the list it has when a refresh fails); it is not live while
+(`useRideNotifications`, which keeps the list it has when a refresh fails); it is not live while
 Home stays in front.
 
 Above everything else on Home, **Riding now** (`ActiveGroupSection`) shows the group the rider can join
@@ -117,8 +117,9 @@ fails, the section is not rendered. It loads when Home opens, when the app comes
 **every 10 seconds** while Home is visible (`useActiveGroup`), so a group the rider left elsewhere disappears
 within about 10 s. A refresh that fails hides the section instead of keeping a group that may have ended.
 
-The "Next ride" block on Home still shows the guide's empty `state-view`
-("No rides planned"): clan rides have no endpoints yet. Clans and the Home
+The "Next ride" block on Home shows the soonest upcoming or live clan ride as a ride card, with Join ride while it
+is live ([scheduled-events.md](scheduled-events.md#frontend)); with none it shows the guide's empty `state-view`
+("No rides planned"). Clans and the Home
 feed of notices are real, see [clans.md](clans.md#frontend). Profile shows
 the rider's profile ([user-profile.md](user-profile.md#frontend)) and, from what `me/` returns, the
 email. When `me/` reports `is_staff`, an

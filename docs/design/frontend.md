@@ -62,6 +62,9 @@ renaming one would delete it and create a new one.
 - Migrations run in the pre-deploy step so a failing migration stops the
   release. `collectstatic` stays in the start command because pre-deploy
   runs in a separate container and its files would not reach the running one.
+- `Scheduler` runs the same code as `Server` with `python manage.py start_scheduled_events --interval 30`, which
+  starts the clan events that are due ([scheduled-events.md](scheduled-events.md#who-runs-it)). It gets the same
+  database and `REDIS_URL` variables, no volume and no domain.
 - `frontend` declares the `exvia.up.railway.app` service domain and is the
   only public service; `Server` is reachable only through the private network
   (`server.railway.internal:8000`). See

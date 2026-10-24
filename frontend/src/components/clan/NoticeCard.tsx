@@ -1,5 +1,6 @@
 'use client'
 
+import EventDetails from '@/components/clan/EventDetails'
 import NoticeRouteLink from '@/components/clan/NoticeRouteLink'
 import { useAuth } from '@/hooks/useAuth'
 import { formatRelativeTime } from '@/services/formatRelativeTime'
@@ -17,7 +18,7 @@ interface NoticeCardProps {
 
 export default function NoticeCard({ notice, isClanShown, onEdit }: NoticeCardProps) {
   const { user } = useAuth()
-  const { author, clan_name, created_at, title, description, route } = notice
+  const { author, clan_name, created_at, title, description, route, event } = notice
   const age = formatRelativeTime(created_at)
   const isAuthor = user?.id === author.id
 
@@ -45,6 +46,7 @@ export default function NoticeCard({ notice, isClanShown, onEdit }: NoticeCardPr
       <h3 className="text-subtitle">{title}</h3>
       <p className="text-small">{description}</p>
       {route && <NoticeRouteLink route={route} />}
+      {event && <EventDetails event={event} />}
     </article>
   )
 }

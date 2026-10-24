@@ -11,7 +11,7 @@ export PGDATABASE PGUSER PGPASSWORD PGHOST PGPORT REDIS_URL
 
 STYLEGUIDE = docs/ui-ux/index.html
 
-.PHONY: help install railway_install railway_login db_setup redis_setup db_migrate db_shell db_seed run_redis stop_redis run_server run_frontend open_styleguide railway_plan railway_apply create_app
+.PHONY: help install railway_install railway_login db_setup redis_setup db_migrate db_shell db_seed run_redis stop_redis run_server run_scheduler run_frontend open_styleguide railway_plan railway_apply create_app
 
 ##@ Help
 
@@ -57,6 +57,9 @@ stop_redis: ## Stop the local Redis service
 
 run_server: ## Run the ASGI development server (HTTP + WebSockets) with auto-reload
 	poetry run uvicorn config.asgi:application --reload
+
+run_scheduler: ## Start the clan events whose time has come, checking every 30 seconds
+	poetry run python manage.py start_scheduled_events --interval 30
 
 run_frontend: ## Run the Next.js development server (frontend/)
 	cd frontend && corepack pnpm dev

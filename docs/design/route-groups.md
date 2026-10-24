@@ -152,6 +152,15 @@ Also new, in the users app: `GET /api/auth/users/lookup/?username=<name>` return
 The invite dialog uses it to reject an unknown name before **Ride** is pressed. It tells a
 signed-in caller whether a username exists, as the clan invitation already does.
 
+## Joining without an invitation
+
+A group opened by a clan ride ([scheduled-events.md](scheduled-events.md)) is joined by its clan's members with
+`join_group` ([group_service.py](../../apps/routes/group_service.py)): the rider becomes `accepted` at once, the
+same full-group check applies (`GroupFull`), an invitation they held is closed as accepted and their other pending
+invitations expire. It is called with the group locked; the clans app exposes it as
+`POST /api/clans/events/<id>/join/`, so there is no route-groups endpoint for it. `is_group_active` is the
+`RESUME_WINDOW` check of [Active group](#active-group) for one group.
+
 ## Inviting and removing
 
 The leader can change who is in a group while it rides (`invite_rider`, `remove_rider` in

@@ -3,13 +3,16 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+import ClanEventCard from '@/components/clan/ClanEventCard'
 import NoticeList from '@/components/clan/NoticeList'
 import StateView from '@/components/feedback/StateView'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useAuth } from '@/hooks/useAuth'
+import { useClanEventJoin } from '@/hooks/useClanEventJoin'
+import { useNextClanEvent } from '@/hooks/useNextClanEvent'
 import { useRemoteList } from '@/hooks/useRemoteList'
+import { useRideNotifications } from '@/hooks/useRideNotifications'
 import { useRouteInvitationAnswer } from '@/hooks/useRouteInvitationAnswer'
-import { useRouteInvitations } from '@/hooks/useRouteInvitations'
 import { fetchFeedNotices } from '@/services/clansApi'
 import ActiveGroupSection from '@/views/home/ActiveGroupSection'
 import NotificationsSheet from '@/views/home/NotificationsSheet'
@@ -20,15 +23,17 @@ export default function HomeScreen() {
   const { user } = useAuth()
   const router = useRouter()
   const feed = useRemoteList(fetchFeedNotices, FEED_FAILURE_LABEL)
-  const invitations = useRouteInvitations()
+  const notifications = useRideNotifications()
+  const { event: nextEvent } = useNextClanEvent()
   const { group: activeGroup } = useActiveGroup()
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const answer = useRouteInvitationAnswer({
     onAccepted: (groupId) => router.push(`/ride/${groupId}`),
-    onRejected: invitations.reload,
+    onRejected: notifications.reload,
   })
-  const { pendingCount } = invitations
-  const bellLabel = pendingCount > 0 ? `Notifications, ${pendingCount} waiting for an answer` : 'Notifications'
+  const rideJoin = useClanEventJoin((groupId) => router.push(`/ride/${groupId}`))
+  const { pendingCount } = notifications
+  const bellLabel = pendingCount > 0 ? `Notifications, ${pendingCount} waiting for you` : 'Notifications'
 
   return (
     <main className="screen-body">
@@ -58,12 +63,16 @@ export default function HomeScreen() {
         <h2 className="text-overline" id="next-ride-title">
           Next ride
         </h2>
-        <StateView
-          title="No rides planned"
-          description="When a clan you belong to schedules a ride, it shows up here."
-        >
-          <span className="icon icon-lg icon-calendar"></span>
-        </StateView>
+        {nextEvent ? (
+          <ClanEventCard event={nextEvent} isClanShown />
+        ) : (
+          <StateView
+            title="No rides planned"
+            description="When a clan you belong to schedules a ride, it shows up here."
+          >
+            <span className="icon icon-lg icon-calendar"></span>
+          </StateView>
+        )}
       </section>
       <section className="stack-sm" aria-labelledby="feed-title">
         <h2 className="text-overline" id="feed-title">
@@ -81,8 +90,9 @@ export default function HomeScreen() {
       </section>
       {isNotificationsOpen && (
         <NotificationsSheet
-          invitations={invitations}
+          notifications={notifications}
           answer={answer}
+          rideJoin={rideJoin}
           onClose={() => setIsNotificationsOpen(false)}
         />
       )}

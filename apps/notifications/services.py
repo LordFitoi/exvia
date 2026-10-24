@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.models import User
 
+from apps.clans.models import ScheduledEvent
 from apps.notifications.models import EventType, InvitationAnswer, NotificationEvent
 from apps.routes.models import RouteGroup
 
@@ -17,6 +18,16 @@ def notify_route_invitation(group: RouteGroup, invitees: Iterable[User]) -> Noti
     )
     event.destinations.set(invitees)
     return event
+
+
+def notify_event_started(event: ScheduledEvent, members: Iterable[User]) -> NotificationEvent:
+    """One event, from the clan admin, for all the members at once: the ride started and its group is open."""
+    notification = NotificationEvent.objects.create(
+        event_type=EventType.EVENT_STARTED, author=event.created_by, route_group=event.route_group,
+        scheduled_event=event,
+    )
+    notification.destinations.set(members)
+    return notification
 
 
 def latest_invitation(group: RouteGroup, user: User) -> NotificationEvent | None:

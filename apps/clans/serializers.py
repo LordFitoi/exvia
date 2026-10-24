@@ -1,9 +1,13 @@
+from datetime import datetime
 from typing import Any
 
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework import serializers
 
-from apps.clans.models import ClanGroup, ClanInvitation, ClanNotice
+from apps.clans.event_service import create_event, event_state
+from apps.clans.models import ClanGroup, ClanInvitation, ClanNotice, ScheduledEvent
+from apps.routes import group_meta
 from apps.routes.models import Route
 from apps.routes.serializers import RouteSerializer
 
@@ -11,6 +15,7 @@ UNKNOWN_USER_MESSAGE = 'No user with this username.'
 ALREADY_MEMBER_MESSAGE = 'This user is already a member of the clan.'
 ALREADY_INVITED_MESSAGE = 'This user already has a pending invitation to the clan.'
 NOT_YOUR_ROUTE_MESSAGE = 'You can only attach a route you drew.'
+PAST_TIME_MESSAGE = 'Pick a time in the future.'
 
 
 class MemberSerializer(serializers.ModelSerializer):
@@ -47,27 +52,69 @@ class NoticeRouteSerializer(RouteSerializer):
         read_only_fields = fields
 
 
-class NoticeSerializer(serializers.ModelSerializer):
-    """A clan notice; the client sends `title`, `description` and optionally `route_id`, one of its own routes."""
+class RouteAttachmentSerializer(serializers.ModelSerializer):
+    """Base of the serializers that carry one of the caller's routes: read as `route`, written as `route_id`."""
 
-    clan_name = serializers.CharField(source='clan.name', read_only=True)
-    author = MemberSerializer(read_only=True)
     route = NoticeRouteSerializer(read_only=True)
     route_id = serializers.PrimaryKeyRelatedField(
         source='route', queryset=Route.objects.all(), write_only=True, required=False, allow_null=True,
     )
 
-    class Meta:
-        model = ClanNotice
-        fields = (
-            'id', 'clan', 'clan_name', 'author', 'title', 'description', 'route', 'route_id', 'created_at',
-        )
-        read_only_fields = ('id', 'clan', 'created_at')
-
     def validate_route_id(self, route: Route | None) -> Route | None:
         if route is not None and route.author_id != self.context['request'].user.pk:
             raise serializers.ValidationError(NOT_YOUR_ROUTE_MESSAGE)
         return route
+
+
+class ScheduledEventSerializer(RouteAttachmentSerializer):
+    """A scheduled ride. The admin sends `title`, `description`, `scheduled_at` (in the future) and optionally
+    `route_id`. `state` is `upcoming`, `live` (its group is open to
+    join) or `ended`; `route_group` is the group once it started, and `is_joined` whether the caller rides in it.
+    Read it with `clan`, `route` and `route_group` selected."""
+
+    clan_name = serializers.CharField(source='clan.name', read_only=True)
+    state = serializers.SerializerMethodField()
+    is_joined = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ScheduledEvent
+        fields = (
+            'id', 'clan', 'clan_name', 'title', 'description', 'scheduled_at', 'route', 'route_id',
+            'status', 'state', 'route_group', 'is_joined', 'created_at',
+        )
+        read_only_fields = ('id', 'clan', 'status', 'route_group', 'created_at')
+
+    def get_state(self, event: ScheduledEvent) -> str:
+        return event_state(event, timezone.now()).value
+
+    def get_is_joined(self, event: ScheduledEvent) -> bool:
+        group = event.route_group
+        status = group_meta.get_status(group.meta_json, self.context['request'].user.pk) if group else None
+        return status == group_meta.ParticipantStatus.ACCEPTED
+
+    def validate_scheduled_at(self, scheduled_at: datetime) -> datetime:
+        if scheduled_at <= timezone.now():
+            raise serializers.ValidationError(PAST_TIME_MESSAGE)
+        return scheduled_at
+
+    def create(self, validated_data: dict[str, Any]) -> ScheduledEvent:
+        return create_event(self.context['clan'], validated_data)
+
+
+class NoticeSerializer(RouteAttachmentSerializer):
+    """A clan notice; the client sends `title`, `description` and optionally `route_id`, one of its own routes.
+    `event` is the scheduled ride the notice announces, or null."""
+
+    clan_name = serializers.CharField(source='clan.name', read_only=True)
+    author = MemberSerializer(read_only=True)
+    event = ScheduledEventSerializer(read_only=True)
+
+    class Meta:
+        model = ClanNotice
+        fields = (
+            'id', 'clan', 'clan_name', 'author', 'title', 'description', 'route', 'route_id', 'event', 'created_at',
+        )
+        read_only_fields = ('id', 'clan', 'created_at')
 
 
 class InvitationCreateSerializer(serializers.Serializer):

@@ -11,6 +11,7 @@ EVENT_TYPE_MAX_LENGTH = 32
 class EventType(models.TextChoices):
     ROUTE_INVITATION = 'route_invitation', 'Route invitation'
     CLAN_INVITATION = 'clan_invitation', 'Clan invitation'
+    EVENT_STARTED = 'event_started', 'Scheduled event started'
     SYSTEM = 'system', 'System'
 
 
@@ -33,7 +34,11 @@ class NotificationEvent(TimeStampedModel):
     )
     route_group = models.ForeignKey(
         RouteGroup, on_delete=models.CASCADE, null=True, blank=True, related_name='notification_events',
-        help_text='The group this event is about, for route invitations.',
+        help_text='The group this event is about, for route invitations and started events.',
+    )
+    scheduled_event = models.ForeignKey(
+        'clans.ScheduledEvent', on_delete=models.CASCADE, null=True, blank=True, related_name='notification_events',
+        help_text='The clan event that started, for started events.',
     )
 
     class Meta:

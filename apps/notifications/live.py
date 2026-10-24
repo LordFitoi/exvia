@@ -23,12 +23,14 @@ def build_notification(event: NotificationEvent) -> dict[str, object]:
         title, body = 'Ride invitation', f'{author} invited you to ride {route.name if route else FREE_MODE_LABEL}.'
     elif event.event_type == EventType.CLAN_INVITATION:
         title, body = 'Clan invitation', f'{author} invited you to join a clan.'
+    elif event.event_type == EventType.EVENT_STARTED and event.scheduled_event:
+        title, body = 'Ride started', f'{event.scheduled_event.title} has started. Join the ride!'
     return {'id': event.pk, 'title': title, 'body': body}
 
 
 def broadcast_event(event_id: int, user_ids: list[int]) -> None:
     """Best effort: a user with no open app hears nothing here, and finds the event in the list instead."""
-    event = NotificationEvent.objects.select_related('author', 'route_group__route').get(pk=event_id)
+    event = NotificationEvent.objects.select_related('author', 'route_group__route', 'scheduled_event').get(pk=event_id)
     notification = build_notification(event)
     channel_layer = get_channel_layer()
     try:

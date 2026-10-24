@@ -1,7 +1,7 @@
 # Notifications
 
 Django app for notifications sent to users. A model, admin and a read endpoint; the
-only event created so far is the route invitation of [route-groups.md](route-groups.md).
+events created so far are the route invitation of [route-groups.md](route-groups.md) and the start of a clan ride ([scheduled-events.md](scheduled-events.md)).
 The list is fetched by clients; on top of it, every event is also heard at once by the destinations who have the app
 open, as a toast (see [Live channel](#live-channel)). The Home bell and sheet that
 show the list are in [frontend-screens.md](frontend-screens.md).
@@ -30,10 +30,11 @@ ordered newest first.
 
 | Field | Type | Notes |
 |-------|------|-------|
-| `event_type` | `CharField(32)` | `EventType`: `route_invitation`, `clan_invitation`, `system` |
+| `event_type` | `CharField(32)` | `EventType`: `route_invitation`, `clan_invitation`, `event_started`, `system` |
 | `author` | FK to `auth.User` | Optional (`null`, `blank`); empty for system events; `related_name='sent_notification_events'`, `CASCADE` |
 | `destinations` | M2M to `auth.User` | Everyone notified by this one event; `related_name='notification_events'` |
-| `route_group` | FK to `routes.RouteGroup` | Optional; the group a route invitation is about; `related_name='notification_events'`, `CASCADE` |
+| `route_group` | FK to `routes.RouteGroup` | Optional; the group a route invitation or a started event is about; `related_name='notification_events'`, `CASCADE` |
+| `scheduled_event` | FK to `clans.ScheduledEvent` | Optional; the clan event that started; `related_name='notification_events'`, `CASCADE` |
 
 `InvitationAnswer` (`event` FK `related_name='answers'`, `user` FK, `status` an `AnswerStatus`: `accepted`,
 `rejected` or `expired`, unique per `event` + `user`) is what one destination answered to one event, or
@@ -57,7 +58,10 @@ first, in one query, unpaginated:
 ```
 
 `route_name` is `null` in free mode. `status` is the caller's answer **to that event** and `null` for events
-that are not about a group:
+that are not about a group. An `event_started` event also carries `scheduled_event` (id), `event_title` and
+`clan_name` (all `null` for other events), and its `status` is `open` (its group is `live` and the caller is not in
+it, so they can join), `joined` or `ended` (the group saw no activity for `RESUME_WINDOW`); it is sent to every
+member of the clan but the admin. For route invitations:
 
 | Status | When |
 |--------|------|
@@ -91,7 +95,7 @@ notification shows as a **toast** at once instead of waiting for the next time t
 - **Client.** `LiveNotificationProvider` (in the `(app)` layout) opens it with `startNotificationConnection`,
   which reuses the reconnecting, token-renewing socket of the ride channel (`startSocketConnection`), shows
   the `body` in a `Toast` with the bell icon, and exposes the latest notification through
-  `useLiveNotifications`. `useRouteInvitations` reloads when a new one arrives, so Home's bell badge and
+  `useLiveNotifications`. `useRideNotifications` reloads when a new one arrives, so Home's bell badge and
   the sheet are current without a refresh.
 
 ## Key decisions

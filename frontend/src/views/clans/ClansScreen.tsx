@@ -31,7 +31,12 @@ export default function ClansScreen() {
     setOpenClan(clan)
   }
 
-  if (openClan) return <ClanView clan={openClan} onBack={() => setOpenClan(null)} />
+  const handleUpdated = (clan: Clan) => {
+    clans.reload()
+    setOpenClan(clan)
+  }
+
+  if (openClan) return <ClanView clan={openClan} onBack={() => setOpenClan(null)} onUpdated={handleUpdated} />
 
   return (
     <main className="screen-body">

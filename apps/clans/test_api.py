@@ -65,6 +65,53 @@ class ClanCreationTests(ClanApiTestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+class ClanUpdateTests(ClanApiTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.url = reverse('clans:clan_detail', args=[self.clan.pk])
+
+    def test_owner_edits_name_and_description(self) -> None:
+        response = self.client.patch(self.url, {'name': 'Dawn Patrol', 'description': 'Early.'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.clan.refresh_from_db()
+        self.assertEqual((self.clan.name, self.clan.description), ('Dawn Patrol', 'Early.'))
+        self.assertEqual([member['username'] for member in response.data['members']], ['member'])
+
+    def test_edit_cannot_change_the_owner(self) -> None:
+        self.client.patch(self.url, {'owner': self.outsider.pk}, format='json')
+
+        self.clan.refresh_from_db()
+        self.assertEqual(self.clan.owner, self.member)
+
+    def test_edit_rejects_a_blank_name(self) -> None:
+        response = self.client.patch(self.url, {'name': ''}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(set(response.data), {'name'})
+
+    def test_member_who_is_not_the_owner_cannot_edit(self) -> None:
+        self.clan.users.add(self.outsider)
+        self.client.force_authenticate(self.outsider)
+
+        response = self.client.patch(self.url, {'name': 'Hijacked'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.clan.refresh_from_db()
+        self.assertEqual(self.clan.name, 'Night Riders')
+
+    def test_non_member_gets_404(self) -> None:
+        self.client.force_authenticate(self.outsider)
+
+        response = self.client.patch(self.url, {'name': 'Hijacked'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_clan_is_not_deletable_or_replaceable(self) -> None:
+        self.assertEqual(self.client.delete(self.url).status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(self.client.put(self.url, {}, format='json').status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
 class NoticeApiTests(ClanApiTestCase):
     def test_member_posts_notice_as_author(self) -> None:
         response = self.client.post(

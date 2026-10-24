@@ -6,6 +6,12 @@
   gap: var(--space-3);
 }
 
+/* Clan screen title: grows so the admin's edit button sits at the end of the header */
+.clan-title {
+  flex: 1;
+  min-width: 0;
+}
+
 .clan-cover {
   aspect-ratio: 16 / 9;
   background: var(--color-primary-soft);

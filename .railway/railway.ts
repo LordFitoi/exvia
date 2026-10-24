@@ -5,6 +5,9 @@ const APP_DOMAIN = "exvia.up.railway.app";
 const BACKEND_PRIVATE_URL = "http://server.railway.internal:8000";
 const DATABASE_REGION = "us-west2";
 const MEDIA_MOUNT_PATH = "/data/media";
+// Railway cron jobs run at most every 5 minutes, too coarse to start a ride on time, so the scheduler
+// is a small always-on service that looks again every few seconds.
+const SCHEDULER_INTERVAL_SECONDS = 30;
 
 export default defineRailway(() => {
   const db = postgres("Postgres", { region: DATABASE_REGION });
@@ -55,6 +58,23 @@ export default defineRailway(() => {
     },
   });
 
+  // Starts the clan events whose time has come (opens their route group and notifies the members).
+  const scheduler = service("Scheduler", {
+    source: github(GITHUB_REPO, { branch: "main", checkSuites: false }),
+    build: { builder: "RAILPACK" },
+    start: `python manage.py start_scheduled_events --interval ${SCHEDULER_INTERVAL_SECONDS}`,
+    replicas: { [DATABASE_REGION]: 1 },
+    env: {
+      DISABLE_COLLECTSTATIC: "1",
+      PGDATABASE: db.env.PGDATABASE,
+      PGUSER: db.env.PGUSER,
+      PGPASSWORD: db.env.PGPASSWORD,
+      PGHOST: db.env.PGHOST,
+      PGPORT: db.env.PGPORT,
+      REDIS_URL: cache.env.REDIS_URL,
+    },
+  });
+
   const frontend = service("frontend", {
     source: github(GITHUB_REPO, { branch: "main", rootDirectory: "frontend" }),
     build: { builder: "RAILPACK", buildCommand: "pnpm build" },
@@ -70,6 +90,6 @@ export default defineRailway(() => {
   });
 
   return project("Exvia", {
-    resources: [dbVolume, mediaVolume, group("Django", [server, db, cache]), frontend],
+    resources: [dbVolume, mediaVolume, group("Django", [server, scheduler, db, cache]), frontend],
   });
 });

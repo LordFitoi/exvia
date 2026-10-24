@@ -72,6 +72,24 @@ def create_group(author: User, route: Route | None, invitees: list[User]) -> Rou
     return group
 
 
+def join_group(group: RouteGroup, user: User) -> None:
+    """Puts a user in the group as a rider (accepted) without an invitation, for a group opened to a clan.
+    Joining a group the user already rides in changes nothing. An invitation the user holds is closed as
+    accepted, and their other pending invitations expire, as when accepting. Call it inside a transaction
+    that holds a lock on `group`."""
+    status = group_meta.get_status(group.meta_json, user.pk)
+    if status == ParticipantStatus.ACCEPTED:
+        return
+    if not group.participants.filter(pk=user.pk).exists() and group.participants.count() >= MAX_GROUP_PARTICIPANTS:
+        raise GroupFull(f'Group {group.pk} already has {MAX_GROUP_PARTICIPANTS} riders.')
+    group_meta.set_status(group.meta_json, user.pk, ParticipantStatus.ACCEPTED)
+    group.save(update_fields=['meta_json', 'updated_at'])
+    group.participants.add(user)
+    if status == ParticipantStatus.INVITED:
+        record_invitation_answer(group, user, AnswerStatus.ACCEPTED)
+    expire_other_invitations(user, group)
+
+
 def answer_invitation(group: RouteGroup, user: User, answer: ParticipantStatus) -> None:
     """Records the user's answer. Rejecting also frees their place in the group, and accepting expires
     the user's other pending invitations. An invitation older than `INVITATION_VALIDITY` cannot be answered.
@@ -205,6 +223,11 @@ def connected_riders(group: RouteGroup, now: datetime) -> QuerySet[User]:
     """The riders of the group who are connected at `now` (see `CONNECTED_WINDOW`)."""
     connected_ids = group_meta.get_connected_ids(group.meta_json, now - CONNECTED_WINDOW)
     return group.participants.filter(pk__in=connected_ids)
+
+
+def is_group_active(group: RouteGroup, now: datetime) -> bool:
+    """Whether the group saw activity within `RESUME_WINDOW`, so it has not ended (see `find_active_group`)."""
+    return group.updated_at >= now - RESUME_WINDOW
 
 
 def find_active_group(groups: QuerySet[RouteGroup], user: User, now: datetime) -> RouteGroup | None:
