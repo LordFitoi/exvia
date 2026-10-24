@@ -116,7 +116,7 @@ the map. `UserMap` calls `useMapPlaces(mounted)`, which composes the pieces belo
   coordinates rounded to 6 decimals, which the server demands. Field errors show under their field.
   On success the sheet and card close, the place is added to the map without another request and a
   toast says "<name> saved".
-- **Saved places on the map** are `marker marker-place` buttons (a solid, opaque green disc) with the icon of their category
+- **Saved places on the map** are `marker marker-place` buttons (a solid, opaque blue disc, so it is not taken for a green route point) with the icon of their category
   (`icon-fuel` gas station, `icon-utensils` restaurant, `icon-coffee` cafe, `icon-wrench` mechanic,
   `icon-bed` hotel, `icon-tent` camping, `icon-mountain` viewpoint, `icon-parking` rest stop, `icon-star`
   other). Tapping one opens `SavedPlaceCard`: name, category, coordinates, the notes, and **Ride here**.
@@ -357,11 +357,18 @@ Behavior:
     the sheet) and the point is added **as a tapped point would be**: snapped to
     the nearest street within 50 m, with the street leg from the previous point.
     It is titled with the place's name and address ("Next, Avenida Abraham
-    Lincoln, Polígono Central, Santo Domingo") instead of "Point N"; points added
-    by tapping keep "Point N". The field then clears, ready for the next place.
-  - The title is only a draft label: it is not saved with the route, so reopening
-    a route to edit shows "Point N" again. A place with no street within 50 m
-    shows the same "No street here" alert as a tap.
+    Lincoln, Polígono Central, Santo Domingo"). The field then clears, ready for
+    the next place. A place with no street within 50 m shows the same "No street
+    here" alert as a tap.
+  - **A saved place** (from the search, or tapped on the map) is added with its own
+    name and category, and its list row and marker show the category's icon in place
+    of its number (the first point keeps its number). Other points show their number.
+  - **A tapped point** is titled by the address at the spot. The address is looked up
+    for every point added, saved place or not (Mapbox reverse geocoding,
+    `streetAddressApi.ts`, while the street leg is routed), and kept as its `address`.
+    If the lookup fails the point is still added without one, and a tapped one is listed as "Point N".
+  - The name, address and category are saved with the route as its
+    [waypoints](routes.md#waypoints), so reopening a route to edit shows them again.
   - **Not supported**: crossings of two streets ("Alcalá & Serrano"); neither
     service searches them. Tap the map there.
 - Each point after the first also fetches the **street path from the previous
@@ -410,8 +417,8 @@ Behavior:
   re-added on every `style.load`, because switching between the light and
   dark style drops custom layers.
 - **Save route** is disabled until there are 2 points and no leg is being
-  fetched. It sends the whole street path as `points`, plus the tapped points
-  as `waypoints` (so the route can be edited later), so the server's distance
+  fetched. It sends the whole street path as `points`, plus the points
+  as `waypoints`, each with its name, address and category (so the route can be edited later), so the server's distance
   follows the roads (see
   [routes.md](routes.md#points)). It opens the modal: a native `<dialog>` opened with `showModal()`,
   styled as the guide's bottom sheet (`sheet sheet-modal`), so Esc, focus

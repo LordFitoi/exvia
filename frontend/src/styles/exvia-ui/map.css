@@ -151,8 +151,14 @@
 .checkpoint-times { grid-column: 1 / -1; }
 .checkpoint-times .list { max-block-size: 30dvh; overflow-y: auto; }
 
-.ride-panel-toggle .icon { transition: rotate var(--duration-fast) var(--ease-out); }
+/* The chevron that shows or hides the rest of a panel (the ride strip, the shared route's panel) */
+.ride-panel-toggle .icon,
+.map-panel-toggle .icon { transition: rotate var(--duration-fast) var(--ease-out); }
 .ride-panel-toggle[aria-expanded="true"] .icon { rotate: 180deg; }
+
+/* The shared route's panel sits at the bottom and unfolds upward, so its chevron points up to unfold it and down to fold it */
+.map-panel-toggle .icon { rotate: 180deg; }
+.map-panel-toggle[aria-expanded="true"] .icon { rotate: 0deg; }
 
 /* Map panel: a flat, square-cornered block of data under a map (the shared route page). Not a
    sheet: nothing slides, drags or covers the map; it takes the height its content needs. */
@@ -164,9 +170,6 @@
   background: var(--color-surface);
   box-shadow: var(--shadow-sheet);
 }
-
-/* Holds the room of the panel's one action button while it is not known yet, so the map does not resize */
-.share-actions-placeholder { block-size: var(--tap-target); }
 
 .map-panel-header {
   display: flex;
@@ -196,10 +199,10 @@
 .marker-primary { background: var(--color-primary); color: var(--color-on-primary); }
 .marker-start { background: var(--color-surface); color: var(--color-text); }
 
-/* A place the rider saved: its kind's glyph on a solid green disc, fully opaque so the map never
-   shows through it. The pseudo-element widens the 36px disc to the 44px hit area without changing
-   how it looks */
-.marker-place { background: var(--color-primary); color: var(--color-on-primary); }
+/* A place the rider saved: its kind's glyph on a solid blue disc, fully opaque so the map never
+   shows through it. Blue, not the route's green, so a saved place is never taken for a route point.
+   The pseudo-element widens the 36px disc to the 44px hit area without changing how it looks */
+.marker-place { background: var(--color-info-dark); color: var(--color-on-info); }
 .marker-place::after { content: ""; position: absolute; inset: -0.25rem; }
 
 /* A saved place shown while drawing a route or riding: only a landmark, so it takes no taps and the map

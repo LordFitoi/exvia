@@ -1,4 +1,5 @@
 import type { Coordinates } from '@/types/geolocation'
+import type { Waypoint } from '@/types/route'
 
 /** A route as anyone with its link sees it: the whole path, its numbers and who drew it. */
 export interface SharedRoute {
@@ -16,4 +17,6 @@ export interface SharedRoute {
   readonly created_at: string
   /** The whole street path, in travel order. */
   readonly points: readonly Coordinates[]
+  /** The points the rider chose, start and finish included; empty for a route saved before they were stored. */
+  readonly waypoints: readonly Waypoint[]
 }

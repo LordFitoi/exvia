@@ -256,7 +256,7 @@ Exvia changes the following on purpose:
   neighbours slide by one row, animating only `transform`. Alt+ArrowUp and
   Alt+ArrowDown move a focused row, since a drag is pointer-only.
 - **Saved places and the place card.** A saved place is a `marker marker-place` button
-  wearing its kind's icon on a solid, opaque green disc (`icon-fuel`, `icon-utensils`, `icon-coffee`, `icon-wrench`, `icon-bed`,
+  wearing its kind's icon on a solid, opaque blue (`--color-info-dark`) disc, so it is not taken for a green route point (`icon-fuel`, `icon-utensils`, `icon-coffee`, `icon-wrench`, `icon-bed`,
   `icon-tent`, `icon-mountain`, `icon-parking`, `icon-star`; the `::after` widens the 36px disc to
   the 44px hit area; in a suggestion list `suggestion-option-saved` puts the rider's saved place first, with its icon at the end of the row in the muted details color, bare (`input-group > .icon` pins only the group's own leading icon, as the list sits inside the group on the map); `marker-passive` makes it a landmark that takes no taps, for the ride maps; in the route creator it stays a button that adds the place as a route point). `place-card` (`content.html`) is the non-modal card at the bottom of the map
   for a pressed spot or a saved place: a `list-item-icon` tile, the title, a close `icon-button`,

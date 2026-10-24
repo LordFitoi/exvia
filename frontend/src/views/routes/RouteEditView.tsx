@@ -7,9 +7,9 @@ import { useHideTabBar } from '@/hooks/useHideTabBar'
 import { useInitialDraftPoints } from '@/hooks/useInitialDraftPoints'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import { updateRoute } from '@/services/routesApi'
+import { toPlainWaypoint } from '@/services/waypoints'
 import RouteEditor from '@/views/routes/RouteEditor'
-import type { Coordinates } from '@/types/geolocation'
-import type { NewRoute, RouteDetail, SavedRoute } from '@/types/route'
+import type { NewRoute, RouteDetail, SavedRoute, Waypoint } from '@/types/route'
 
 interface RouteEditViewProps {
   route: RouteDetail
@@ -19,8 +19,8 @@ interface RouteEditViewProps {
 
 // Routes saved before waypoints were stored only have their street path, so they open with
 // their start and finish and the rider adds the points in between again.
-const getEditableWaypoints = ({ waypoints, points }: RouteDetail): readonly Coordinates[] =>
-  waypoints.length > 0 ? waypoints : [points[0], points[points.length - 1]]
+const getEditableWaypoints = ({ waypoints, points }: RouteDetail): readonly Waypoint[] =>
+  waypoints.length > 0 ? waypoints : [points[0], points[points.length - 1]].map(toPlainWaypoint)
 
 /** Edits an existing route: the creator, started from the route's own points. */
 export default function RouteEditView({ route, onClose, onSaved }: RouteEditViewProps) {
@@ -65,7 +65,7 @@ export default function RouteEditView({ route, onClose, onSaved }: RouteEditView
   return (
     <RouteEditor
       mode="edit"
-      center={waypoints[0]}
+      center={waypoints[0].coordinates}
       userPosition={null}
       initialPoints={initial.points}
       initialValues={{ name: route.name, description: route.description }}

@@ -57,6 +57,13 @@ All endpoints need a JWT and only ever see the caller's own places.
   (`coerce_to_string=False`), and at most 6 decimals are accepted.
 - The Map tab edits a place from the pencil button in its card header (the spot itself is not moved) and deletes it from the card, after a confirm dialog ([map.md](map.md#saved-places)).
 
+## In routes
+
+A rider adds a saved place to a route from the search or by tapping it on the map. The route's waypoint keeps the
+place's `name` and `category` as they are then, so the route shows the place's icon on its maps (and its shared
+page) even to a viewer who has no access to the place itself; see [routes.md](routes.md#waypoints). Nothing else
+of the place (notes, position, id) is copied.
+
 ## Key decisions
 
 - Longitude is named `lng`, matching the `[lng, lat]` points in

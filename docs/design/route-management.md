@@ -71,7 +71,7 @@ were added to the guide for it.
 name, Cancel first and the solid error Delete last). It is the one place the
 guide allows a solid error button.
 
-`useRouteDeletion` (a wrapper over `useConfirmedDeletion`, which the ride history shares) runs the two steps. Cancel (or Escape) closes it and keeps
+`useRouteDeletion` (a wrapper over `useConfirmedDeletion`, which the saved places share) runs the two steps. Cancel (or Escape) closes it and keeps
 the route. Confirming calls `DELETE /api/routes/<uuid>/`; while it runs both
 buttons are disabled and Delete shows the loading state. On success the dialog
 closes, the selection is cleared (so the preview goes back to "Select a route")

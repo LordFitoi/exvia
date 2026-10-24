@@ -1,10 +1,12 @@
 import type { GeoJSONSource, Map as MapboxMap, Marker, PaddingOptions } from 'mapbox-gl'
 
 import { toLngLat } from '@/services/baseMap'
+import { describePlaceLocationCategory } from '@/services/placeLocationCategories'
 import { resolveTokenColor } from '@/services/tokenColor'
 import type { MapboxModule } from '@/services/baseMap'
+import type { PlaceLocationCategory } from '@/services/placeLocationCategories'
 import type { Coordinates } from '@/types/geolocation'
-import type { DraftPoint } from '@/types/route'
+import type { DraftPoint, Waypoint } from '@/types/route'
 
 const ROUTE_SOURCE_ID = 'route-draft'
 const CASING_LAYER_ID = 'route-draft-casing'
@@ -15,6 +17,8 @@ export const LINE_WIDTH = 7
 const FIT_MAX_ZOOM = 17
 const START_MARKER_CLASS = 'marker marker-start'
 const POINT_MARKER_CLASS = 'marker marker-primary'
+const PLACE_MARKER_CLASS = 'marker marker-place'
+const PASSIVE_PLACE_MARKER_CLASS = `${PLACE_MARKER_CLASS} marker-passive`
 
 // The GeoJSON shape Mapbox accepts; declared here because @types/geojson is not a direct dependency.
 export interface RouteLine {
@@ -56,12 +60,24 @@ export const updateRouteLine = (map: MapboxMap, path: readonly Coordinates[]): v
   map.getSource<GeoJSONSource>(ROUTE_SOURCE_ID)?.setData(toRouteLine(path))
 }
 
-const createPointElement = (index: number, onRemove: () => void): HTMLButtonElement => {
+const createIconElement = (iconClass: string): HTMLSpanElement => {
+  const icon = document.createElement('span')
+  icon.className = `icon icon-sm ${iconClass}`
+  icon.ariaHidden = 'true'
+  return icon
+}
+
+const createPointElement = (point: DraftPoint, index: number, onRemove: () => void): HTMLButtonElement => {
   const element = document.createElement('button')
   element.type = 'button'
-  element.className = index === 0 ? START_MARKER_CLASS : POINT_MARKER_CLASS
-  element.textContent = String(index + 1)
   element.ariaLabel = `Remove point ${index + 1}`
+  if (index > 0 && point.category) {
+    element.className = PLACE_MARKER_CLASS
+    element.append(createIconElement(describePlaceLocationCategory(point.category).iconClass))
+  } else {
+    element.className = index === 0 ? START_MARKER_CLASS : POINT_MARKER_CLASS
+    element.textContent = String(index + 1)
+  }
   element.addEventListener('click', (event) => {
     // The marker sits inside the map container, so the click would otherwise add a point too.
     event.stopPropagation()
@@ -70,17 +86,17 @@ const createPointElement = (index: number, onRemove: () => void): HTMLButtonElem
   return element
 }
 
-/** One numbered marker per point; tapping a marker removes its point. */
+/** One marker per point, numbered or, for a saved place, with its kind's icon; tapping a marker removes its point. */
 export const addPointMarkers = (
   mapboxgl: MapboxModule,
   map: MapboxMap,
   points: readonly DraftPoint[],
   onRemove: (id: number) => void,
 ): Marker[] =>
-  points.map(({ id, coordinates }, index) =>
+  points.map((point, index) =>
     // Markers are centered by their own CSS (translate -50%), so anchor at the corner.
-    new mapboxgl.Marker({ element: createPointElement(index, () => onRemove(id)), anchor: 'top-left' })
-      .setLngLat(toLngLat(coordinates))
+    new mapboxgl.Marker({ element: createPointElement(point, index, () => onRemove(point.id)), anchor: 'top-left' })
+      .setLngLat(toLngLat(point.coordinates))
       .addTo(map),
   )
 
@@ -89,10 +105,7 @@ const createEndpointElement = (className: string, iconClass: string, label: stri
   element.className = className
   element.role = 'img'
   element.ariaLabel = label
-  const icon = document.createElement('span')
-  icon.className = `icon icon-sm ${iconClass}`
-  icon.ariaHidden = 'true'
-  element.append(icon)
+  element.append(createIconElement(iconClass))
   return element
 }
 
@@ -105,7 +118,11 @@ export const addFinishMarker = (mapboxgl: MapboxModule, map: MapboxMap, coordina
     .setLngLat(toLngLat(coordinates))
     .addTo(map)
 
-const createCheckpointElement = (number: number): HTMLSpanElement => {
+const createCheckpointElement = (number: number, placeCategory: PlaceLocationCategory | null): HTMLSpanElement => {
+  if (placeCategory) {
+    const { label, iconClass } = describePlaceLocationCategory(placeCategory)
+    return createEndpointElement(PASSIVE_PLACE_MARKER_CLASS, iconClass, `Checkpoint ${number}, ${label.toLowerCase()}`)
+  }
   const element = document.createElement('span')
   element.className = POINT_MARKER_CLASS
   element.role = 'img'
@@ -117,20 +134,21 @@ const createCheckpointElement = (number: number): HTMLSpanElement => {
 interface RouteMarkersOptions {
   readonly path: readonly Coordinates[]
   /** The points the rider chose; empty for a route saved before they were stored. */
-  readonly waypoints: readonly Coordinates[]
+  readonly waypoints: readonly Waypoint[]
 }
 
 /**
- * Start and finish markers, and a numbered marker for every point chosen in between (numbered like the
- * route creator does, so the start is 1). A route without waypoints shows only the start and the finish.
+ * Start and finish markers, and a marker for every point chosen in between: numbered like the route
+ * creator does (the start is 1), or the kind's icon when the point is a saved place.
+ * A route without waypoints shows only the start and the finish.
  */
 export const addRouteMarkers = (
   mapboxgl: MapboxModule,
   map: MapboxMap,
   { path, waypoints }: RouteMarkersOptions,
 ): Marker[] => {
-  const checkpoints = waypoints.slice(1, -1).map((coordinates, index) => ({
-    element: createCheckpointElement(index + 2),
+  const checkpoints = waypoints.slice(1, -1).map(({ coordinates, category }, index) => ({
+    element: createCheckpointElement(index + 2, category),
     coordinates,
   }))
   const places = [

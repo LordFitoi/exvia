@@ -8,7 +8,7 @@ DISTANCE_DECIMALS = 3
 
 def calculate_distance_km(points: list[list[float]]) -> float:
     """Sum the great-circle length of each segment of a [lng, lat] path."""
-    total = sum(_haversine_km(start, end) for start, end in zip(points, points[1:]))
+    total = sum(haversine_km(start, end) for start, end in zip(points, points[1:]))
     return round(total, DISTANCE_DECIMALS)
 
 
@@ -17,7 +17,7 @@ def calculate_estimated_time(distance_km: float) -> timedelta:
     return timedelta(hours=distance_km / AVERAGE_SPEED_KPH)
 
 
-def _haversine_km(start: list[float], end: list[float]) -> float:
+def haversine_km(start: list[float], end: list[float]) -> float:
     start_lng, start_lat = map(radians, start)
     end_lng, end_lat = map(radians, end)
     delta_lat = end_lat - start_lat

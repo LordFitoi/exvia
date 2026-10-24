@@ -1,4 +1,5 @@
 import type { Coordinates } from '@/types/geolocation'
+import type { Waypoint } from '@/types/route'
 
 export const METERS_PER_DEGREE_LATITUDE = 111_320
 const METERS_PER_KILOMETER = 1000
@@ -136,7 +137,7 @@ export const trackProgress = (
 }
 
 /** How many checkpoints a route has: its waypoints between the first (the start) and the last (the finish). */
-export const countCheckpoints = (waypoints: readonly Coordinates[]): number => Math.max(0, waypoints.length - 2)
+export const countCheckpoints = (waypoints: readonly Waypoint[]): number => Math.max(0, waypoints.length - 2)
 
 /**
  * How far along the path, in meters, each point lies (a checkpoint of the route). They are placed in order: a point is
@@ -155,9 +156,9 @@ export const measureCheckpoints = (path: MeasuredPath, checkpoints: readonly Coo
  * checkpoint to the next, and from the last one to the finish, measured along the path. Empty when the
  * route has no waypoints (routes saved before they were stored), so its legs are unknown.
  */
-export const measureLegs = (path: MeasuredPath, waypoints: readonly Coordinates[]): number[] => {
+export const measureLegs = (path: MeasuredPath, waypoints: readonly Waypoint[]): number[] => {
   if (waypoints.length < MIN_WAYPOINTS) return []
-  const checkpoints = measureCheckpoints(path, waypoints.slice(1, -1))
+  const checkpoints = measureCheckpoints(path, waypoints.slice(1, -1).map(({ coordinates }) => coordinates))
   const stops = [0, ...checkpoints, getPathLength(path)]
   return stops.slice(1).map((distance, index) => (distance - stops[index]) / METERS_PER_KILOMETER)
 }

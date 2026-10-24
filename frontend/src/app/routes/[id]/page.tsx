@@ -8,7 +8,10 @@ import { fetchSharedRoute } from '@/services/sharedRouteApi'
 import RouteShareView from '@/views/share/RouteShareView'
 import type { SharedRoute } from '@/types/sharedRoute'
 
-type SharedRoutePageProps = PageProps<'/routes/[id]'>
+// The route behind the link is only known at request time, so the page has no instant shell to validate.
+export const instant = false
+
+type SharedRoutePageProps =PageProps<'/routes/[id]'>
 
 const describeRoute = ({ distance, estimated_time, author, description }: SharedRoute): string => {
   const facts = `${formatDistance(distance)} · ${formatDuration(estimated_time)} · by ${author}`

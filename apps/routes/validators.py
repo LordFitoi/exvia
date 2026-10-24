@@ -1,8 +1,12 @@
 from django.core.exceptions import ValidationError
 
+from apps.places.models import PlaceCategory
+
 MIN_POINTS = 2
 MAX_POINTS = 20_000
 MAX_WAYPOINTS = 500
+WAYPOINT_TEXT_MAX_LENGTH = 255
+WAYPOINT_KEYS = frozenset({'lng', 'lat', 'name', 'address', 'category'})
 MAX_LONGITUDE = 180
 MAX_LATITUDE = 90
 
@@ -13,8 +17,29 @@ def validate_points(value: object) -> None:
 
 
 def validate_waypoints(value: object) -> None:
-    """Accept only a list of up to MAX_WAYPOINTS [lng, lat] pairs; it may be empty."""
-    _validate_coordinate_list(value, minimum=0, maximum=MAX_WAYPOINTS, label='waypoints')
+    """Accept only a list of up to MAX_WAYPOINTS waypoints; it may be empty. A waypoint is an object:
+    `{"lng": 0.0, "lat": 0.0, "name": "Corner Cafe", "address": "Av. Paulista, 1000", "category": "cafe"}`, where
+    `name` is the name of the saved place there or else the address, `address` is the nearest address (empty when
+    unknown) and `category` is that saved place's `PlaceCategory`, else null."""
+    if not isinstance(value, list):
+        raise ValidationError(f'The waypoints must be a list of objects, got {type(value).__name__}.')
+    if len(value) > MAX_WAYPOINTS:
+        raise ValidationError(f'A route can have at most {MAX_WAYPOINTS} waypoints, got {len(value)}.')
+    for waypoint in value:
+        _validate_waypoint(waypoint)
+
+
+def _validate_waypoint(waypoint: object) -> None:
+    if not isinstance(waypoint, dict) or waypoint.keys() != WAYPOINT_KEYS:
+        raise ValidationError(f'A waypoint must be an object with {sorted(WAYPOINT_KEYS)}, got {waypoint!r}.')
+    validate_point([waypoint['lng'], waypoint['lat']])
+    for field in ('name', 'address'):
+        text = waypoint[field]
+        if not isinstance(text, str) or len(text) > WAYPOINT_TEXT_MAX_LENGTH:
+            raise ValidationError(f'A waypoint {field} must be text of at most {WAYPOINT_TEXT_MAX_LENGTH} characters.')
+    category = waypoint['category']
+    if category is not None and category not in PlaceCategory.values:
+        raise ValidationError(f'A waypoint category must be null or one of {PlaceCategory.values}, got {category!r}.')
 
 
 def _validate_coordinate_list(value: object, *, minimum: int, maximum: int, label: str) -> None:

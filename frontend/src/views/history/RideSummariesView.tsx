@@ -18,19 +18,8 @@ export default function RideSummariesView({ onClose }: RideSummariesViewProps) {
   // A full-height screen with its own close button, so the tab bar steps aside.
   useHideTabBar(true)
 
-  const handleDeleted = () => {
-    setSelectedId(null)
-    history.reload()
-  }
-
   if (selectedId !== null) {
-    return (
-      <RideSummaryView
-        summaryId={selectedId}
-        onClose={() => setSelectedId(null)}
-        onDeleted={handleDeleted}
-      />
-    )
+    return <RideSummaryView summaryId={selectedId} onClose={() => setSelectedId(null)} />
   }
 
   return (

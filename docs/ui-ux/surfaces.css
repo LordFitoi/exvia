@@ -190,6 +190,9 @@ button.list-item[aria-pressed="true"] .list-item-title { color: var(--color-prim
 /* Colored disc, for a state reached (a checkpoint passed): the primary of the map markers */
 .avatar-primary { background: var(--color-primary); color: var(--color-on-primary); }
 
+/* Colored disc of a saved place (a checkpoint that is one of the rider's places): the blue of the map's place markers */
+.avatar-place { background: var(--color-info-dark); color: var(--color-on-info); }
+
 .avatar-sm { inline-size: 2rem; block-size: 2rem; font-size: var(--text-caption); }
 .avatar-lg { inline-size: 4rem; block-size: 4rem; font-size: var(--text-h5); }
 .avatar-xl { inline-size: 6.25rem; block-size: 6.25rem; font-size: var(--text-h3); }

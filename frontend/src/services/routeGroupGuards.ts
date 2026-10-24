@@ -1,5 +1,6 @@
 import { parseLngLat } from '@/services/coordinates'
 import { isRecord } from '@/services/typeGuards'
+import { parseWaypoints } from '@/services/waypoints'
 import type { RideRoute } from '@/types/route'
 import type { GroupParticipant, ParticipantStatus, RiderProfile, RouteGroup } from '@/types/routeGroup'
 
@@ -26,8 +27,8 @@ const parseRideRoute = (value: unknown): RideRoute | null => {
   const points = value.points.map(parseLngLat)
   if (!points.every((point) => point !== null)) return null
   // Routes saved before waypoints were stored have none: their map shows only the start and the finish.
-  const waypoints = Array.isArray(value.waypoints) ? value.waypoints.map(parseLngLat) : []
-  if (!waypoints.every((waypoint) => waypoint !== null)) return null
+  const waypoints = parseWaypoints(value.waypoints)
+  if (!waypoints) return null
   return { id, name, distance, estimated_time, points, waypoints }
 }
 

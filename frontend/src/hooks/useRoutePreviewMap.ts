@@ -7,6 +7,7 @@ import { useMapInstance } from '@/hooks/useMapInstance'
 import type { BaseMap } from '@/services/baseMap'
 import { addRouteLine, addRouteMarkers, fitPathBounds, updateRouteLine } from '@/services/routeMapLayers'
 import type { Coordinates } from '@/types/geolocation'
+import type { Waypoint } from '@/types/route'
 
 const PREVIEW_ZOOM = 12
 const PREVIEW_PADDING_PX = 40
@@ -15,7 +16,7 @@ interface RoutePreviewMapOptions {
   accessToken: string | undefined
   path: readonly Coordinates[]
   /** The points the rider chose, shown as checkpoints; empty when the route has none. */
-  waypoints: readonly Coordinates[]
+  waypoints: readonly Waypoint[]
 }
 
 interface RoutePreviewMapHandle {
@@ -24,11 +25,7 @@ interface RoutePreviewMapHandle {
 }
 
 /** A map that shows a whole route: the line, its start, checkpoints and finish markers, framed in view. */
-export const useRoutePreviewMap = ({
-  accessToken,
-  path,
-  waypoints,
-}: RoutePreviewMapOptions): RoutePreviewMapHandle => {
+export const useRoutePreviewMap = ({ accessToken, path, waypoints }: RoutePreviewMapOptions): RoutePreviewMapHandle => {
   const pathRef = useRef(path)
   const hasFittedRef = useRef(false)
 

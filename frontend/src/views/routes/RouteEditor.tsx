@@ -17,7 +17,8 @@ import RouteSheet from '@/views/routes/RouteSheet'
 import SaveRouteDialog from '@/views/routes/SaveRouteDialog'
 import type { Coordinates } from '@/types/geolocation'
 import type { Place } from '@/types/place'
-import type { DraftPoint, NewRoute, SavedRoute } from '@/types/route'
+import type { PlaceLocation } from '@/types/placeLocation'
+import type { DraftPoint, NewRoute, PointDetails, SavedRoute } from '@/types/route'
 
 const MIN_ROUTE_POINTS = 2
 
@@ -49,6 +50,8 @@ interface RouteEditorProps {
   onSaved: (route: SavedRoute) => void
 }
 
+const describeSavedPlace = ({ name, category }: PlaceLocation): PointDetails => ({ name, category })
+
 const describePointCount = (count: number): string => `${count} ${count === 1 ? 'point' : 'points'}`
 
 /** The map and sheet where a route is drawn: tap to add street points, then save. */
@@ -72,13 +75,14 @@ export default function RouteEditor({
     points: draft.points,
     onMapClick: draft.addPoint,
     onPointRemove: draft.removePoint,
-    onPlaceSelect: ({ coordinates, name }) => draft.addPoint(coordinates, name),
+    onPlaceSelect: (saved) => draft.addPoint(saved.coordinates, describeSavedPlace(saved)),
   })
   const { title, cancelLabel, recenterLabel } = COPY[mode]
 
-  const handlePlaceSelect = ({ coordinates, name }: Place) => {
-    focusOn(coordinates)
-    draft.addPoint(coordinates, name)
+  const handlePlaceSelect = (place: Place, saved?: PlaceLocation) => {
+    focusOn(place.coordinates)
+    // A saved place keeps its own name and kind; any other place is named as the search found it.
+    draft.addPoint(place.coordinates, saved ? describeSavedPlace(saved) : { name: place.name, category: null })
   }
 
   // The load-failure screen has no way out of its own, so it keeps the tab bar.
@@ -131,7 +135,7 @@ export default function RouteEditor({
         mode={mode}
         geometry={{
           points: flattenRoutePath(draft.points),
-          waypoints: draft.points.map(({ coordinates }) => coordinates),
+          waypoints: draft.points,
         }}
         initialValues={initialValues}
         saveRoute={saveRoute}

@@ -27,7 +27,10 @@ class Route(TimeStampedModel):
     points = models.JSONField(validators=[validate_points])
     waypoints = models.JSONField(
         default=list, blank=True, validators=[validate_waypoints],
-        help_text='The points the rider chose, in order; `points` is the street path through them.',
+        help_text=(
+            'The points the rider chose, in order, each with its `name`, its `address` and the `category` of the saved place there; '
+            '`points` is the street path through them.'
+        ),
     )
     distance = models.FloatField(editable=False, help_text='Kilometres, calculated from points.')
     estimated_time = models.DurationField(

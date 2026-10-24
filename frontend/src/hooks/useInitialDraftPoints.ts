@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { buildDraftPoints } from '@/services/draftPoints'
-import type { Coordinates } from '@/types/geolocation'
-import type { DraftPoint } from '@/types/route'
+import type { DraftPoint, Waypoint } from '@/types/route'
 
 type InitialDraftStatus = 'loading' | 'ready' | 'failed'
 
@@ -23,7 +22,7 @@ const FAILED_STATE: InitialDraftState = { status: 'failed', points: [] }
 /** Routes the legs between the waypoints of a saved route, so it can be edited as a draft. */
 export const useInitialDraftPoints = (
   accessToken: string | undefined,
-  waypoints: readonly Coordinates[],
+  waypoints: readonly Waypoint[],
 ): InitialDraftPoints => {
   const [state, setState] = useState<InitialDraftState>(LOADING_STATE)
   const [attempt, setAttempt] = useState(0)

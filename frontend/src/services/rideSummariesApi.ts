@@ -71,8 +71,3 @@ export const fetchRideSummary = async (id: number): Promise<RideSummaryDetail> =
   if (!isRideSummaryDetail(summary)) throw unexpectedResponse()
   return summary
 }
-
-/** Deletes one of the caller's own rides, for all its participants. */
-export const deleteRideSummary = async (id: number): Promise<void> => {
-  await requestJsonAuthorized(`${SUMMARIES_PATH}${id}/`, { method: 'DELETE' })
-}

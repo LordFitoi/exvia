@@ -23,11 +23,13 @@ given. The page is `noindex` for the same reason (see
 |-------|------|-----|
 | API | `SharedRouteView` in [views.py](../../apps/routes/views.py), `SharedRouteSerializer` | `GET /api/routes/<uuid>/shared/`, no login |
 | Fetch | [sharedRouteApi.ts](../../frontend/src/services/sharedRouteApi.ts) | Server-side fetch of that endpoint, validated and cached; `null` when there is no such route |
-| Page | `app/routes/[id]/page.tsx` | `generateMetadata`, and the page behind `<Suspense>` |
+| Page | `app/routes/[id]/page.tsx` | `generateMetadata`, `instant = false`, and the page behind `<Suspense>` |
 | Preview image | `app/routes/[id]/opengraph-image.ts` | The picture a link preview shows |
 | View | `views/share/RouteShareView.tsx` | Map on top, panel below |
 | Panel | `views/share/RouteSharePanel.tsx` | Name, author, distance, estimated time, date, description, and the action button |
-| Action | `views/share/RouteShareActions.tsx` | Close for a signed-in rider, Open in Google Maps for anyone else |
+| Checkpoints | `views/share/RouteCheckpointList.tsx` | The start, checkpoints and finish with their names and coordinates, shown while the panel is expanded |
+| Close | `views/share/RouteCloseButton.tsx` | The button over the top right of the map: back to the Map tab for a signed-in rider, an X that closes the tab for a visitor |
+| Action | `views/share/RouteShareActions.tsx` | Open in Google Maps |
 | Google Maps link | `services/googleMapsUrl.ts` | Builds the directions link from the path |
 | Map | `components/route/PreviewMap.tsx` | The route map, shared with the route list and the ride picker |
 | Image URL | `services/staticMapUrl.ts`, `polyline.ts`, `simplifyPath.ts` | Builds the Mapbox Static Images URL |
@@ -47,6 +49,11 @@ UUID, never reaches the view: the URL converter is `<uuid:pk>`.
   "name": "Sunday loop",
   "description": "Easy ride",
   "points": [[-3.7038, 40.4168], [-3.6912, 40.4221]],
+  "waypoints": [
+    {"lng": -3.7038, "lat": 40.4168, "name": "Calle de Alcala, 1, Madrid", "address": "Calle de Alcala, 1, Madrid", "category": null},
+    {"lng": -3.6975, "lat": 40.4190, "name": "Corner Cafe", "address": "Calle Mayor 12, Madrid", "category": "cafe"},
+    {"lng": -3.6912, "lat": 40.4221, "name": "Plaza de Cibeles, Madrid", "address": "Plaza de Cibeles, Madrid", "category": null}
+  ],
   "distance": 1.223,
   "estimated_time": 73,
   "author": "rider",
@@ -54,10 +61,16 @@ UUID, never reaches the view: the URL converter is `<uuid:pk>`.
 }
 ```
 
-It is the route without `waypoints`, and with the author's **username** in
-place of the user id: a link holder learns who drew the route and nothing else
-about them (no id, no email). The private `GET /api/routes/<uuid>/` is
-unchanged and still only returns the caller's own routes.
+It is the route with the author's **username** in place of the user id: a link
+holder learns who drew the route and nothing else about them (no id, no email).
+The private `GET /api/routes/<uuid>/` is unchanged and still only returns the
+caller's own routes.
+
+`waypoints` are the points the rider chose, start and finish included; empty for a route saved before they were
+stored. Each is `{lng, lat, name, address, category}` as [routes.md](routes.md#waypoints) describes: its name, its nearest address
+and the `category` of the author's saved place there, if any. They are stored with the route, so nothing is matched or looked
+up when the page is read. A saved place's `name` and `category` are therefore public to whoever holds the link, as
+the rest of the route is; its notes, position and id never are, since the waypoint holds none of them.
 
 ## The page
 
@@ -65,14 +78,38 @@ unchanged and still only returns the caller's own routes.
   `.app-shell` of its own, so a visitor with no account sees the route at once.
 - Layout is the ride screen's: the map fills the height the panel leaves and
   the panel sits **below** it in the flow, so it never covers the route (the
-  map frames the route inside the space above the panel). The panel is the
+  map frames the route inside the space above the panel). The map shows the
+  start, the finish and every checkpoint in between, numbered as in the route
+  creator (the start is 1), except a checkpoint that is a saved
+  place, which shows its category's icon on the blue place disc instead of the
+  number (`addRouteMarkers` in [routeMapLayers.ts](../../frontend/src/services/routeMapLayers.ts)).
+  The panel is the
   guide's `.map-panel`: a flat block with square corners, no drag handle and no
-  slide-in, since there is nothing to collapse; it holds the three-tile
-  `.route-stats` row. Dark mode follows the map style and the tokens.
+  slide-in; it holds the three-tile `.route-stats` row. Its header has the
+  route's name and, at the end, a chevron button (`map-panel-toggle`, "Show
+  checkpoints" / "Hide checkpoints", `aria-expanded`) that shows or hides the list
+  of the start, every checkpoint and the finish. The panel is at the bottom and unfolds upward, so the chevron points
+  up while it is folded and down once it is unfolded. The list is always rendered
+  open; it is only `hidden` until the panel is expanded, which it is not at first,
+  so the map keeps its height. The start and the finish are titled "Start" and
+  "Finish" (with their flags). A checkpoint is titled by its saved place's name or
+  "Checkpoint N" (the start is 1; a point named by its own address is titled by its number), with the kind's
+  icon on a blue `avatar-place` disc (the blue of the map marker) for a saved place. Under each title is its
+  **address**; the coordinates (`formatCoordinates`, latitude then longitude) only stand in for an address that is
+  not known (Mapbox found none, or did not answer). A route saved before addresses were stored has none, so
+  `fetchSharedRoute` looks up the missing ones when it loads the route (reverse geocoding on the server, at most 25 per
+  route, cached with the route for a few minutes) and the page shows them without the route being changed. The list is capped at 30dvh and
+  scrolls. A route with no stored checkpoints has no chevron. Dark mode follows the
+  map style and the tokens.
 - A route that does not exist renders the app's not-found screen. The status
   code is `200`, not `404`: the data is read inside `<Suspense>` (the route is
   dynamic, `params` cannot be awaited outside it with Cache Components), so
   the response has started by the time the route is known.
+- The page sets `instant = false`, like every other page
+  ([frontend-screens.md](frontend-screens.md)). Without it, the dev server
+  logged `Route "/routes/[id]" did not produce a static shell and Next.js was
+  unable to determine a reason` after each request, because this is the one page
+  that is not a static shell.
 - The route comes from the server (`fetchSharedRoute`, `'use cache'`,
   `cacheLife('minutes')`) and goes to the client as props, which keeps the
   page and its metadata from asking the API twice. A failed request throws and
@@ -81,15 +118,18 @@ unchanged and still only returns the caller's own routes.
 
 ## Actions
 
-The panel ends with one full-width button, chosen on the client from the session
-(`AuthProvider` is in the root layout, so it is available on this public page):
-
-- **Signed in: Close.** Goes back to where the rider came from (`router.back()`),
-  or Home when the link was opened directly (no history). A rider reaches the page
-  from a notice's attached route ([clans.md](clans.md#attached-route)).
-- **Anonymous: Open in Google Maps.** Opens a `google.com/maps/dir/?api=1` link in a
-  new tab, with no API key. While the session is still being restored a placeholder
-  keeps the button's height, so the map does not resize when it appears.
+- **Signed in: Back to the map**, an icon link (the back chevron, as the other screens' back buttons, `aria-label` "Back to the map") in the
+  `map-controls` block over the top right of the map (`RouteCloseButton`, chosen on the client from the session:
+  `AuthProvider` is in the root layout, so it is available on this public page). It always goes to the Map tab
+  (`/map`), whether the rider came from a notice's attached route ([clans.md](clans.md#attached-route)) or opened
+  the link directly.
+- **Not signed in: Close**, an X icon button in the same place. It only calls `window.close()`. Browsers allow that
+  just for a tab a script opened, so a tab opened from a link or a chat usually stays open and the button does
+  nothing; it does not redirect, since Home would be the login for a visitor.
+- Neither button shows while the session is being restored, and both float over the map, so they take no room and
+  the layout does not move.
+- **Everyone: Open in Google Maps**, the one full-width button that ends the panel.
+  It opens a `google.com/maps/dir/?api=1` link in a new tab, with no API key.
 
 ### The Google Maps link
 
@@ -105,8 +145,7 @@ detected from the user agent when the button is tapped.
 
 **It is an approximation.** Google plans the streets between those points itself, so
 the route passes through the same corners but may take other streets, most so on a
-long route with 3 waypoints. The `waypoints` the rider chose are not used because
-this endpoint deliberately does not expose them (see [API](#api)).
+long route with 3 waypoints. The `waypoints` are not used for this link: it is built from the path, as above.
 
 ## Metadata
 
@@ -172,6 +211,10 @@ reaches the preview, only the exact image does.
   [next.config.ts](../../frontend/next.config.ts) matches every user agent, so
   metadata blocks the response and always lands in `<head>`. The cost is that
   the first byte of this page waits for the route fetch (cached for minutes).
+- **The waypoints carry their own names and categories.** The viewer is usually anonymous and the places belong to the
+  author, so the page cannot look them up; it reads what the route stored when it was saved. The link
+  preview image is unchanged: Mapbox's static image shows only the `a` and `b`
+  pins.
 - **Own image route instead of pointing `og:image` at Mapbox**: the URL is on
   the app's domain, stable, and keeps the token out of the page source.
 - **The link is given from the route list**: its Share button

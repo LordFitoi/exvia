@@ -324,7 +324,7 @@ the track (`useRideArrival`).
 - **Where they show.** `CheckpointTimes` (`components/route/`), a flat `list` with **the start, every checkpoint
   of the route and the finish**, one row each, in route order, so a route with no points in between still lists
   its start and finish. A stop not reached yet is gray (`avatar`, `list-item-pending`): "Not reached yet" and a
-  dash. Once reached it is colored (`avatar-primary`, the green of the map markers) and shows **the hour** it was
+  dash. Once reached it is colored (`avatar-primary`, the green of the map markers; a checkpoint that is a saved place is `avatar-place`, the blue of its map marker, with its kind's icon and its name as the title, while any other checkpoint is titled by its address or "Checkpoint N") and shows **the hour** it was
   reached at (`At 09:12`, the reader's locale), followed by **the average speed since the stop before it**
   (`At 09:12 · 24.5 km/h`) and, on the right, **the time it took** from the moment ride mode opened as a
   stopwatch (`8:41`). The speed of a leg is its length along the route over the time between the two stops:

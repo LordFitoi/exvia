@@ -190,15 +190,29 @@ storing an unbounded JSON document.
 
 ## Waypoints
 
-`waypoints` is the other list: the points the rider **chose**, in order, as
-`[lng, lat]` pairs. `points` is the street path through them, thousands of
-vertices that cannot be turned back into the chosen points, so the editor needs
-`waypoints` to reopen a route as editable points and re-route the legs between
-them. `validate_waypoints` allows 0 to `MAX_WAYPOINTS` (500) pairs; the list is
-optional (`blank=True`, default `[]`), because routes saved before the field
-existed, and API clients that only send a path, have none. The server never
-uses it for the distance, which comes from `points`. Nothing checks that the
-two lists agree: the client that sends one sends both.
+`waypoints` is the other list: the points the rider **chose**, in order. `points` is the street path through them,
+thousands of vertices that cannot be turned back into the chosen points, so the editor needs `waypoints` to reopen a
+route as editable points and re-route the legs between them. Each waypoint says what is there, not only where:
+
+```json
+{"lng": -3.6975, "lat": 40.4190, "name": "Corner Cafe", "address": "Calle Mayor 12, Madrid", "category": "cafe"}
+```
+
+- `name` is the saved place's own name when the rider picked one of their [saved places](places.md), the place's name
+  and address as the search found it when they picked another place, and the point's address when they tapped
+  the map. It is an empty string when unknown.
+- `address` is the nearest address (`Avenida Winston Churchill, Santo Domingo`), looked up by reverse geocoding
+  for **every** point, whatever its name. It is an empty string when the lookup found none or failed.
+- `category` is that saved place's `PlaceCategory` (`gas_station`, `cafe`...), or `null` for any other point. It
+  is a snapshot: renaming, recategorising or deleting the saved place later does not change the routes that
+  used it, and the waypoint does not keep the place's id.
+
+`validate_waypoints` allows 0 to `MAX_WAYPOINTS` (500) objects with exactly those five keys (coordinates inside the
+world, `name` and `address` at most 255 characters each, `category` null or a `PlaceCategory` value). The list is optional (`blank=True`,
+default `[]`), because routes saved before the field existed, and API clients that only send a path, have none.
+Migration `0013_structured_waypoints` turned the `[lng, lat]` pairs stored until then into waypoints with an empty
+`name` and a null `category`, and `0014_waypoint_address` gave every waypoint an empty `address`. The server never uses waypoints for the distance, which comes from `points`. Nothing
+checks that the two lists agree: the client that sends one sends both.
 
 ## Calculated fields
 
@@ -241,7 +255,10 @@ A route is serialized as:
   "name": "Sunday loop",
   "description": "",
   "points": [[-3.7038, 40.4168], [-3.6912, 40.4221]],
-  "waypoints": [[-3.7038, 40.4168], [-3.6912, 40.4221]],
+  "waypoints": [
+    {"lng": -3.7038, "lat": 40.4168, "name": "Calle de Alcala, 1, Madrid", "address": "Calle de Alcala, 1, Madrid", "category": null},
+    {"lng": -3.6912, "lat": 40.4221, "name": "Corner Cafe", "address": "Calle Mayor 12, Madrid", "category": "cafe"}
+  ],
   "distance": 1.223,
   "estimated_time": 73,
   "author": 1,
@@ -261,8 +278,7 @@ sending them is ignored. `id` is a UUID string.
 ### Shared route
 
 `GET /api/routes/<uuid>/shared/` needs **no JWT** and returns any route to whoever
-knows its UUID, with the author's username instead of their id and without
-`waypoints`. It is read-only and `404` for an unknown UUID. See
+knows its UUID, with the author's username instead of their id. It is read-only and `404` for an unknown UUID. See
 [route-sharing.md](route-sharing.md).
 
 ## Key decisions

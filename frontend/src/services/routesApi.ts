@@ -2,6 +2,7 @@ import { ApiError } from '@/services/apiClient'
 import { requestJsonAuthorized } from '@/services/authorizedRequest'
 import { parseLngLat } from '@/services/coordinates'
 import { isRecord, isRouteSummary, isSavedRoute } from '@/services/typeGuards'
+import { parseWaypoints, toApiWaypoint } from '@/services/waypoints'
 import type { Coordinates } from '@/types/geolocation'
 import type { NewRoute, RouteDetail, RouteSummary, SavedRoute } from '@/types/route'
 
@@ -24,7 +25,7 @@ const toRouteBody = ({ name, description, points, waypoints }: NewRoute) => ({
   name,
   description,
   points: toLngLatPairs(points),
-  waypoints: toLngLatPairs(waypoints),
+  waypoints: waypoints.map(toApiWaypoint),
 })
 
 const expectSavedRoute = (payload: unknown): SavedRoute => {
@@ -59,7 +60,7 @@ export const fetchRoutes = async (): Promise<RouteSummary[]> => {
 export const fetchRoute = async (id: string): Promise<RouteDetail> => {
   const route = await requestJsonAuthorized(`${ROUTES_PATH}${id}/`)
   const points = isRecord(route) ? parseCoordinateList(route.points, MIN_ROUTE_POINTS) : null
-  const waypoints = isRecord(route) ? parseCoordinateList(route.waypoints, 0) : null
+  const waypoints = isRecord(route) ? parseWaypoints(route.waypoints) : null
   if (!isRouteSummary(route) || !points || !waypoints) throw unexpectedResponse()
   return { ...route, points, waypoints }
 }

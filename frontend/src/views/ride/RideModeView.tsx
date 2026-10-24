@@ -72,6 +72,7 @@ export default function RideModeView({ route, location, rider, groupRide, onQuit
   const checkpoints = {
     startedAt,
     count: countCheckpoints(route.waypoints),
+    waypoints: route.waypoints,
     reachedAt: checkpointTimes,
     finishedAt: arrivedAt,
     legKilometres,

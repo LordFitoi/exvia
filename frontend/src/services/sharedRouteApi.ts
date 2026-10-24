@@ -1,8 +1,12 @@
 import { cacheLife } from 'next/cache'
 
 import { parseLngLat } from '@/services/coordinates'
+import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
+import { fetchStreetAddress } from '@/services/streetAddressApi'
 import { isRecord, isRouteSummary } from '@/services/typeGuards'
+import { parseWaypoints } from '@/services/waypoints'
 import type { Coordinates } from '@/types/geolocation'
+import type { Waypoint } from '@/types/route'
 import type { SharedRoute } from '@/types/sharedRoute'
 
 // Server only: the browser reaches the backend through the same-origin /api proxy, but a
@@ -11,6 +15,8 @@ const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:8000'
 const SHARED_ROUTE_TIMEOUT_MS = 10000
 const HTTP_NOT_FOUND = 404
 const MIN_ROUTE_POINTS = 2
+// Bounds the lookups a route saved before addresses were stored can cost; the rest keep their coordinates.
+const MAX_ADDRESS_LOOKUPS = 25
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const parsePoints = (value: unknown): Coordinates[] | null => {
@@ -23,8 +29,33 @@ const parseSharedRoute = (payload: unknown): SharedRoute | null => {
   if (!isRouteSummary(payload) || !isRecord(payload)) return null
   const { id, name, description, distance, estimated_time, author, created_at } = payload
   const points = parsePoints(payload.points)
-  if (typeof author !== 'string' || typeof created_at !== 'string' || !points) return null
-  return { id, name, description, distance, estimated_time, author, created_at, points }
+  const waypoints = parseWaypoints(payload.waypoints)
+  if (typeof author !== 'string' || typeof created_at !== 'string' || !points || !waypoints) return null
+  return { id, name, description, distance, estimated_time, author, created_at, points, waypoints }
+}
+
+/** The waypoint with the address at its spot, or as it was when Mapbox knows none or does not answer. */
+const withAddress = async (waypoint: Waypoint): Promise<Waypoint> => {
+  if (waypoint.address || !MAPBOX_ACCESS_TOKEN) return waypoint
+  try {
+    const address = await fetchStreetAddress(waypoint.coordinates, {
+      accessToken: MAPBOX_ACCESS_TOKEN,
+      signal: AbortSignal.timeout(SHARED_ROUTE_TIMEOUT_MS),
+    })
+    return { ...waypoint, address }
+  } catch (error) {
+    console.error('Could not look up the address of a shared route point', error)
+    return waypoint
+  }
+}
+
+/** Routes saved before addresses were stored have none; they are looked up here, so the page can show them. */
+const fillMissingAddresses = async (route: SharedRoute): Promise<SharedRoute> => {
+  let remainingLookups = MAX_ADDRESS_LOOKUPS
+  const waypoints = await Promise.all(
+    route.waypoints.map((waypoint) => (!waypoint.address && remainingLookups-- > 0 ? withAddress(waypoint) : waypoint)),
+  )
+  return { ...route, waypoints }
 }
 
 /**
@@ -44,5 +75,5 @@ export const fetchSharedRoute = async (id: string): Promise<SharedRoute | null> 
 
   const route = parseSharedRoute(await response.json())
   if (!route) throw new Error(`Could not load the shared route ${id}: the server sent an unexpected response`)
-  return route
+  return fillMissingAddresses(route)
 }

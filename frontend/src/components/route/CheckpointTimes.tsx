@@ -1,5 +1,6 @@
 import { formatAverageSpeed, formatClock, formatTimeOfDay, NO_VALUE } from '@/services/formatRoute'
-import type { CurrentLeg } from '@/types/route'
+import { describePlaceLocationCategory } from '@/services/placeLocationCategories'
+import type { CurrentLeg, Waypoint } from '@/types/route'
 
 const MS_PER_SECOND = 1000
 // The start is checkpoint 1 on the route's markers, so the first one after it is 2.
@@ -10,6 +11,8 @@ export interface CheckpointTimesProps {
   startedAt: number
   /** How many checkpoints the route has between the start and the finish. */
   count: number
+  /** The points the rider chose for the route, the start and the finish included, which name the checkpoints and say which are saved places; empty when unknown. */
+  waypoints: readonly Waypoint[]
   /** When the rider reached the start and then each checkpoint, in route order, in milliseconds since the epoch. */
   reachedAt: readonly number[]
   /** When the rider reached the finish, or null while they have not. */
@@ -33,8 +36,10 @@ export interface CheckpointTimesProps {
 interface Stop {
   readonly key: string
   readonly title: string
-  /** The marker icon of the start and the finish; a checkpoint shows its number. */
+  /** The marker icon of the start and the finish, or of the kind of a saved place; any other checkpoint shows its number. */
   readonly iconClass?: string
+  /** Whether the stop is one of the rider's saved places, which are blue as on the map. */
+  readonly isPlace?: boolean
   readonly number?: number
   /** When the rider got there, or null while they have not. */
   readonly reachedAt: number | null
@@ -44,14 +49,19 @@ interface Stop {
 
 type StopBase = Omit<Stop, 'legSpeed'>
 
-const buildBaseStops = ({ count, reachedAt, finishedAt }: CheckpointTimesProps): StopBase[] => [
+/** A checkpoint is named by its address or saved place, and shows its kind's icon when it is a saved place. */
+const buildCheckpoint = (waypoint: Waypoint | undefined, number: number, reachedAt: number | null): StopBase => {
+  const key = `checkpoint-${number}`
+  const title = waypoint?.name || `Checkpoint ${number}`
+  if (!waypoint?.category) return { key, title, number, reachedAt }
+  return { key, title, number, iconClass: describePlaceLocationCategory(waypoint.category).iconClass, isPlace: true, reachedAt }
+}
+
+const buildBaseStops = ({ count, waypoints, reachedAt, finishedAt }: CheckpointTimesProps): StopBase[] => [
   { key: 'start', title: 'Start', iconClass: 'icon-flag', reachedAt: reachedAt[0] ?? null },
-  ...Array.from({ length: count }, (_, index) => ({
-    key: `checkpoint-${index}`,
-    title: `Checkpoint ${index + FIRST_CHECKPOINT_NUMBER}`,
-    number: index + FIRST_CHECKPOINT_NUMBER,
-    reachedAt: reachedAt[index + 1] ?? null,
-  })),
+  ...Array.from({ length: count }, (_, index) =>
+    buildCheckpoint(waypoints[index + 1], index + FIRST_CHECKPOINT_NUMBER, reachedAt[index + 1] ?? null),
+  ),
   { key: 'finish', title: 'Finish', iconClass: 'icon-flag-checkered', reachedAt: finishedAt },
 ]
 
@@ -104,13 +114,14 @@ const describePending = (legSpeed: string | null): string =>
   legSpeed === null ? 'Not reached yet' : `Not reached yet · ${legSpeed} km/h so far`
 
 function StopRow({ stop, startedAt }: { stop: Stop; startedAt: number }) {
-  const { title, iconClass, number, reachedAt, legSpeed } = stop
+  const { title, iconClass, isPlace, number, reachedAt, legSpeed } = stop
   const isReached = reachedAt !== null
+  const reachedClass = isPlace ? 'avatar avatar-sm avatar-place' : 'avatar avatar-sm avatar-primary'
   const secondsFromStart = isReached ? Math.max(0, (reachedAt - startedAt) / MS_PER_SECOND) : 0
 
   return (
     <li className={isReached ? 'list-item' : 'list-item list-item-pending'}>
-      <span className={isReached ? 'avatar avatar-sm avatar-primary' : 'avatar avatar-sm'} aria-hidden="true">
+      <span className={isReached ? reachedClass : 'avatar avatar-sm'} aria-hidden="true">
         {iconClass ? <span className={`icon icon-sm ${iconClass}`}></span> : number}
       </span>
       <span className="list-item-body">

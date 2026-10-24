@@ -1,7 +1,9 @@
 import uuid
 from datetime import timedelta
+from importlib import import_module
 
 from django.contrib.auth.models import User
+from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
@@ -10,10 +12,16 @@ from rest_framework.test import APIClient
 
 from apps.routes.geometry import calculate_distance_km, calculate_estimated_time
 from apps.routes.models import DESCRIPTION_MAX_LENGTH, Route
-from apps.routes.validators import MAX_POINTS, MAX_WAYPOINTS, validate_points, validate_waypoints
+from apps.routes.validators import (
+    MAX_POINTS, MAX_WAYPOINTS, WAYPOINT_TEXT_MAX_LENGTH, validate_points, validate_waypoints,
+)
 
 ONE_DEGREE_LATITUDE_KM = 111.195
 EQUATOR_STRAIGHT_LINE = [[0, 0], [0, 1]]
+EQUATOR_WAYPOINTS = [
+    {'lng': 0, 'lat': 0, 'name': 'Start street, 1', 'address': 'Start street, 1', 'category': None},
+    {'lng': 0, 'lat': 1, 'name': 'Corner Cafe', 'address': 'Main street, 2', 'category': 'cafe'},
+]
 
 
 class DistanceTests(SimpleTestCase):
@@ -50,7 +58,30 @@ class PointsValidatorTests(SimpleTestCase):
     def test_waypoints_may_be_empty_but_not_too_many(self) -> None:
         validate_waypoints([])
         with self.assertRaises(ValidationError):
-            validate_waypoints([[0, 0]] * (MAX_WAYPOINTS + 1))
+            validate_waypoints(EQUATOR_WAYPOINTS[:1] * (MAX_WAYPOINTS + 1))
+
+    def test_accepts_named_waypoints_with_or_without_a_saved_place_category(self) -> None:
+        validate_waypoints(EQUATOR_WAYPOINTS)
+        validate_waypoints([{'lng': 0, 'lat': 0, 'name': '', 'address': '', 'category': None}])
+
+    def test_rejects_malformed_waypoints(self) -> None:
+        valid = EQUATOR_WAYPOINTS[0]
+        malformed = (
+            [0, 0],
+            {'lng': 0, 'lat': 0},
+            {key: value for key, value in valid.items() if key != 'address'},
+            {**valid, 'extra': 1},
+            {**valid, 'lat': 91},
+            {**valid, 'lng': 'a'},
+            {**valid, 'name': None},
+            {**valid, 'name': 'x' * (WAYPOINT_TEXT_MAX_LENGTH + 1)},
+            {**valid, 'address': None},
+            {**valid, 'address': 'x' * (WAYPOINT_TEXT_MAX_LENGTH + 1)},
+            {**valid, 'category': 'spaceport'},
+        )
+        for waypoint in malformed:
+            with self.subTest(waypoint=waypoint), self.assertRaises(ValidationError):
+                validate_waypoints([waypoint])
 
     def test_rejects_malformed_points(self) -> None:
         for point in ([0], [0, 0, 0], ['a', 'b'], [True, False], 'ab'):
@@ -197,13 +228,13 @@ class RouteApiTests(TestCase):
         route = self._create_route(self.author)
         body = {
             'name': 'Renamed', 'description': 'Now longer', 'points': [[0, 0], [0, 2]],
-            'waypoints': [[0, 0], [0, 2]],
+            'waypoints': EQUATOR_WAYPOINTS,
         }
         response = self.client.put(self._detail_url(route), body, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         route.refresh_from_db()
         self.assertEqual((route.name, route.description), ('Renamed', 'Now longer'))
-        self.assertEqual(route.waypoints, [[0, 0], [0, 2]])
+        self.assertEqual(route.waypoints, EQUATOR_WAYPOINTS)
         self.assertAlmostEqual(route.distance, 2 * ONE_DEGREE_LATITUDE_KM, delta=0.01)
 
     def test_partial_update_keeps_other_fields(self) -> None:
@@ -234,19 +265,55 @@ class RouteApiTests(TestCase):
         self.assertEqual(route.name, 'Loop')
 
     def test_waypoints_are_optional_and_returned_by_detail_only(self) -> None:
-        body = {'name': 'Loop', 'points': EQUATOR_STRAIGHT_LINE, 'waypoints': EQUATOR_STRAIGHT_LINE}
+        body = {'name': 'Loop', 'points': EQUATOR_STRAIGHT_LINE, 'waypoints': EQUATOR_WAYPOINTS}
         created = self.client.post(self.list_url, body, format='json')
-        self.assertEqual(created.data['waypoints'], EQUATOR_STRAIGHT_LINE)
+        self.assertEqual(created.data['waypoints'], EQUATOR_WAYPOINTS)
         listed = self.client.get(self.list_url)
         self.assertNotIn('waypoints', listed.data[0])
         without = self.client.post(self.list_url, {'name': 'Bare', 'points': EQUATOR_STRAIGHT_LINE}, format='json')
         self.assertEqual(without.data['waypoints'], [])
 
     def test_rejects_invalid_waypoints(self) -> None:
-        body = {'name': 'Loop', 'points': EQUATOR_STRAIGHT_LINE, 'waypoints': [[0, 95]]}
+        body = {'name': 'Loop', 'points': EQUATOR_STRAIGHT_LINE, 'waypoints': [{**EQUATOR_WAYPOINTS[0], 'lat': 95}]}
         response = self.client.post(self.list_url, body, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('waypoints', response.data)
+
+
+class StructuredWaypointsMigrationTests(TestCase):
+    def test_pairs_become_unnamed_waypoints_and_back(self) -> None:
+        migration = import_module('apps.routes.migrations.0013_structured_waypoints')
+        author = User.objects.create_user('rider', password='pw')
+        route = Route.objects.create(name='Old', points=EQUATOR_STRAIGHT_LINE, author=author)
+        Route.objects.filter(pk=route.pk).update(waypoints=[[0, 0], [0, 1]])
+
+        migration.structure_waypoints(apps, None)
+        route.refresh_from_db()
+        self.assertEqual(route.waypoints, [
+            {'lng': 0, 'lat': 0, 'name': '', 'category': None},
+            {'lng': 0, 'lat': 1, 'name': '', 'category': None},
+        ])
+
+        migration.flatten_waypoints(apps, None)
+        route.refresh_from_db()
+        self.assertEqual(route.waypoints, [[0, 0], [0, 1]])
+
+
+class WaypointAddressMigrationTests(TestCase):
+    def test_waypoints_gain_an_empty_address_and_lose_it_again(self) -> None:
+        migration = import_module('apps.routes.migrations.0014_waypoint_address')
+        author = User.objects.create_user('rider', password='pw')
+        route = Route.objects.create(name='Old', points=EQUATOR_STRAIGHT_LINE, author=author)
+        waypoint = {'lng': 0, 'lat': 0, 'name': 'Cafe', 'category': 'cafe'}
+        Route.objects.filter(pk=route.pk).update(waypoints=[waypoint])
+
+        migration.add_address(apps, None)
+        route.refresh_from_db()
+        self.assertEqual(route.waypoints, [{**waypoint, 'address': ''}])
+
+        migration.remove_address(apps, None)
+        route.refresh_from_db()
+        self.assertEqual(route.waypoints, [waypoint])
 
 
 class SharedRouteApiTests(TestCase):
@@ -272,9 +339,13 @@ class SharedRouteApiTests(TestCase):
         self.assertEqual(response.data['points'], EQUATOR_STRAIGHT_LINE)
         self.assertEqual(response.data['author'], 'rider')
 
-    def test_exposes_neither_the_user_id_nor_waypoints(self) -> None:
+    def test_exposes_the_waypoints_with_their_names_and_categories(self) -> None:
+        self.route.waypoints = EQUATOR_WAYPOINTS
+        self.route.save()
+        self.assertEqual(self.client.get(self.url).data['waypoints'], EQUATOR_WAYPOINTS)
+
+    def test_exposes_no_user_id(self) -> None:
         response = self.client.get(self.url)
-        self.assertNotIn('waypoints', response.data)
         self.assertNotIn('rider@example.com', str(response.data))
         self.assertNotEqual(response.data['author'], self.author.pk)
 

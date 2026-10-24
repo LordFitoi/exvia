@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { fetchStreetPath } from '@/services/streetRouteApi'
+import { fetchStreetAddress } from '@/services/streetAddressApi'
 import { snapToStreet } from '@/services/streetSnapApi'
 import type { Coordinates } from '@/types/geolocation'
-import type { DraftPoint } from '@/types/route'
+import type { DraftPoint, PointDetails } from '@/types/route'
 
 const NO_STREET_MESSAGE = 'No street here. Tap closer to a street to add a point.'
 const NO_ROUTE_MESSAGE = 'There is no street route to that spot. Try a point on a connected street.'
@@ -28,7 +29,8 @@ interface RouteDraft {
   points: readonly DraftPoint[]
   isBusy: boolean
   error: string | null
-  addPoint: (coordinates: Coordinates, label?: string) => Promise<void>
+  /** Without `details` the point is named by its address. */
+  addPoint: (coordinates: Coordinates, details?: PointDetails) => Promise<void>
   removePoint: (id: number) => Promise<void>
   movePoint: (id: number, toIndex: number) => Promise<void>
 }
@@ -43,6 +45,17 @@ const buildLeg = async (
   const path = await fetchStreetPath(previous.coordinates, coordinates, options)
   // The path starts at the previous point, which the previous leg already ends with.
   return path && path.slice(1)
+}
+
+/** The nearest address; a failed lookup only leaves the point without one. */
+const lookUpAddress = async (street: Coordinates, options: DraftChangeOptions): Promise<string> => {
+  try {
+    return await fetchStreetAddress(street, options)
+  } catch (error) {
+    if (options.signal.aborted) throw error
+    console.error('Could not look up the address of the point', error)
+    return ''
+  }
 }
 
 const moveItem = <TItem,>(items: readonly TItem[], from: number, to: number): TItem[] => {
@@ -101,14 +114,18 @@ export const useRouteDraft = ({ accessToken, initialPoints }: RouteDraftOptions)
     }
   }
 
-  const addPoint = (tapped: Coordinates, label?: string) =>
+  const addPoint = (tapped: Coordinates, details?: PointDetails) =>
     runExclusive(async (options) => {
       const street = await snapToStreet(tapped, options)
       if (!street) return setError(NO_STREET_MESSAGE)
-      const path = await buildLeg(points.at(-1), street, options)
+      const [path, address] = await Promise.all([
+        buildLeg(points.at(-1), street, options),
+        lookUpAddress(street, options),
+      ])
       if (!path) return setError(NO_ROUTE_MESSAGE)
+      const { name, category } = details ?? { name: address, category: null }
       const id = nextIdRef.current++
-      setPoints((previous) => [...previous, { id, coordinates: street, path, label }])
+      setPoints((previous) => [...previous, { id, coordinates: street, name, address, category, path }])
     })
 
   // Removing a point joins its neighbours with a new leg; if that fails the point stays.

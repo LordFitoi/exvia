@@ -1,9 +1,10 @@
 'use client'
 
 import { useDragReorder } from '@/hooks/useDragReorder'
+import { formatCoordinates } from '@/services/formatCoordinates'
+import { describePlaceLocationCategory } from '@/services/placeLocationCategories'
 import type { DraftPoint } from '@/types/route'
 
-const COORDINATE_DECIMALS = 5
 const MIN_POINTS_TO_REORDER = 2
 
 interface RoutePointListProps {
@@ -12,8 +13,15 @@ interface RoutePointListProps {
   onMove: (id: number, toIndex: number) => void
 }
 
-const formatCoordinates = ({ latitude, longitude }: DraftPoint['coordinates']): string =>
-  `${latitude.toFixed(COORDINATE_DECIMALS)}, ${longitude.toFixed(COORDINATE_DECIMALS)}`
+/** The start keeps its number; any other saved place shows its kind's icon, and a plain point its number. */
+function PointIcon({ point, index }: { point: DraftPoint; index: number }) {
+  if (index === 0 || !point.category) return <>{index + 1}</>
+  return <span className={`icon icon-sm ${describePlaceLocationCategory(point.category).iconClass}`}></span>
+}
+
+/** A saved place says its kind; any other point its coordinates, as its name already says where it is. */
+const describePoint = ({ category, coordinates }: DraftPoint): string =>
+  category ? describePlaceLocationCategory(category).label : formatCoordinates(coordinates)
 
 export default function RoutePointList({ points, onRemove, onMove }: RoutePointListProps) {
   const { listRef, getRowProps } = useDragReorder({
@@ -32,25 +40,25 @@ export default function RoutePointList({ points, onRemove, onMove }: RoutePointL
     <>
       <div className="route-point-list" ref={listRef}>
         <ul className="list">
-          {points.map(({ id, coordinates, label }, index) => (
+          {points.map((point, index) => (
             <li
               className="list-item route-point"
-              key={id}
+              key={point.id}
               aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
               {...getRowProps(index, points.length)}
             >
               <span className="list-item-icon" aria-hidden="true">
-                {index + 1}
+                <PointIcon point={point} index={index} />
               </span>
               <span className="list-item-body">
-                <span className="list-item-title">{label ?? `Point ${index + 1}`}</span>
-                <span className="list-item-meta">{formatCoordinates(coordinates)}</span>
+                <span className="list-item-title">{point.name || `Point ${index + 1}`}</span>
+                <span className="list-item-meta">{describePoint(point)}</span>
               </span>
               <button
                 className="icon-button"
                 type="button"
                 aria-label={`Remove point ${index + 1}`}
-                onClick={() => onRemove(id)}
+                onClick={() => onRemove(point.id)}
               >
                 <span className="icon icon-x" aria-hidden="true"></span>
               </button>

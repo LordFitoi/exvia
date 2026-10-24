@@ -18,6 +18,7 @@ import { addRideLines, updateRideLines } from '@/services/rideMapLayers'
 import { addRouteMarkers } from '@/services/routeMapLayers'
 import type { RiderMarkerData } from '@/services/riderMarkers'
 import type { Coordinates } from '@/types/geolocation'
+import type { Waypoint } from '@/types/route'
 
 const RIDE_ZOOM = 16.5
 const RIDE_PITCH_DEGREES = 60
@@ -28,7 +29,7 @@ interface RideMapOptions {
   accessToken: string | undefined
   path: readonly Coordinates[]
   /** The points the rider chose, shown as checkpoints. */
-  waypoints: readonly Coordinates[]
+  waypoints: readonly Waypoint[]
   lines: RideLines
   /** The rider's position, or null while it is unknown. */
   rider: Coordinates | null

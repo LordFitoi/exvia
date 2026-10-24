@@ -1,11 +1,8 @@
 'use client'
 
-import ConfirmDialog from '@/components/feedback/ConfirmDialog'
 import StateView from '@/components/feedback/StateView'
 import CheckpointTimes from '@/components/route/CheckpointTimes'
 import RoutePreview from '@/components/route/RoutePreview'
-import { useAuth } from '@/hooks/useAuth'
-import { useRideSummaryDeletion } from '@/hooks/useRideSummaryDeletion'
 import { useRideSummaryDetail } from '@/hooks/useRideSummaryDetail'
 import { useRouteLegs } from '@/hooks/useRouteLegs'
 import { useRouteDetail } from '@/hooks/useRouteDetail'
@@ -14,13 +11,14 @@ import { RIDE_MODES } from '@/services/rideMode'
 import { countCheckpoints } from '@/services/routeProgress'
 import RideStatsGrid from '@/views/history/RideStatsGrid'
 import type { RideSummaryDetail } from '@/types/rideSummary'
+import type { Waypoint } from '@/types/route'
+
+const NO_WAYPOINTS: readonly Waypoint[] = []
 
 interface RideSummaryViewProps {
   summaryId: number
   /** Back to the history list. */
   onClose: () => void
-  /** The ride was deleted; the list should reload and show without it. */
-  onDeleted: () => void
 }
 
 function ParticipantList({ summary }: { summary: RideSummaryDetail }) {
@@ -47,6 +45,7 @@ function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
   const route = useRouteDetail(summary.route)
   const reachedAt = summary.reached_at.map((moment) => Date.parse(moment))
   const legKilometres = useRouteLegs(route.shownRoute)
+  const waypoints = route.shownRoute?.waypoints ?? NO_WAYPOINTS
   const mode = RIDE_MODES[summary.route_type]
 
   return (
@@ -69,7 +68,8 @@ function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
       {summary.route_type === 'ride' && (
         <CheckpointTimes
           startedAt={Date.parse(summary.start_at)}
-          count={Math.max(countCheckpoints(route.shownRoute?.waypoints ?? []), reachedAt.length - 1)}
+          count={Math.max(countCheckpoints(waypoints), reachedAt.length - 1)}
+          waypoints={waypoints}
           reachedAt={reachedAt}
           finishedAt={summary.is_finished ? Date.parse(summary.end_at) : null}
           legKilometres={legKilometres}
@@ -81,10 +81,8 @@ function RideSummaryContent({ summary }: { summary: RideSummaryDetail }) {
 }
 
 /** One ride of the history: its route and preview, who rode, the time it took, the speeds and when each checkpoint was reached. */
-export default function RideSummaryView({ summaryId, onClose, onDeleted }: RideSummaryViewProps) {
-  const { user } = useAuth()
+export default function RideSummaryView({ summaryId, onClose }: RideSummaryViewProps) {
   const detail = useRideSummaryDetail(summaryId)
-  const deletion = useRideSummaryDeletion({ summaryId, onDeleted })
 
   return (
     <main className="screen-body">
@@ -115,25 +113,6 @@ export default function RideSummaryView({ summaryId, onClose, onDeleted }: RideS
           <span className="icon icon-lg icon-alert"></span>
         </StateView>
       )}
-      {detail.summary && detail.summary.author === user?.id && (
-        <button
-          className="button button-soft button-error button-lg button-block"
-          type="button"
-          onClick={deletion.requestDeletion}
-        >
-          <span className="icon icon-trash" aria-hidden="true"></span>
-          Delete ride
-        </button>
-      )}
-      <ConfirmDialog
-        isOpen={deletion.isConfirming}
-        title="Delete this ride?"
-        description="It will be removed from your ride history for good, and for anyone who rode with you. This cannot be undone."
-        isPending={deletion.isPending}
-        error={deletion.error}
-        onCancel={deletion.cancel}
-        onConfirm={deletion.confirm}
-      />
     </main>
   )
 }

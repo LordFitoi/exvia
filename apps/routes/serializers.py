@@ -42,14 +42,15 @@ class RouteSummarySerializer(RouteSerializer):
 
 
 class SharedRouteSerializer(RouteSerializer):
-    """What anyone holding a route's link can read: the route without its waypoints, and its
-    author's username instead of the user id."""
+    """What anyone holding a route's link can read: the route with its author's username instead of the
+    user id."""
 
     author = serializers.CharField(source='author.username', read_only=True)
 
     class Meta(RouteSerializer.Meta):
         fields = (
-            'id', 'name', 'description', 'points', 'distance', 'estimated_time', 'author', 'created_at',
+            'id', 'name', 'description', 'points', 'waypoints', 'distance', 'estimated_time', 'author',
+            'created_at',
         )
         read_only_fields = fields
 

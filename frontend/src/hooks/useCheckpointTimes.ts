@@ -6,7 +6,7 @@ import type { RideProgress } from '@/hooks/useRideProgress'
 import { measureCheckpoints, measureDistance, PASSING_METERS, trackPassing } from '@/services/routeProgress'
 import type { MeasuredPath } from '@/services/routeProgress'
 import type { Coordinates } from '@/types/geolocation'
-import type { CurrentLeg } from '@/types/route'
+import type { CurrentLeg, Waypoint } from '@/types/route'
 
 // Within this many meters of a stop, along the track or in a straight line, the rider has reached it; GPS is
 // never exact.
@@ -17,7 +17,7 @@ const METERS_PER_KILOMETER = 1000
 interface CheckpointTimesOptions {
   progress: RideProgress
   /** The points the rider chose for the route: the start, the checkpoints and the finish. */
-  waypoints: readonly Coordinates[]
+  waypoints: readonly Waypoint[]
   /** The rider's position, or null while it is unknown. */
   rider: Coordinates | null
   /** When the rider's latest GPS fix was taken, in milliseconds since the epoch. */
@@ -41,8 +41,8 @@ interface Stop {
 }
 
 /** The start and then each checkpoint (the waypoints between the start and the finish), in route order. */
-const buildStops = (path: MeasuredPath, waypoints: readonly Coordinates[]): Stop[] => {
-  const checkpoints = waypoints.slice(1, -1)
+const buildStops = (path: MeasuredPath, waypoints: readonly Waypoint[]): Stop[] => {
+  const checkpoints = waypoints.slice(1, -1).map(({ coordinates }) => coordinates)
   const distances = measureCheckpoints(path, checkpoints)
   return [
     { point: path.points[0], distance: START_DISTANCE },

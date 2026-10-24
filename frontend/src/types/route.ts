@@ -1,4 +1,19 @@
+import type { PlaceLocationCategory } from '@/services/placeLocationCategories'
 import type { Coordinates } from '@/types/geolocation'
+
+/** A point the rider chose for a route: where it is and what is there. */
+export interface Waypoint {
+  readonly coordinates: Coordinates
+  /** The name of the saved place there or else the address; empty when it is not known. */
+  readonly name: string
+  /** The nearest address; empty when it is not known. */
+  readonly address: string
+  /** The kind of the rider's saved place there; null for a plain point. */
+  readonly category: PlaceLocationCategory | null
+}
+
+/** What a saved place or a place found by the search adds to its point: its name and kind. The address is looked up for every point. */
+export type PointDetails = Pick<Waypoint, 'name' | 'category'>
 
 export interface NewRoute {
   readonly name: string
@@ -6,7 +21,7 @@ export interface NewRoute {
   /** The whole street path, in travel order. */
   readonly points: readonly Coordinates[]
   /** The points the rider chose, in order; the path goes through them. */
-  readonly waypoints: readonly Coordinates[]
+  readonly waypoints: readonly Waypoint[]
 }
 
 /** The geometry of a route being saved, before it has a name. */
@@ -31,20 +46,17 @@ export interface RouteSummary extends SavedRoute {
 export interface RouteDetail extends RouteSummary {
   readonly points: readonly Coordinates[]
   /** Empty for routes saved before waypoints were stored. */
-  readonly waypoints: readonly Coordinates[]
+  readonly waypoints: readonly Waypoint[]
 }
 
 /**
  * A point added to a route being drawn; the id keeps list and marker identity stable.
  * `path` is the street path that leads to the point from the previous one, without the previous
  * point itself, ending at `coordinates`. For the first point it is just `[coordinates]`.
- * `label` is the place or address the rider picked in the search, when there was one.
  */
-export interface DraftPoint {
+export interface DraftPoint extends Waypoint {
   readonly id: number
-  readonly coordinates: Coordinates
   readonly path: readonly Coordinates[]
-  readonly label?: string
 }
 
 /** What a ride needs of its route: the path, the checkpoints and the facts of the summary. A group member

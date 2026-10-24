@@ -12,6 +12,10 @@ from apps.routes.group_meta import ParticipantStatus
 from apps.routes.models import MAX_GROUP_PARTICIPANTS, Route, RouteGroup
 
 EQUATOR_STRAIGHT_LINE = [[0, 0], [0, 1]]
+EQUATOR_WAYPOINTS = [
+    {'lng': 0, 'lat': 0, 'name': 'Start street, 1', 'address': 'Start street, 1', 'category': None},
+    {'lng': 0, 'lat': 1, 'name': 'Corner Cafe', 'address': 'Main street, 2', 'category': 'cafe'},
+]
 RIDE_START = datetime(2026, 10, 18, 9, 0, tzinfo=timezone.utc)
 
 
@@ -43,10 +47,10 @@ class GroupCreateTests(GroupApiTestCase):
         self.assertEqual(data['author']['username'], 'owner')
 
     def test_the_route_of_the_group_carries_its_waypoints_for_the_checkpoints(self) -> None:
-        self.route.waypoints = EQUATOR_STRAIGHT_LINE
+        self.route.waypoints = EQUATOR_WAYPOINTS
         self.route.save()
         data = self._create_group(route=str(self.route.id))
-        self.assertEqual(data['route']['waypoints'], EQUATOR_STRAIGHT_LINE)
+        self.assertEqual(data['route']['waypoints'], EQUATOR_WAYPOINTS)
 
     def test_notifies_all_the_invitees_with_one_event(self) -> None:
         data = self._create_group(route=str(self.route.id), invitees=['ana', 'ben'])

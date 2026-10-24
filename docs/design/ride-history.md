@@ -21,10 +21,9 @@ it needs no location, so it opens even while the map is still waiting for a fix.
 | Summary screen | `views/history/RideSummaryView.tsx` | "Ride summary" header with an X (back to the list): route name and day, route preview, stats, checkpoint times, participants |
 | Stats | `views/history/RideStatsGrid.tsx` | The two `route-stats route-stats-pair` grids (2 columns): time and distance, then average and max speed |
 | Checkpoint times | `components/route/CheckpointTimes.tsx` | The checkpoints the rider reached: the hour and the time from the start |
-| Delete | `hooks/useRideSummaryDeletion.ts`, `hooks/useConfirmedDeletion.ts`, `components/feedback/ConfirmDialog.tsx` | Asks first, then `DELETE`s the ride |
 | List data | `hooks/useMyRideSummaries.ts` | `GET /api/routes/summaries/`, with `reload` |
 | Summary data | `hooks/useRideSummaryDetail.ts` | `GET /api/routes/summaries/<id>/`, with `retry` |
-| API | `services/rideSummariesApi.ts` | `fetchRideSummaries`, `fetchRideSummary`, `deleteRideSummary` (and `createRideSummary`) |
+| API | `services/rideSummariesApi.ts` | `fetchRideSummaries`, `fetchRideSummary` (and `createRideSummary`) |
 
 Both screens are full height with their own X, so they hide the tab bar
 (`useHideTabBar`, held by `RideSummariesView` for both). They reuse the guide's
@@ -85,16 +84,8 @@ then.
 
 ## Delete
 
-The summary screen ends with **Delete ride**, a soft error button. It opens the
-shared confirm dialog ("Delete this ride?", removed for good, and for anyone who
-rode with it) and `useRideSummaryDeletion` calls `DELETE
-/api/routes/summaries/<id>/`: both buttons are disabled while it runs and a
-failure keeps the dialog open with the message. On success the screen goes back
-to the list, which reloads without the ride. The route itself is not touched.
-
-Only the **author** can delete (anyone else gets `404`, as for a ride that is not
-theirs). A ride saved from a group also lists the riders connected then as participants, so the
-button is shown only to the author (`author` in the detail, compared with the signed-in user).
+The app has no button to delete a ride: the history only grows. The API still has `DELETE
+/api/routes/summaries/<id>/` (author only, [routes.md](routes.md#route-summaries)), but nothing in the frontend calls it.
 
 ## Key decisions
 

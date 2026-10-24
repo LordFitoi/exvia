@@ -6,22 +6,19 @@ import StateView from '@/components/feedback/StateView'
 import { useRoutePreviewMap } from '@/hooks/useRoutePreviewMap'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { Coordinates } from '@/types/geolocation'
+import type { Waypoint } from '@/types/route'
 
-const NO_WAYPOINTS: readonly Coordinates[] = []
+const NO_WAYPOINTS: readonly Waypoint[] = []
 
 interface PreviewMapProps {
   path: readonly Coordinates[]
   /** The points the rider chose, shown as checkpoints; leave out for a route that does not share them. */
-  waypoints?: readonly Coordinates[]
+  waypoints?: readonly Waypoint[]
 }
 
 /** A map filling its container with the whole route in view, or a message when the map cannot load. */
 export default function PreviewMap({ path, waypoints = NO_WAYPOINTS }: PreviewMapProps) {
-  const { containerRef, hasLoadFailed } = useRoutePreviewMap({
-    accessToken: MAPBOX_ACCESS_TOKEN,
-    path,
-    waypoints,
-  })
+  const { containerRef, hasLoadFailed } = useRoutePreviewMap({ accessToken: MAPBOX_ACCESS_TOKEN, path, waypoints })
 
   if (hasLoadFailed) {
     return (
