@@ -2,7 +2,6 @@ from django.contrib.auth.models import User
 from django.db import models
 
 from apps.core.models import TimeStampedModel
-from apps.routes.group_meta import ParticipantStatus
 from apps.routes.models import RouteGroup
 
 ANSWER_STATUS_MAX_LENGTH = 16
@@ -13,6 +12,12 @@ class EventType(models.TextChoices):
     ROUTE_INVITATION = 'route_invitation', 'Route invitation'
     CLAN_INVITATION = 'clan_invitation', 'Clan invitation'
     SYSTEM = 'system', 'System'
+
+
+class AnswerStatus(models.TextChoices):
+    ACCEPTED = 'accepted', 'Accepted'
+    REJECTED = 'rejected', 'Rejected'
+    EXPIRED = 'expired', 'Expired'
 
 
 class NotificationEvent(TimeStampedModel):
@@ -39,16 +44,14 @@ class NotificationEvent(TimeStampedModel):
 
 
 class InvitationAnswer(TimeStampedModel):
-    """What one destination answered to one invitation event. An event with no answer from a user is
-    still waiting, or was replaced by a newer invitation to the same group. Once recorded it never
-    changes, so an old invitation stays closed when the same rider is invited again."""
+    """What one destination answered to one invitation event, or `expired` when the rider accepted another
+    invitation first. An event with no answer from a user is still waiting, timed out, or was replaced by a
+    newer invitation to the same group. Once recorded it never changes, so an old invitation stays closed
+    when the same rider is invited again."""
 
     event = models.ForeignKey(NotificationEvent, on_delete=models.CASCADE, related_name='answers')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitation_answers')
-    status = models.CharField(
-        max_length=ANSWER_STATUS_MAX_LENGTH,
-        choices=[(ParticipantStatus.ACCEPTED, 'Accepted'), (ParticipantStatus.REJECTED, 'Rejected')],
-    )
+    status = models.CharField(max_length=ANSWER_STATUS_MAX_LENGTH, choices=AnswerStatus.choices)
 
     class Meta:
         ordering = ('-created_at',)

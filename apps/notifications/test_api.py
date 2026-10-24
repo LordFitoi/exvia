@@ -1,16 +1,23 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.routes.models import Route
+from apps.notifications.models import NotificationEvent
+from apps.notifications.services import INVITATION_VALIDITY
+from apps.routes import group_meta
+from apps.routes.group_meta import ParticipantStatus
+from apps.routes.models import Route, RouteGroup
 
 EQUATOR_STRAIGHT_LINE = [[0, 0], [0, 1]]
 LIST_URL = reverse('notifications:notification_list')
 
 
-class NotificationListTests(TestCase):
+class NotificationApiTestCase(TestCase):
     def setUp(self) -> None:
         self.owner = User.objects.create_user('owner', password='pw')
         self.ana = User.objects.create_user('ana', password='pw')
@@ -37,6 +44,8 @@ class NotificationListTests(TestCase):
         response = self._client_for(self.owner).post(reverse('routes:group_create'), payload, format='json')
         return response.data['id']
 
+
+class NotificationListTests(NotificationApiTestCase):
     def test_lists_only_the_notifications_addressed_to_the_caller(self) -> None:
         self._invite(self.route)
         self.assertEqual(len(self._client_for(self.ana).get(LIST_URL).data), 1)
@@ -102,3 +111,74 @@ class NotificationListTests(TestCase):
 
     def test_requires_authentication(self) -> None:
         self.assertEqual(APIClient().get(LIST_URL).status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class InvitationExpiryTests(NotificationApiTestCase):
+    """Invitations that time out, or that close when the rider accepts another one."""
+
+    def _age_invitations(self, age: timedelta) -> None:
+        NotificationEvent.objects.update(created_at=timezone.now() - age)
+
+    def test_an_invitation_older_than_the_validity_is_expired(self) -> None:
+        self._invite(self.route)
+        self._age_invitations(INVITATION_VALIDITY)
+        self.assertEqual(self._listed_statuses(), ['expired'])
+
+    def test_an_invitation_younger_than_the_validity_is_still_waiting(self) -> None:
+        self._invite(self.route)
+        self._age_invitations(INVITATION_VALIDITY - timedelta(minutes=1))
+        self.assertEqual(self._listed_statuses(), ['invited'])
+
+    def test_an_answered_invitation_keeps_its_answer_after_the_validity(self) -> None:
+        group_id = self._invite(self.route)
+        self._answer(group_id, 'accept')
+        self._age_invitations(INVITATION_VALIDITY * 2)
+        self.assertEqual(self._listed_statuses(), ['accepted'])
+
+    def test_an_expired_invitation_cannot_be_answered(self) -> None:
+        group_id = self._invite(self.route)
+        self._age_invitations(INVITATION_VALIDITY)
+        for answer in ('accept', 'reject'):
+            response = self._client_for(self.ana).post(reverse(f'routes:group_{answer}', args=[group_id]))
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertEqual(response.data['detail'], 'This invitation has expired.')
+
+    def test_inviting_again_gives_a_fresh_invitation(self) -> None:
+        group_id = self._invite(self.route)
+        self._age_invitations(INVITATION_VALIDITY)
+        remove_url = reverse('routes:group_remove', args=[group_id])
+        self._client_for(self.owner).post(remove_url, {'user': self.ana.pk}, format='json')
+        self._invite_again(group_id)
+        self._answer(group_id, 'accept')
+        self.assertEqual(self._listed_statuses(), ['accepted', 'expired'])
+
+    def test_accepting_one_invitation_expires_the_others_and_frees_their_places(self) -> None:
+        first, second, third = self._invite(self.route), self._invite(None), self._invite(self.route)
+        self._answer(second, 'accept')
+        self.assertEqual(self._listed_statuses(), ['expired', 'accepted', 'expired'])
+        for group_id in (first, third):
+            group = RouteGroup.objects.get(pk=group_id)
+            self.assertNotIn(self.ana, group.participants.all())
+            self.assertIsNone(group_meta.get_status(group.meta_json, self.ana.pk))
+
+    def test_an_expired_invitation_is_gone_for_the_rider(self) -> None:
+        first, second = self._invite(self.route), self._invite(None)
+        self._answer(second, 'accept')
+        response = self._client_for(self.ana).post(reverse('routes:group_accept', args=[first]))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_rejecting_one_invitation_leaves_the_others_waiting(self) -> None:
+        first, second = self._invite(self.route), self._invite(None)
+        self._answer(second, 'reject')
+        self.assertEqual(self._listed_statuses(), ['rejected', 'invited'])
+        first_group = RouteGroup.objects.get(pk=first)
+        self.assertEqual(group_meta.get_status(first_group.meta_json, self.ana.pk), ParticipantStatus.INVITED)
+
+    def test_accepting_does_not_touch_the_invitations_of_other_riders(self) -> None:
+        group_id = self._invite(self.route)
+        invite_url = reverse('routes:group_invite', args=[group_id])
+        self._client_for(self.owner).post(invite_url, {'username': 'ben'}, format='json')
+        other = self._invite(None)
+        self._answer(other, 'accept')
+        ben_statuses = [item['status'] for item in self._client_for(self.ben).get(LIST_URL).data]
+        self.assertEqual(ben_statuses, ['invited'])

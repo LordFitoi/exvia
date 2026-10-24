@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 
 from django.contrib.auth.models import User
-from django.db import connection
+from django.db import connection, transaction
 from django.test import TransactionTestCase
 
 from apps.routes import group_meta
@@ -18,7 +18,8 @@ class SavePositionTests(TransactionTestCase):
         self.ana = User.objects.create_user('ana', password='pw')
         self.ben = User.objects.create_user('ben', password='pw')
         self.group = create_group(self.owner, None, [self.ana, self.ben])
-        answer_invitation(self.group, self.ana, ParticipantStatus.ACCEPTED)
+        with transaction.atomic():
+            answer_invitation(self.group, self.ana, ParticipantStatus.ACCEPTED)
 
     def _report(self, user: User, count: int) -> None:
         try:

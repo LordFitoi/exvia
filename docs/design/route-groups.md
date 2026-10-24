@@ -129,6 +129,19 @@ answer, or the author's own, is `400` (`You have already answered this invitatio
 Rejecting records `rejected` in `meta_json` and removes the rider from `participants`, which
 frees the place and makes every later call about that group `404` for them.
 
+### Answering and expiry
+
+An invitation can be answered for `INVITATION_VALIDITY` (1 h) after it was sent; later `answer_invitation`
+raises `InvitationExpired` and both endpoints answer `400` (`This invitation has expired.`). The leader can
+invite the rider again, which sends a fresh invitation.
+
+Accepting also **expires the rider's other pending invitations** (`expire_other_invitations`, same
+transaction): in every other group where they are still `invited` their entry is forgotten and they leave
+`participants` (as for a [removal](#inviting-and-removing)), which frees the place, and their notification is
+closed with an `expired` answer ([notifications.md](notifications.md#api)). Those groups are then `404` for
+them. Rejecting touches only the rejected invitation. The other groups are locked in primary key order after the
+accepted one; two riders accepting crosswise at the same moment could still deadlock, and the database aborts one.
+
 **Saving the ride**: `POST /api/routes/<uuid>/summaries/` (see [routes.md](routes.md#route-summaries))
 now also accepts the route of a group the caller has **accepted** (looked up in `meta_json`);
 an invited-only or rejected rider still gets `404`. The summary is the caller's, and lists as participants the riders

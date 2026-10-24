@@ -4,8 +4,15 @@ from typing import Any
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import QuerySet
+from django.utils import timezone
 
-from apps.notifications.services import notify_route_invitation, record_invitation_answer
+from apps.notifications.models import AnswerStatus
+from apps.notifications.services import (
+    is_invitation_expired,
+    latest_invitation,
+    notify_route_invitation,
+    record_invitation_answer,
+)
 from apps.routes import group_meta
 from apps.routes.group_meta import ParticipantStatus
 from apps.routes.models import MAX_GROUP_PARTICIPANTS, Route, RouteGroup
@@ -20,6 +27,10 @@ RESUME_WINDOW = timedelta(hours=2)
 
 class InvitationAlreadyAnswered(ValueError):
     """The user has already accepted or rejected the invitation, or was never invited."""
+
+
+class InvitationExpired(ValueError):
+    """The invitation was sent too long ago to be answered."""
 
 
 class NotRidingInGroup(ValueError):
@@ -62,15 +73,37 @@ def create_group(author: User, route: Route | None, invitees: list[User]) -> Rou
 
 
 def answer_invitation(group: RouteGroup, user: User, answer: ParticipantStatus) -> None:
-    """Records the user's answer. Rejecting also frees their place in the group.
+    """Records the user's answer. Rejecting also frees their place in the group, and accepting expires
+    the user's other pending invitations. An invitation older than `INVITATION_VALIDITY` cannot be answered.
     Call it inside a transaction that holds a lock on `group`."""
     if group_meta.get_status(group.meta_json, user.pk) != ParticipantStatus.INVITED:
         raise InvitationAlreadyAnswered(f'User {user.pk} has no pending invitation to group {group.pk}.')
+    invitation = latest_invitation(group, user)
+    if invitation is not None and is_invitation_expired(invitation, timezone.now()):
+        raise InvitationExpired(f'The invitation of user {user.pk} to group {group.pk} has expired.')
     group_meta.set_status(group.meta_json, user.pk, answer)
     group.save(update_fields=['meta_json', 'updated_at'])
     record_invitation_answer(group, user, answer)
     if answer == ParticipantStatus.REJECTED:
         group.participants.remove(user)
+    else:
+        expire_other_invitations(user, group)
+
+
+def expire_other_invitations(user: User, accepted: RouteGroup) -> None:
+    """Closes every other invitation the user has not answered as expired and takes them out of those
+    groups, which frees their places. Locks the groups in primary key order, after the `accepted` one."""
+    others = (
+        RouteGroup.objects.select_for_update(of=('self',))
+        .filter(participants=user).exclude(pk=accepted.pk).order_by('pk')
+    )
+    for group in others:
+        if group_meta.get_status(group.meta_json, user.pk) != ParticipantStatus.INVITED:
+            continue
+        group_meta.remove_participant(group.meta_json, user.pk)
+        group.save(update_fields=['meta_json', 'updated_at'])
+        group.participants.remove(user)
+        record_invitation_answer(group, user, AnswerStatus.EXPIRED)
 
 
 def next_leader(group: RouteGroup, leaver: User) -> User | None:

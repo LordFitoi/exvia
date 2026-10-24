@@ -100,7 +100,7 @@ invitations to ride waiting for an answer, and the button's label says it ("Noti
 waiting for an answer"). It opens `NotificationsSheet`, a modal sheet listing the invitations
 (`GET /api/notifications/`, see [notifications.md](notifications.md#api)): who invited you, the
 route (or "Free mode") and how long ago, with **Reject** and **Accept**; an answered one keeps
-its row with an **Accepted** or **Rejected** badge for good, even if the same rider is invited again to that group; an old one never answered shows **Expired**. A new invitation that arrives while the app is open also appears as a toast and refreshes the list ([live channel](notifications.md#live-channel)). **Accept** goes straight to
+its row with an **Accepted** or **Rejected** badge for good, even if the same rider is invited again to that group; one never answered shows **Expired** once it is an hour old, after the rider accepted another invitation, or when it was replaced. A new invitation that arrives while the app is open also appears as a toast and refreshes the list ([live channel](notifications.md#live-channel)). **Accept** goes straight to
 `/ride/<group id>`, where the ride starts at once; **Reject** only refreshes the list. The list
 loads when Home opens and again whenever the app comes back to the foreground
 (`useRouteInvitations`, which keeps the list it has when a refresh fails); it is not live while

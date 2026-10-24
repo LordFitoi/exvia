@@ -25,6 +25,7 @@ from apps.routes.group_service import (
     CannotRemoveLeader,
     GroupFull,
     InvitationAlreadyAnswered,
+    InvitationExpired,
     NotInGroup,
     NotRidingInGroup,
     answer_invitation,
@@ -40,6 +41,7 @@ from apps.routes.live import broadcast_leader_change, broadcast_route_change
 from apps.routes.models import MAX_GROUP_PARTICIPANTS, RouteGroup
 
 ALREADY_ANSWERED_MESSAGE = 'You have already answered this invitation.'
+INVITATION_EXPIRED_MESSAGE = 'This invitation has expired.'
 NOT_RIDING_MESSAGE = 'You are not riding in this group.'
 NOT_LEADER_MESSAGE = 'Only the rider who leads the group can do this.'
 ALREADY_IN_GROUP_MESSAGE = 'This rider is already in the group.'
@@ -109,6 +111,8 @@ class GroupAnswerView(APIView):
             answer_invitation(group, request.user, self.answer)
         except InvitationAlreadyAnswered as error:
             raise ValidationError({'detail': ALREADY_ANSWERED_MESSAGE}) from error
+        except InvitationExpired as error:
+            raise ValidationError({'detail': INVITATION_EXPIRED_MESSAGE}) from error
         if self.answer == ParticipantStatus.REJECTED:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(GroupSerializer(group_queryset().get(pk=group.pk)).data)

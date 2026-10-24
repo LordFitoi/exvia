@@ -35,9 +35,9 @@ ordered newest first.
 | `destinations` | M2M to `auth.User` | Everyone notified by this one event; `related_name='notification_events'` |
 | `route_group` | FK to `routes.RouteGroup` | Optional; the group a route invitation is about; `related_name='notification_events'`, `CASCADE` |
 
-`InvitationAnswer` (`event` FK `related_name='answers'`, `user` FK, `status` `accepted` or `rejected`,
-unique per `event` + `user`) is what one destination answered to one event. It is written once, when the
-rider answers, and never changes.
+`InvitationAnswer` (`event` FK `related_name='answers'`, `user` FK, `status` an `AnswerStatus`: `accepted`,
+`rejected` or `expired`, unique per `event` + `user`) is what one destination answered to one event, or
+`expired` when the rider accepted another invitation first. It is written once and never changes.
 
 ## API
 
@@ -62,8 +62,8 @@ that are not about a group:
 | Status | When |
 |--------|------|
 | `accepted`, `rejected` | The caller answered this event (an `InvitationAnswer` exists). Final: a later invitation to the same group does not reopen it |
-| `invited` | No answer yet, this is the caller's newest event for the group, and the group's `meta_json` still has them as invited. Only this one can be answered |
-| `expired` | Unanswered but no longer answerable: the caller was invited again, or taken out of the group |
+| `invited` | No answer yet, this is the caller's newest event for the group, it is younger than `INVITATION_VALIDITY` and the group's `meta_json` still has them as invited. Only this one can be answered |
+| `expired` | Unanswered but no longer answerable: it is `INVITATION_VALIDITY` (1 h, in [services.py](../../apps/notifications/services.py)) old or older, the caller accepted another invitation (an `InvitationAnswer` with `expired`), was invited again, or was taken out of the group |
 
 Before a newest event is answered, its status is read from the group's `meta_json`, which is how events
 from before `InvitationAnswer` keep showing their answer. A client counts the `invited` ones for a badge.
@@ -105,6 +105,13 @@ notification shows as a **toast** at once instead of waiting for the next time t
   tell the notifications of one rider apart: inviting the same rider again after they answered or left
   makes a new event for the same group, and reading every event's status from the group made all of the
   old ones show `invited` again.
+- **Expiry is computed for time, recorded for the other invitation**: an invitation expires `INVITATION_VALIDITY`
+  after its event was created, judged on read (`is_invitation_expired`) by the list and by the answer
+  endpoints (`400`, `This invitation has expired.`), so nothing runs in the background. A timed-out invitee
+  keeps their place in the group until the leader removes them or invites them again (a new event, a new hour).
+  Accepting an invitation is different: it is an event of its own, so `expire_other_invitations` closes the
+  rider's other pending invitations at once with an `expired` answer and takes them out of those groups (see
+  [route-groups.md](route-groups.md#answering-and-expiry)), so a rider is never invited to two rides at once.
 - **Answering closes the newest event**: a rider can only have one pending invitation per group, so the
   answer endpoints (by group) always mean their newest event for it. Old events cannot be answered.
 - **The link is typed, per kind of event**: `route_group` exists because the first
