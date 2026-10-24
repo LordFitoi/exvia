@@ -19,7 +19,6 @@ pillow = "^13.0.0"
 channels = "^4.3"
 uvicorn = {version = "^0.54", extras = ["standard"]}
 channels-redis = "^4.3"
-pywebpush = "^2.5.0"
 
 [build-system]
 requires = ["poetry-core"]

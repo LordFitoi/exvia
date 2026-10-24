@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.notifications.models import InvitationAnswer, NotificationEvent, PushSubscription
+from apps.notifications.models import InvitationAnswer, NotificationEvent
 
 
 @admin.register(NotificationEvent)
@@ -19,11 +19,3 @@ class InvitationAnswerAdmin(admin.ModelAdmin):
     search_fields = ('user__username',)
     readonly_fields = ('created_at', 'updated_at')
     autocomplete_fields = ('event', 'user')
-
-
-@admin.register(PushSubscription)
-class PushSubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('user', 'created_at')
-    search_fields = ('user__username',)
-    readonly_fields = ('created_at', 'updated_at')
-    autocomplete_fields = ('user',)

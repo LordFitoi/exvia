@@ -11,7 +11,7 @@ export PGDATABASE PGUSER PGPASSWORD PGHOST PGPORT REDIS_URL
 
 STYLEGUIDE = docs/ui-ux/index.html
 
-.PHONY: help install railway_install railway_login db_setup redis_setup db_migrate db_shell db_seed run_redis stop_redis run_server run_frontend vapid_keys open_styleguide railway_plan railway_apply create_app
+.PHONY: help install railway_install railway_login db_setup redis_setup db_migrate db_shell db_seed run_redis stop_redis run_server run_frontend open_styleguide railway_plan railway_apply create_app
 
 ##@ Help
 
@@ -60,9 +60,6 @@ run_server: ## Run the ASGI development server (HTTP + WebSockets) with auto-rel
 
 run_frontend: ## Run the Next.js development server (frontend/)
 	cd frontend && corepack pnpm dev
-
-vapid_keys: ## Generate a VAPID key pair for Web Push (export it as VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY)
-	@poetry run python manage.py generate_vapid_keys
 
 open_styleguide: ## Open the UI/UX style guide (docs/ui-ux/) in the browser
 	@if command -v wslview >/dev/null 2>&1; then wslview $(STYLEGUIDE); \

@@ -7,7 +7,6 @@ import NoticeList from '@/components/clan/NoticeList'
 import StateView from '@/components/feedback/StateView'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useAuth } from '@/hooks/useAuth'
-import { usePushNotifications } from '@/hooks/usePushNotifications'
 import { useRemoteList } from '@/hooks/useRemoteList'
 import { useRouteInvitationAnswer } from '@/hooks/useRouteInvitationAnswer'
 import { useRouteInvitations } from '@/hooks/useRouteInvitations'
@@ -23,7 +22,6 @@ export default function HomeScreen() {
   const feed = useRemoteList(fetchFeedNotices, FEED_FAILURE_LABEL)
   const invitations = useRouteInvitations()
   const { group: activeGroup } = useActiveGroup()
-  const push = usePushNotifications()
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const answer = useRouteInvitationAnswer({
     onAccepted: (groupId) => router.push(`/ride/${groupId}`),
@@ -85,7 +83,6 @@ export default function HomeScreen() {
         <NotificationsSheet
           invitations={invitations}
           answer={answer}
-          push={push}
           onClose={() => setIsNotificationsOpen(false)}
         />
       )}

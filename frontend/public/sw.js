@@ -1,6 +1,5 @@
 // Service worker: makes the app installable and keeps the shell usable offline.
 // It never touches the API: only same-origin GET navigations and static assets.
-// It also shows the push notifications the server sends (see the "push" handlers at the end).
 
 const CACHE_VERSION = "exvia-v4";
 const OFFLINE_URL = "/offline/";
@@ -76,33 +75,4 @@ async function cacheFirst(request) {
     await cache.put(request, response.clone());
   }
   return response;
-}
-
-// Web Push: the server sends {title, body, url, tag}; a tap opens (or focuses) the app at that url.
-const NOTIFICATION_ICON = "/icons/icon-192.png";
-
-self.addEventListener("push", (event) => {
-  const { title, body, url, tag } = event.data ? event.data.json() : {};
-  event.waitUntil(
-    self.registration.showNotification(title || "Exvia", {
-      body,
-      tag,
-      icon: NOTIFICATION_ICON,
-      badge: NOTIFICATION_ICON,
-      data: { url: url || "/" },
-    }),
-  );
-});
-
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  event.waitUntil(openApp(event.notification.data.url));
-});
-
-async function openApp(url) {
-  const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-  const open = windows.find((client) => new URL(client.url).origin === self.location.origin);
-  if (!open) return self.clients.openWindow(url);
-  await open.navigate(url);
-  return open.focus();
 }

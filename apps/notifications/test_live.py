@@ -3,11 +3,13 @@ from unittest.mock import AsyncMock, patch
 from channels.db import database_sync_to_async
 from channels.routing import URLRouter
 from django.contrib.auth.models import User
-from django.test import TransactionTestCase, override_settings
+from django.test import TestCase, TransactionTestCase, override_settings
 from rest_framework_simplejwt.tokens import AccessToken
 
 from apps.core.websocket_auth import CLOSE_UNAUTHORIZED
 from apps.core.websocket_testing import WebsocketClient
+from apps.notifications.live import build_notification
+from apps.notifications.models import EventType, NotificationEvent
 from apps.notifications.routing import websocket_urlpatterns
 from apps.routes.group_service import create_group
 from apps.routes.models import Route
@@ -77,3 +79,19 @@ class NotificationConsumerTests(TransactionTestCase):
             get_layer.return_value.group_send = AsyncMock(side_effect=OSError('redis is down'))
             event_id = await self._invite(self.ana)
         self.assertIsNotNone(event_id)
+
+
+class NotificationTextTests(TestCase):
+    def setUp(self) -> None:
+        self.owner = User.objects.create_user('owner', password='pw')
+
+    def test_a_free_mode_invitation_says_so(self) -> None:
+        event = NotificationEvent.objects.create(
+            event_type=EventType.ROUTE_INVITATION, author=self.owner, route_group=create_group(self.owner, None, []),
+        )
+        self.assertEqual(build_notification(event)['body'], 'owner invited you to ride in free mode.')
+
+    def test_a_clan_invitation_names_the_author(self) -> None:
+        event = NotificationEvent.objects.create(event_type=EventType.CLAN_INVITATION, author=self.owner)
+        self.assertEqual(build_notification(event)['title'], 'Clan invitation')
+        self.assertEqual(build_notification(event)['body'], 'owner invited you to join a clan.')

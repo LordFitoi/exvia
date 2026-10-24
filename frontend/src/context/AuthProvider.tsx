@@ -7,7 +7,6 @@ import { AuthContext } from '@/context/AuthContext'
 import type { AuthContextValue, AuthStatus } from '@/context/AuthContext'
 import { createAccount } from '@/services/authApi'
 import { endSession, restoreSession, startSession } from '@/services/session'
-import { removePushSubscription } from '@/services/webPush'
 import type { LoginCredentials, User } from '@/types/auth'
 
 interface AuthState {
@@ -23,19 +22,6 @@ const INITIAL_STATE: AuthState = { status: 'loading', user: null }
 const ANONYMOUS_STATE: AuthState = { status: 'anonymous', user: null }
 
 const toAuthenticated = (user: User): AuthState => ({ status: 'authenticated', user })
-
-// A slow network must not keep the rider from signing out.
-const PUSH_REMOVAL_TIMEOUT_MS = 3000
-
-/** Stops this phone's notifications for the rider who is leaving, while their token still works. */
-const stopPushNotifications = async (): Promise<void> => {
-  const timeout = new Promise<void>((resolve) => setTimeout(resolve, PUSH_REMOVAL_TIMEOUT_MS))
-  try {
-    await Promise.race([removePushSubscription(), timeout])
-  } catch (error) {
-    console.error('Could not remove the push subscription on logout', error)
-  }
-}
 
 export default function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>(INITIAL_STATE)
@@ -62,7 +48,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   const logout = useCallback(async () => {
-    await stopPushNotifications()
     endSession()
     setState(ANONYMOUS_STATE)
   }, [])

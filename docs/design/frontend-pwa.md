@@ -90,6 +90,6 @@ qualifies; `localhost` also counts as secure).
 
 ## Not included
 
-- Push notifications and background sync.
+- Push notifications (Web Push was removed) and background sync.
 - Offline data: nothing from the API is cached, so offline screens are shells.
 - A custom install prompt, iOS splash images and manifest screenshots.

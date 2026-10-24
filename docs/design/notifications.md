@@ -3,8 +3,7 @@
 Django app for notifications sent to users. A model, admin and a read endpoint; the
 only event created so far is the route invitation of [route-groups.md](route-groups.md).
 The list is fetched by clients; on top of it, every event is also heard at once by the destinations who have the app
-open, as a toast (see [Live channel](#live-channel)), and sent to their phones as a **Web Push** notification
-(see [Web Push](#web-push)). The Home bell and sheet that
+open, as a toast (see [Live channel](#live-channel)). The Home bell and sheet that
 show the list are in [frontend-screens.md](frontend-screens.md).
 
 ## Layout
@@ -21,11 +20,8 @@ in `config/urls.py`.
 | [services.py](../../apps/notifications/services.py) | `notify_route_invitation` creates events from other apps; `record_invitation_answer` closes one with the answer |
 | [serializers.py](../../apps/notifications/serializers.py), [views.py](../../apps/notifications/views.py), [urls.py](../../apps/notifications/urls.py) | `GET /api/notifications/` |
 | [consumers.py](../../apps/notifications/consumers.py), [routing.py](../../apps/notifications/routing.py) | `NotificationConsumer` at `/ws/notifications/` |
-| [live.py](../../apps/notifications/live.py) | `broadcast_event`: sends an event to the open apps of its destinations |
-| [push.py](../../apps/notifications/push.py) | Payload of an event and its delivery to the subscriptions, in a thread |
-| [signals.py](../../apps/notifications/signals.py) | Starts the live broadcast and the push delivery when users are added to an event's `destinations` |
-| [push_serializers.py](../../apps/notifications/push_serializers.py), [push_views.py](../../apps/notifications/push_views.py) | The two push endpoints |
-| [management/commands/generate_vapid_keys.py](../../apps/notifications/management/commands/generate_vapid_keys.py) | Makes the key pair Web Push needs |
+| [live.py](../../apps/notifications/live.py) | `build_notification` (the title and text of an event) and `broadcast_event`, which sends it to the open apps of its destinations |
+| [signals.py](../../apps/notifications/signals.py) | Starts the live broadcast when users are added to an event's `destinations` |
 
 ## Data model
 
@@ -84,78 +80,19 @@ notification shows as a **toast** at once instead of waiting for the next time t
 - **Protocol.** Like the ride channel ([asgi-websockets.md](asgi-websockets.md)), the first message is
   `{"type": "auth", "token": <access JWT>}` (a missing, bad or late token closes with `4401`), and the
   server answers `{"type": "ready"}`. After that it only sends
-  `{"type": "notification", "id", "title", "body"}`, with the same title and text as the push; the client
+  `{"type": "notification", "id", "title", "body"}`, the client
   sends nothing else. Token checking is shared with the ride channel in
   [websocket_auth.py](../../apps/core/websocket_auth.py).
 - **Fan-out.** Each connected user joins the channel-layer group `user_notifications_<id>`, so every open
   app of the user (phone and laptop) hears it, across replicas, through Redis. The `m2m_changed` receiver
-  that starts the push also calls `broadcast_event` on commit, so a new `event_type` is live with no extra code.
-- **Best effort.** A user with no open app hears nothing here and still has the push and the list. If Redis
+  calls `broadcast_event` on commit, so a new `event_type` is live with no extra code.
+- **Best effort.** A user with no open app hears nothing here and finds the event in the list. If Redis
   cannot be reached the failure is logged and the request that created the event is not affected.
 - **Client.** `LiveNotificationProvider` (in the `(app)` layout) opens it with `startNotificationConnection`,
   which reuses the reconnecting, token-renewing socket of the ride channel (`startSocketConnection`), shows
   the `body` in a `Toast` with the bell icon, and exposes the latest notification through
   `useLiveNotifications`. `useRouteInvitations` reloads when a new one arrives, so Home's bell badge and
   the sheet are current without a refresh.
-
-## Web Push
-
-A notification reaches a phone that has the app closed through the browser's push service
-(FCM, Mozilla, Apple, Windows), using the Web Push protocol with VAPID keys.
-
-**Currently disabled in the frontend.** `IS_PUSH_ENABLED` in `hooks/usePushNotifications.ts` is
-`false` until push is configured properly: the app no longer asks for permission, subscribes or shows
-the **Turn on** row. Logout still removes an existing subscription. Browsers that subscribed earlier
-keep their subscription on the server until it is removed there.
-
-**Configuration.** Three settings, read from the environment, all optional: `VAPID_PUBLIC_KEY`,
-`VAPID_PRIVATE_KEY` and `VAPID_CONTACT_EMAIL` (an address the push services may write to). Without
-all three **no push is sent** and the key endpoint answers `null`, so the app runs without it.
-`make vapid_keys` (`python manage.py generate_vapid_keys`) prints a pair; keep the private key secret and **never change
-the pair afterwards**, since every existing subscription is tied to the public key. On Railway the
-three are `preserve()`d in [railway.ts](../../.railway/railway.ts): set them once in the dashboard.
-
-**Model.** `PushSubscription`: `user` (CASCADE, `related_name='push_subscriptions'`), `endpoint`
-(unique) and the browser's `p256dh` and `auth` keys. One user can have many (phone, laptop); an
-endpoint belongs to one user at a time.
-
-| Endpoint | Does |
-|----------|------|
-| `GET /api/notifications/push/key/` | `{"public_key": "..." \| null}` the browser subscribes with |
-| `POST /api/notifications/push/subscriptions/` | Body: the browser's `PushSubscription.toJSON()` (`endpoint`, `keys`). Saves it for the caller (a browser already known moves to the caller); `204` |
-| `DELETE /api/notifications/push/subscriptions/` | Body `{"endpoint"}`. Removes the caller's own; `204` |
-
-The endpoint must be `https` and on a known push service (`googleapis.com`, `mozilla.com`,
-`windows.com`, `apple.com`), or the POST is `400`: the server calls that address, so an open
-list would let a client make it call any URL (SSRF).
-
-**Delivery.** A `m2m_changed` receiver on `NotificationEvent.destinations` reacts to `post_add`
-(`event.destinations.add()` or `.set()`, which is how `services.py` creates events; adding from the
-user's side is not covered). When the surrounding transaction commits, one background thread
-(`push.deliver`) pushes to all subscriptions of the added users, so the request that created the
-event does not wait for the push services. The payload is `{title, body, url, tag}`:
-
-| Event | Title and text |
-|-------|----------------|
-| `route_invitation` | "Ride invitation", "ana invited you to ride Coast loop." (or "in free mode") |
-| `clan_invitation` | "Clan invitation", "ana invited you to join a clan." |
-| other | "Exvia", "You have a new notification." |
-
-`url` is `/` (Home, where the bell carries the invitation) and `tag` is `event-<id>`. A push the
-service answers `404` or `410` (the browser unsubscribed) deletes that subscription; any other failure
-is logged and the subscription stays. Delivery is best effort: no retry, and a message not delivered
-within a day (`PUSH_TTL_SECONDS`) is dropped by the push service. The thread dies with the process, so
-a restart in the middle loses the pushes in flight; the list in the app is the source of truth.
-
-**Client.** `public/sw.js` shows the notification on `push` and, on a tap, focuses the open app or opens
-it at `url`. `usePushNotifications` (Home) registers the browser: when the permission is already granted
-it subscribes again silently on every Home mount, which also moves a shared phone to whoever is signed
-in; otherwise the notifications sheet shows a **Turn on** row (a tap is required by the browsers, iOS
-included) or, if the user denied it, how to unblock it. Logging out removes the subscription from the
-server and the browser first, so the next rider on that phone does not get the previous one's messages.
-The service worker is registered in production builds only, so push can be tried with `next build &&
-next start` on localhost or HTTPS; in development the row never appears. iOS needs the app installed to
-the home screen.
 
 ## Key decisions
 
@@ -174,11 +111,10 @@ the home screen.
   event that needs a target is the route invitation; a clan invitation would get its
   own optional FK the same way. A new `event_type` is one `EventType` member plus a
   no-op `AlterField` migration (choices are part of the migration state).
-- **Push is a side effect of the destinations, not of each service**: the signal means a new event
-  type is pushed with no extra code, only a payload text. The cost is that adding users to an
-  existing event also pushes to them.
-- **A socket for "the app is open", push for "it is not"**: both are fed by the same signal, so a user
-  with the app open gets the toast and also a push if subscribed; the push `tag` keeps it to one entry on the phone.
-- **No task queue**: a thread started on commit is enough for a few phones per event. A queue becomes
-  worth it with many destinations per event or when lost pushes matter.
+- **The broadcast is a side effect of the destinations, not of each service**: the signal means a new event
+  type is heard live with no extra code, only a text. The cost is that adding users to an existing event also
+  announces it to them.
+- **There is no Web Push.** An event reaches a user with the app closed only as an entry in the list the next
+  time they open it. Web Push (a `PushSubscription` model, VAPID keys, a delivery thread) was removed; migration
+  `0005_delete_pushsubscription` drops its table.
 - **Read state is not modelled**: a read flag is decided with the feature that needs it.

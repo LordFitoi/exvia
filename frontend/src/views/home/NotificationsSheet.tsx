@@ -7,12 +7,10 @@ import StateView from '@/components/feedback/StateView'
 import RiderAvatar from '@/components/rider/RiderAvatar'
 import SheetHeader from '@/components/layout/SheetHeader'
 import { useModalDialog } from '@/hooks/useModalDialog'
-import type { usePushNotifications } from '@/hooks/usePushNotifications'
 import type { useRouteInvitationAnswer } from '@/hooks/useRouteInvitationAnswer'
 import type { useRouteInvitations } from '@/hooks/useRouteInvitations'
 import { formatRelativeTime } from '@/services/formatRelativeTime'
 import type { RouteInvitation } from '@/types/notification'
-import PushNotificationsRow from '@/views/home/PushNotificationsRow'
 
 const FREE_MODE_LABEL = 'Free mode'
 const ANSWERED_BADGES = {
@@ -24,7 +22,6 @@ const ANSWERED_BADGES = {
 interface NotificationsSheetProps {
   invitations: ReturnType<typeof useRouteInvitations>
   answer: ReturnType<typeof useRouteInvitationAnswer>
-  push: ReturnType<typeof usePushNotifications>
   onClose: () => void
 }
 
@@ -75,7 +72,7 @@ function InvitationRow({ invitation, answer }: InvitationRowProps) {
 }
 
 /** A modal sheet with the invitations to ride; accepting one starts the ride at once. Mount it to open it. */
-export default function NotificationsSheet({ invitations, answer, push, onClose }: NotificationsSheetProps) {
+export default function NotificationsSheet({ invitations, answer, onClose }: NotificationsSheetProps) {
   const dialogRef = useModalDialog(true)
   const titleId = useId()
   const { status, invitations: items } = invitations
@@ -89,7 +86,6 @@ export default function NotificationsSheet({ invitations, answer, push, onClose 
         sheetRef={dialogRef}
         onClose={onClose}
       />
-      <PushNotificationsRow push={push} />
       {answer.error && (
         <p className="field-error" role="alert">
           {answer.error}
