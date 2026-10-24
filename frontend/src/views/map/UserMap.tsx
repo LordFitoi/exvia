@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import Toast from '@/components/feedback/Toast'
+import FoundPlaceCard from '@/views/map/FoundPlaceCard'
 import MapStatusView from '@/views/map/MapStatusView'
 import PinPlaceCard from '@/views/map/PinPlaceCard'
 import RouteMenu from '@/views/map/RouteMenu'
@@ -43,7 +44,7 @@ export default function UserMap({
     accessToken: MAPBOX_ACCESS_TOKEN,
     coordinates,
   })
-  const { selection, addPlace, removePlace, clearSelection } = useMapPlaces(mounted)
+  const { selection, addPlace, removePlace, updatePlace, showPlace, clearSelection } = useMapPlaces(mounted)
   const [saveRequest, setSaveRequest] = useState<SavePlaceRequest | null>(null)
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null)
 
@@ -62,6 +63,11 @@ export default function UserMap({
     setNoticeMessage(`${place.name} deleted`)
   }
 
+  const handleUpdated = (place: PlaceLocation) => {
+    updatePlace(place)
+    setNoticeMessage(`${place.name} updated`)
+  }
+
   if (hasLoadFailed) {
     return (
       <MapStatusView
@@ -76,7 +82,7 @@ export default function UserMap({
       <h1 className="visually-hidden">Map</h1>
       <div ref={containerRef} className="map-canvas"></div>
       <div className="map-overlay">
-        <PlaceSearch proximity={coordinates} label="Search a place to ride to" onSelect={onSelectPlace} />
+        <PlaceSearch proximity={coordinates} label="Search a place to ride to" onSelect={showPlace} />
         {children}
         {noticeMessage && <Toast message={noticeMessage} onDismiss={dismissNoticeMessage} />}
         <div className="map-controls">
@@ -95,12 +101,22 @@ export default function UserMap({
           onClose={clearSelection}
         />
       )}
+      {selection?.kind === 'found' && (
+        <FoundPlaceCard
+          key={selection.place.id}
+          place={selection.place}
+          onRide={onSelectPlace}
+          onSave={setSaveRequest}
+          onClose={clearSelection}
+        />
+      )}
       {selection?.kind === 'saved' && (
         <SavedPlaceCard
           key={selection.place.id}
           place={selection.place}
           onRide={onSelectPlace}
           onDeleted={handleDeleted}
+          onUpdated={handleUpdated}
           onClose={clearSelection}
         />
       )}

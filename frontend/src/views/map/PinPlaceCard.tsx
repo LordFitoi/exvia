@@ -52,14 +52,14 @@ export default function PinPlaceCard({ coordinates, onRide, onSave, onClose }: P
       <p className="text-body2" role="status">
         {describeCommerce(commerce)}
       </p>
-      <div className="button-row button-row-even">
+      <div className="button-row">
         <button
-          className="button button-soft"
+          className="button button-soft button-square"
           type="button"
+          aria-label="Save place"
           onClick={() => onSave({ coordinates, suggestedName: suggestName(commerce) })}
         >
           <span className="icon icon-star" aria-hidden="true"></span>
-          Save place
         </button>
         <button className="button button-primary" type="button" onClick={() => onRide(place)}>
           <span className="icon icon-flag-checkered" aria-hidden="true"></span>

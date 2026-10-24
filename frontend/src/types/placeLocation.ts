@@ -1,5 +1,6 @@
 import type { PlaceLocationCategory } from '@/services/placeLocationCategories'
 import type { Coordinates } from '@/types/geolocation'
+import type { Place } from '@/types/place'
 
 /** A place the rider saved as a favorite. */
 export interface PlaceLocation {
@@ -10,10 +11,14 @@ export interface PlaceLocation {
   readonly coordinates: Coordinates
 }
 
-export interface NewPlaceLocation {
+/** What the rider writes about a saved place: it can be edited after the place is saved. */
+export interface PlaceDetails {
   readonly name: string
   readonly notes: string
   readonly category: PlaceLocationCategory
+}
+
+export interface NewPlaceLocation extends PlaceDetails {
   readonly coordinates: Coordinates
 }
 
@@ -24,7 +29,9 @@ export interface SavePlaceRequest {
   readonly suggestedName: string
 }
 
-/** What the place card describes: a spot the rider pressed on, or one of their saved places. */
+/** What the place card describes: a spot the rider pressed on, a place picked in the search, or one of their saved places. */
 export type PlaceSelection =
   | { readonly kind: 'pin'; readonly coordinates: Coordinates }
+  | { readonly kind: 'found'; readonly place: Place }
+| { readonly kind: 'pin'; readonly coordinates: Coordinates }
   | { readonly kind: 'saved'; readonly place: PlaceLocation }

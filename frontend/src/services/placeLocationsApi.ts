@@ -4,7 +4,7 @@ import { isPlaceLocationCategory } from '@/services/placeLocationCategories'
 import type { PlaceLocationCategory } from '@/services/placeLocationCategories'
 import { isRecord } from '@/services/typeGuards'
 import { toBboxParam } from '@/services/viewport'
-import type { NewPlaceLocation, PlaceLocation } from '@/types/placeLocation'
+import type { NewPlaceLocation, PlaceDetails, PlaceLocation } from '@/types/placeLocation'
 import type { Viewport } from '@/types/viewport'
 
 const PLACE_LOCATIONS_PATH = '/api/places/'
@@ -81,3 +81,8 @@ export const createPlaceLocation = async ({
 export const deletePlaceLocation = async (id: number): Promise<void> => {
   await requestJsonAuthorized(`${PLACE_LOCATIONS_PATH}${id}/`, { method: 'DELETE' })
 }
+
+export const updatePlaceLocation = async (id: number, details: PlaceDetails): Promise<PlaceLocation> =>
+  toPlaceLocation(
+    expectPlaceLocation(await requestJsonAuthorized(`${PLACE_LOCATIONS_PATH}${id}/`, { method: 'PATCH', body: details })),
+  )

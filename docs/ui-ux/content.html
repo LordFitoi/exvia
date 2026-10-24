@@ -177,6 +177,21 @@
           <div class="menu-spacer"></div>
         </div>
         <div class="specimen">
+          <span class="specimen-title">Selectable list with a menu: the selected row shows more options</span>
+          <ul class="list">
+            <li class="list-item list-item-split">
+              <button class="list-item-main" type="button" aria-pressed="true"><span class="list-item-icon"><span class="icon icon-route" aria-hidden="true"></span></span><span class="list-item-body"><span class="list-item-title">Sunday loop</span><span class="list-item-meta">42.1 km, 42 min</span></span></button>
+              <div class="menu">
+                <button class="icon-button" type="button" aria-label="More options for Sunday loop" aria-haspopup="menu" aria-expanded="false"><span class="icon icon-more" aria-hidden="true"></span></button>
+              </div>
+            </li>
+            <li class="list-item list-item-split">
+              <button class="list-item-main" type="button" aria-pressed="false"><span class="list-item-icon"><span class="icon icon-route" aria-hidden="true"></span></span><span class="list-item-body"><span class="list-item-title">Coast road</span><span class="list-item-meta">118.6 km, 1 h 59 min</span></span></button>
+            </li>
+          </ul>
+          <p class="text-small text-muted">Edit, Share and Delete live in the menu (Delete in the error color, last), not in a button bar</p>
+        </div>
+        <div class="specimen">
           <span class="specimen-title">Button row: destructive soft and first, primary last</span>
           <div class="button-row">
             <button class="button button-soft button-error button-lg" type="button"><span class="icon icon-trash" aria-hidden="true"></span>Delete</button>

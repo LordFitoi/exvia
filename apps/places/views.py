@@ -1,5 +1,5 @@
 from django.db.models import QuerySet
-from rest_framework.generics import DestroyAPIView, ListAPIView, ListCreateAPIView
+from rest_framework.generics import DestroyAPIView, ListAPIView, ListCreateAPIView, UpdateAPIView
 from rest_framework.serializers import BaseSerializer
 
 from apps.places.models import PlaceLocation
@@ -33,8 +33,10 @@ class PlaceLocationAllView(ListAPIView):
         return PlaceLocation.objects.filter(author=self.request.user).order_by('name', 'id')[:MAX_PLACES_LISTED]
 
 
-class PlaceLocationDetailView(DestroyAPIView):
-    """Deletes one of the caller's saved places; another rider's place is a 404."""
+class PlaceLocationDetailView(UpdateAPIView, DestroyAPIView):
+    """Edits or deletes one of the caller's saved places; another rider's place is a 404."""
+
+    serializer_class = PlaceLocationSerializer
 
     def get_queryset(self) -> QuerySet[PlaceLocation]:
         return PlaceLocation.objects.filter(author=self.request.user)

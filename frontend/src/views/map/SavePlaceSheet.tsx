@@ -1,17 +1,9 @@
 'use client'
 
-import CategoryField from '@/components/form/CategoryField'
-import FormSheet from '@/components/form/FormSheet'
-import TextAreaField from '@/components/form/TextAreaField'
-import TextField from '@/components/form/TextField'
-import { useFormSubmission } from '@/hooks/useFormSubmission'
-import { DEFAULT_PLACE_LOCATION_CATEGORY, isPlaceLocationCategory } from '@/services/placeLocationCategories'
+import PlaceFormSheet from '@/views/map/PlaceFormSheet'
+import { DEFAULT_PLACE_LOCATION_CATEGORY } from '@/services/placeLocationCategories'
 import { createPlaceLocation } from '@/services/placeLocationsApi'
-import type { PlaceLocation, SavePlaceRequest } from '@/types/placeLocation'
-
-const FIELD_NAMES = ['name', 'category', 'notes'] as const
-const NAME_MAX_LENGTH = 100
-const NOTES_MAX_LENGTH = 500
+import type { PlaceDetails, PlaceLocation, SavePlaceRequest } from '@/types/placeLocation'
 
 interface SavePlaceSheetProps {
   request: SavePlaceRequest
@@ -21,39 +13,19 @@ interface SavePlaceSheetProps {
 
 /** The sheet that names a spot, picks its kind and takes personal notes, then saves it as a favorite place. */
 export default function SavePlaceSheet({ request, onSaved, onClose }: SavePlaceSheetProps) {
-  const { isPending, fieldErrors, formError, handleSubmit } = useFormSubmission(
-    async ({ name, category, notes }) => {
-      onSaved(
-        await createPlaceLocation({
-          name: name.trim(),
-          notes: notes.trim(),
-          category: isPlaceLocationCategory(category) ? category : DEFAULT_PLACE_LOCATION_CATEGORY,
-          coordinates: request.coordinates,
-        }),
-      )
-    },
-    FIELD_NAMES,
-  )
+  const initial: PlaceDetails = { name: request.suggestedName, notes: '', category: DEFAULT_PLACE_LOCATION_CATEGORY }
+
+  const handleSubmit = async (details: PlaceDetails) => {
+    onSaved(await createPlaceLocation({ ...details, coordinates: request.coordinates }))
+  }
 
   return (
-    <FormSheet
+    <PlaceFormSheet
       title="Save place"
       submitLabel="Save place"
-      isPending={isPending}
-      formError={formError}
+      initial={initial}
       onSubmit={handleSubmit}
       onClose={onClose}
-    >
-      <TextField
-        name="name"
-        label="Name"
-        autoComplete="off"
-        maxLength={NAME_MAX_LENGTH}
-        error={fieldErrors.name}
-        defaultValue={request.suggestedName}
-      />
-      <CategoryField name="category" label="Category" error={fieldErrors.category} />
-      <TextAreaField name="notes" label="Notes (optional)" maxLength={NOTES_MAX_LENGTH} error={fieldErrors.notes} />
-    </FormSheet>
+    />
   )
 }

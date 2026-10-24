@@ -28,22 +28,28 @@ and scrolls, and the actions at the bottom are **Delete**, **Share** and **Edit*
 of Ride.
 
 - Top to bottom: the "Routes" header with an X (back to the map), the preview,
-  the list, and the actions in two lines: **Delete** and **Share** half and half
-  (`button-row-even`, both soft), then **Edit** full width below them, the
-  primary action last and under the thumb. Three on one line were too tight on a
-  phone (`button-group` keeps the same 12px gap between the lines). The tab bar is hidden (`useHideTabBar`).
+  and the list. There is no button bar: tapping a row selects it and shows a
+  **more-options** button on the right of that row (`RouteRowMenu`, the same
+  pattern as the rider rows in [ride.md](ride.md)), so a delete is never one tap
+  away. Its menu has **Edit**, **Share** and **Delete** (in the error color).
+  The tab bar is hidden (`useHideTabBar`).
 - Selecting a row fetches that route's path and frames it on the preview, as in
-  the picker. **Edit** is enabled once the selected route has loaded; **Delete**
-  and **Share** as soon as one is selected. None is enabled with no selection.
+  the picker. **Edit** is in the menu once the selected route has loaded;
+  **Share** and **Delete** are there as soon as the row is selected. Only the
+  selected row has the menu, so nothing can be done with no selection.
   There is no Ride button.
 - With no routes, the empty state offers **Create a route**, which switches to
   the creator.
 - `RoutePreview` and `RouteChoiceList` are shared with the picker
-  (`components/route/`).
+  (`components/route/`). The list takes an optional `renderMenu`: with it the
+  rows are the guide's split rows (`list-item-split`, main button plus menu)
+  and the selected one shows the menu instead of the check; the picker does not
+  pass it and keeps the check. The menu is in the top layer
+  (`useMenuPopover({ isInTopLayer: true })`), because the list scrolls and clips.
 
 ## Share
 
-**Share** copies the route's public link,
+**Share** (menu item) copies the route's public link,
 `<origin>/routes/<uuid>/` ([route-sharing.md](route-sharing.md)), to the
 clipboard (`navigator.clipboard`, through `useShareRoute`) and confirms it with
 a **toast**: "Link copied to the clipboard", at the top of the screen, which
@@ -60,7 +66,7 @@ were added to the guide for it.
 
 ## Delete
 
-**Delete** opens the guide's confirm dialog (`components/feedback/ConfirmDialog`, shared with the [ride history](ride-history.md#delete): a native
+**Delete** (menu item) opens the guide's confirm dialog (`components/feedback/ConfirmDialog`, shared with the [ride history](ride-history.md#delete): a native
 `<dialog class="dialog" role="alertdialog">`, "Delete this route?", the route
 name, Cancel first and the solid error Delete last). It is the one place the
 guide allows a solid error button.
@@ -74,7 +80,7 @@ text, and the buttons are enabled again.
 
 ## Edit
 
-`RouteEditView` opens from **Edit** in place of the list; Cancel (the X) returns
+`RouteEditView` opens from the menu's **Edit** in place of the list; Cancel (the X) returns
 to the list with the same route still selected. It is the route creator on an
 existing route: the shared `RouteEditor` screen with different inputs.
 

@@ -7,6 +7,7 @@ import { useSuggestionPopover } from '@/hooks/useSuggestionPopover'
 import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import type { Coordinates } from '@/types/geolocation'
 import type { Place } from '@/types/place'
+import type { PlaceLocation } from '@/types/placeLocation'
 import PlaceSearchInput from '@/views/routes/PlaceSearchInput'
 import PlaceSuggestionList from '@/views/routes/PlaceSuggestionList'
 
@@ -15,7 +16,8 @@ interface PlaceSearchProps {
   proximity: Coordinates
   /** What the field is for, for screen readers: the visible placeholder only names what can be typed. */
   label: string
-  onSelect: (place: Place) => void
+  /** A saved place also comes with `savedPlace`, so it can be told from a place the services found. */
+  onSelect: (place: Place, savedPlace?: PlaceLocation) => void
 }
 
 /**

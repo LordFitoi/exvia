@@ -21,6 +21,7 @@ const toSavedResult = (place: PlaceLocation, from: Coordinates): SavedPlaceResul
     distanceMeters: measureDistanceMeters(from, place.coordinates),
     iconClass,
     place: { id: `place-location-${place.id}`, name: place.name, coordinates: place.coordinates },
+    saved: place,
   }
 }
 

@@ -10,6 +10,8 @@ import type { BaseMap } from '@/services/baseMap'
 import type { Coordinates } from '@/types/geolocation'
 
 const USER_ZOOM = 15
+const USER_PITCH_DEGREES = 0
+const USER_BEARING_DEGREES = 0
 
 interface UserMapOptions {
   accessToken: string | undefined
@@ -42,12 +44,17 @@ export const useUserMap = ({ accessToken, coordinates }: UserMapOptions): UserMa
 
   const { containerRef, mounted, hasLoadFailed } = useMapInstance({
     accessToken,
-    view: { center: coordinates, zoom: USER_ZOOM },
+    view: { center: coordinates, zoom: USER_ZOOM, pitch: USER_PITCH_DEGREES, bearing: USER_BEARING_DEGREES },
     onReady: handleReady,
   })
 
   const recenter = () => {
-    mounted?.map.flyTo({ center: toLngLat(coordinatesRef.current), zoom: USER_ZOOM })
+    mounted?.map.flyTo({
+      center: toLngLat(coordinatesRef.current),
+      zoom: USER_ZOOM,
+      pitch: USER_PITCH_DEGREES,
+      bearing: USER_BEARING_DEGREES,
+    })
   }
 
   return { containerRef, mounted, hasLoadFailed, recenter }

@@ -8,13 +8,21 @@ import type { BaseMap } from '@/services/baseMap'
 import { createPlaceLocationElement } from '@/services/placeLocationMarkers'
 import type { PlaceLocation } from '@/types/placeLocation'
 
-/** One marker per saved place, with its kind's icon, selectable when `onSelect` is given. A place that stays in the list keeps its marker, so panning does not flicker. */
+interface PlaceMarker {
+  readonly marker: Marker
+  /** What the marker shows and hands over when tapped: it is made again when this changes. */
+  readonly content: string
+}
+
+const describeContent = ({ name, notes, category }: PlaceLocation): string => `${category}|${name}|${notes}`
+
+/** One marker per saved place, with its kind's icon, selectable when `onSelect` is given. A place that stays in the list as it is keeps its marker, so panning does not flicker. */
 export const usePlaceMarkers = (
   mounted: BaseMap | null,
   places: readonly PlaceLocation[],
   onSelect: ((place: PlaceLocation) => void) | null,
 ): void => {
-  const markersRef = useRef(new Map<number, Marker>())
+  const markersRef = useRef(new Map<number, PlaceMarker>())
   const onSelectRef = useRef(onSelect)
   const isSelectable = onSelect !== null
 
@@ -25,9 +33,9 @@ export const usePlaceMarkers = (
   useEffect(() => {
     if (!mounted) return
     const markers = markersRef.current
-    const currentIds = new Set(places.map((place) => place.id))
-    markers.forEach((marker, id) => {
-      if (currentIds.has(id)) return
+    const currentContents = new Map(places.map((place) => [place.id, describeContent(place)]))
+    markers.forEach(({ marker, content }, id) => {
+      if (currentContents.get(id) === content) return
       marker.remove()
       markers.delete(id)
     })
@@ -42,14 +50,14 @@ export const usePlaceMarkers = (
         const marker = new mounted.mapboxgl.Marker({ element, anchor: 'top-left' })
           .setLngLat(toLngLat(place.coordinates))
           .addTo(mounted.map)
-        markers.set(place.id, marker)
+        markers.set(place.id, { marker, content: describeContent(place) })
       })
   }, [mounted, places, isSelectable])
 
   useEffect(() => {
     const markers = markersRef.current
     return () => {
-      markers.forEach((marker) => marker.remove())
+      markers.forEach(({ marker }) => marker.remove())
       markers.clear()
     }
   }, [mounted])

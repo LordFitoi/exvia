@@ -22,7 +22,7 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 | Position | `hooks/useGeolocation.ts` | `watchPosition` state: `pending`, `ready`, `denied`, `unavailable` |
 | Street snap | `hooks/useStreetPosition.ts` | Snaps each GPS fix to the nearest street; keeps the last street position |
 | Snap request | `services/streetSnapApi.ts` | Mapbox Directions call that returns the snapped point, or `null` |
-| Search | `views/routes/PlaceSearch.tsx` | The same place search as the route creator, at the top of the map; picking a place starts a [ride to it](#riding-to-a-place) |
+| Search | `views/routes/PlaceSearch.tsx` | The same place search as the route creator, at the top of the map; picking a place shows it on the map with a card, from which the rider can [ride to it](#riding-to-a-place) |
 | Destination ride | `views/map/DestinationRideView.tsx`, `hooks/useDestinationMap.ts`, `hooks/useDestinationArrival.ts` | Ride mode towards the picked place and its arrival summary (`views/map/DestinationSummarySheet.tsx`) |
 | Mapbox | `hooks/useUserMap.ts` | Creates the map (through `useMapInstance`) and the "You" marker, keeps the marker on the latest position, and hands the created map to the places hooks |
 | Places | `hooks/useMapPlaces.ts` and the [saved places](#saved-places) pieces | A press and hold drops a pin with a card; the rider's saved places show as icons |
@@ -39,7 +39,8 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
   an empty map.
 - The position is watched continuously (high accuracy). Each update moves the
   marker; the camera does not follow, so the rider can pan freely. The locate
-  button (top right) flies back to the current position.
+  button (top right) flies back to the current position and resets the camera
+  to the default view: zoom 15, flat (pitch 0) and north up (bearing 0).
 - Only street positions are shown. Every fix is sent to the Mapbox Directions
   API as a zero-length `driving` route with a 50 m radius; the snapped
   waypoint is what the map and marker use, never the raw GPS point. A new fix
@@ -81,15 +82,15 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 
 A rider can save any spot as a favorite place ([places.md](places.md)) and sees their saved places on
 the map. `UserMap` calls `useMapPlaces(mounted)`, which composes the pieces below and returns the
-`selection` (what the place card describes), `addPlace`, `removePlace` and `clearSelection`.
+`selection` (what the place card describes), `addPlace`, `removePlace`, `updatePlace`, `showPlace` (a place picked in the search) and `clearSelection`.
 
 | Piece | File | Job |
 |-------|------|-----|
 | Long press | `hooks/useMapLongPress.ts` | Tells a press and hold from a tap and a drag |
-| Pin and card | `hooks/usePinMarker.ts`, `views/map/PinPlaceCard.tsx`, `views/map/PlaceCard.tsx` | The pin on the pressed spot and its card |
+| Pin and card | `hooks/usePinMarker.ts`, `views/map/PinPlaceCard.tsx`, `views/map/FoundPlaceCard.tsx`, `views/map/PlaceCard.tsx` | The pin on the pressed spot or searched place, and its card |
 | Nearest business | `hooks/useNearestCommerce.ts`, `services/nearestCommerceApi.ts` | The business closest to the spot |
-| Saved place | `views/map/SavedPlaceCard.tsx`, `hooks/usePlaceMarkers.ts`, `hooks/usePlaceDeletion.ts`, `services/placeLocationMarkers.ts` | One icon marker per saved place, and its card (ride there, or delete it) |
-| Save sheet | `views/map/SavePlaceSheet.tsx`, `components/form/CategoryField.tsx` | Name, category and notes |
+| Saved place | `views/map/SavedPlaceCard.tsx`, `views/map/EditPlaceSheet.tsx`, `hooks/usePlaceMarkers.ts`, `hooks/usePlaceDeletion.ts`, `services/placeLocationMarkers.ts` | One icon marker per saved place, and its card (edit it beside the close button, ride there, or delete it) |
+| Save sheet | `views/map/SavePlaceSheet.tsx`, `views/map/PlaceFormSheet.tsx`, `components/form/CategoryField.tsx` | Name, category and notes (`PlaceFormSheet` is also the edit form) |
 | Viewport | `hooks/usePlaceLocations.ts`, `services/viewport.ts`, `services/placeLocationsApi.ts` | Loads only the saved places in view |
 | Categories | `services/placeLocationCategories.ts` | The fixed kinds, each with its label and icon |
 | Camera | `hooks/useSelectionFocus.ts` | Centers the selected spot above the card |
@@ -169,9 +170,15 @@ the map. `UserMap` calls `useMapPlaces(mounted)`, which composes the pieces belo
 
 The search field of the [route creator](#route-creator) (`PlaceSearch`, same services, same 100 km
 ranked list and categories) is also at the top of the map, over the controls, searching near the
-rider's street position. Picking a **place** (a category row only lists its places, as there) does not add a point:
-it opens **ride mode towards that place** in place of the map (`MapOverview` keeps the picked `Place`;
-`key` is the place id, so a new pick restarts the ride).
+rider's street position. Picking a **place** (a category row only lists its places, as there) does not add a point,
+and does not start the ride either: it **shows the place on the map first**, like a press and hold or a tap on a
+saved place. The camera moves to it, a pin marks it (`usePinMarker`) and its card opens (`useMapPlaces.showPlace`
+sets a `found` selection). The card (`views/map/FoundPlaceCard.tsx`) has the name, the address and the
+coordinates, **Save place** (opens the [save sheet](#saved-places) with the name filled in) and **Ride here**. A
+*saved* place picked in the search opens its saved-place card instead (`PlaceSearch` hands over the
+`PlaceLocation` as a second argument), with the ride and delete buttons. **Ride here** opens **ride mode towards
+that place** in place of the map (`MapOverview` keeps the picked `Place`; `key` is the place id, so a new pick
+restarts the ride).
 
 - **The path is never stored or drawn from a saved route.** `useStreetRoute` asks Mapbox Directions for the
   street route (`fetchStreetRoute`: path, distance and duration) **from the rider's current position to the

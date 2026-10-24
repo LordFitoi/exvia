@@ -16,6 +16,8 @@ interface RouteChoiceListProps {
   onRetry: () => void
   /** What the empty state offers, such as a link to draw the first route. */
   emptyAction: ReactNode
+  /** The more-options menu of the selected route. With it, the row has that menu instead of the check. */
+  renderMenu?: (route: RouteSummary) => ReactNode
 }
 
 function RouteChoiceSkeleton() {
@@ -42,6 +44,7 @@ export default function RouteChoiceList({
   onSelect,
   onRetry,
   emptyAction,
+  renderMenu,
 }: RouteChoiceListProps) {
   if (status === 'loading') return <RouteChoiceSkeleton />
 
@@ -76,19 +79,37 @@ export default function RouteChoiceList({
   return (
     <div className={size === 'fill' ? 'route-choice-list route-choice-list-fill' : 'route-choice-list'}>
       <ul className="list">
-        {routes.map((route) => (
-          <li key={route.id}>
-            <button
-              className="list-item"
-              type="button"
-              aria-pressed={route.id === selectedId}
-              onClick={() => onSelect(route.id)}
-            >
-              <RouteItemBody route={route} />
-              {route.id === selectedId && <span className="icon icon-check" aria-hidden="true"></span>}
-            </button>
-          </li>
-        ))}
+        {routes.map((route) => {
+          const isSelected = route.id === selectedId
+          if (renderMenu) {
+            return (
+              <li className="list-item list-item-split" key={route.id}>
+                <button
+                  className="list-item-main"
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => onSelect(route.id)}
+                >
+                  <RouteItemBody route={route} />
+                </button>
+                {isSelected && renderMenu(route)}
+              </li>
+            )
+          }
+          return (
+            <li key={route.id}>
+              <button
+                className="list-item"
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => onSelect(route.id)}
+              >
+                <RouteItemBody route={route} />
+                {isSelected && <span className="icon icon-check" aria-hidden="true"></span>}
+              </button>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )

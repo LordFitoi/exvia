@@ -19,7 +19,7 @@ const KIND_SUGGESTIONS: readonly PlaceSuggestion[] = listCategories()
 interface PlaceCompletionOptions {
   accessToken: string | undefined
   proximity: Coordinates
-  onSelect: (place: Place) => void
+  onSelect: (place: Place, savedPlace?: PlaceLocation) => void
 }
 
 export interface PlaceCompletion {
@@ -91,10 +91,10 @@ interface ListedSuggestions {
   proximity: Coordinates
 }
 
-/** The kinds of place with nothing typed; else the places found, with the rider's saved places that match the text first, in at most 8 rows. */
+/** The kinds of place with nothing typed; else the places found, with the rider's saved places that match the text first. Never more than 8 rows. */
 const listSuggestions = ({ text, categoryId, found, favorites, proximity }: ListedSuggestions): readonly PlaceSuggestion[] => {
-  if (text === '') return KIND_SUGGESTIONS
-  if (categoryId !== null) return found
+  if (text === '') return KIND_SUGGESTIONS.slice(0, MAX_SUGGESTIONS)
+  if (categoryId !== null) return found.slice(0, MAX_SUGGESTIONS)
   return putSavedPlacesFirst(findSavedPlaces(text, favorites, proximity), found).slice(0, MAX_SUGGESTIONS)
 }
 
@@ -111,7 +111,7 @@ export const usePlaceCompletion = ({ accessToken, proximity, onSelect }: PlaceCo
   const pick = (suggestion: PlaceSuggestion) => {
     if (suggestion.kind === 'category') return dispatch({ type: 'category-picked', id: suggestion.id, title: suggestion.title })
     dispatch({ type: 'place-picked' })
-    onSelect(suggestion.place)
+    onSelect(suggestion.place, suggestion.kind === 'saved' ? suggestion.saved : undefined)
   }
 
   const move = (step: number) => {

@@ -13,13 +13,14 @@ import { useRouteDeletion } from '@/hooks/useRouteDeletion'
 import { useRouteDetail } from '@/hooks/useRouteDetail'
 import { LINK_COPIED_MESSAGE, SHARE_FAILED_MESSAGE, useShareRoute } from '@/hooks/useShareRoute'
 import RouteEditView from '@/views/routes/RouteEditView'
+import RouteRowMenu from '@/views/routes/RouteRowMenu'
 
 interface RouteListViewProps {
   onClose: () => void
   onCreateRoute: () => void
 }
 
-/** The user's routes: preview one on a small map, then edit or delete it. */
+/** The user's routes: preview one on a small map, then edit, share or delete it from its menu. */
 export default function RouteListView({ onClose, onCreateRoute }: RouteListViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -67,6 +68,14 @@ export default function RouteListView({ onClose, onCreateRoute }: RouteListViewP
           selectedId={selectedId}
           onSelect={setSelectedId}
           onRetry={myRoutes.reload}
+          renderMenu={(route) => (
+            <RouteRowMenu
+              routeName={route.name}
+              onEdit={detail.route ? () => setIsEditing(true) : undefined}
+              onShare={sharing.copyLink}
+              onDelete={deletion.requestDeletion}
+            />
+          )}
           emptyAction={
             <button className="button button-primary" type="button" onClick={onCreateRoute}>
               Create a route
@@ -75,37 +84,6 @@ export default function RouteListView({ onClose, onCreateRoute }: RouteListViewP
         />
       </div>
       <FormAlert message={sharing.hasFailed ? SHARE_FAILED_MESSAGE : null} />
-      <div className="button-group">
-        <div className="button-row button-row-even">
-          <button
-            className="button button-soft button-error button-lg"
-            type="button"
-            disabled={selectedId === null}
-            onClick={deletion.requestDeletion}
-          >
-            <span className="icon icon-trash" aria-hidden="true"></span>
-            Delete
-          </button>
-          <button
-            className="button button-soft button-lg"
-            type="button"
-            disabled={selectedId === null}
-            onClick={sharing.copyLink}
-          >
-            <span className="icon icon-share" aria-hidden="true"></span>
-            Share
-          </button>
-        </div>
-        <button
-          className="button button-primary button-lg button-block"
-          type="button"
-          disabled={!detail.route}
-          onClick={() => setIsEditing(true)}
-        >
-          <span className="icon icon-edit" aria-hidden="true"></span>
-          Edit
-        </button>
-      </div>
       {sharing.isCopied && (
         <div className="toast-region">
           <Toast message={LINK_COPIED_MESSAGE} onDismiss={sharing.dismissCopied} />

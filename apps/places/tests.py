@@ -149,6 +149,46 @@ class PlaceLocationDeleteApiTests(TestCase):
         self.assertTrue(PlaceLocation.objects.filter(pk=place.pk).exists())
 
 
+class PlaceLocationUpdateApiTests(TestCase):
+    def setUp(self) -> None:
+        self.rider = User.objects.create_user('rider', password='pw')
+        self.client = APIClient()
+        self.client.force_authenticate(self.rider)
+
+    def save_place(self, author: User) -> PlaceLocation:
+        return PlaceLocation.objects.create(author=author, name='Shell', category=PlaceCategory.CAFE, lat=1, lng=2)
+
+    def test_requires_authentication(self) -> None:
+        place = self.save_place(self.rider)
+        response = APIClient().patch(reverse('places:place_detail', args=[place.pk]), {'name': 'Esso'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_edits_name_notes_and_category_of_own_place(self) -> None:
+        place = self.save_place(self.rider)
+        payload = {'name': 'Esso', 'notes': 'Cheap', 'category': 'gas_station'}
+        response = self.client.patch(reverse('places:place_detail', args=[place.pk]), payload, format='json')
+
+        place.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual((place.name, place.notes, place.category), ('Esso', 'Cheap', 'gas_station'))
+        self.assertEqual((float(place.lat), float(place.lng)), (1, 2))
+
+    def test_rejects_an_unknown_category(self) -> None:
+        place = self.save_place(self.rider)
+        response = self.client.patch(reverse('places:place_detail', args=[place.pk]), {'category': 'spaceport'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_another_riders_place_is_not_found_and_unchanged(self) -> None:
+        place = self.save_place(User.objects.create_user('other', password='pw'))
+        response = self.client.patch(reverse('places:place_detail', args=[place.pk]), {'name': 'Esso'}, format='json')
+
+        place.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(place.name, 'Shell')
+
+
 class PlaceLocationAllApiTests(TestCase):
     def setUp(self) -> None:
         self.rider = User.objects.create_user('rider', password='pw')

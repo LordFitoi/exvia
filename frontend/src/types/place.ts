@@ -1,4 +1,5 @@
 import type { Coordinates } from '@/types/geolocation'
+import type { PlaceLocation } from '@/types/placeLocation'
 
 /** A place, business or address found by the search, ready to become a point. */
 export interface Place {
@@ -39,6 +40,8 @@ export interface SavedPlaceResult {
   /** The icon of the kind it was saved as. */
   readonly iconClass: string
   readonly place: Place
+  /** The saved place itself, with its kind and notes. */
+  readonly saved: PlaceLocation
 }
 
 export type PlaceSuggestion = PlaceResult | SavedPlaceResult | CategoryResult
