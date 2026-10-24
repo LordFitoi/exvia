@@ -66,7 +66,12 @@ with `route_id`, which must be a route the caller drew (400 otherwise), so a
 member cannot attach, and thereby expose, someone else's route. The card links
 to the public page of the route ([route-sharing.md](route-sharing.md)): the
 route's UUID is already its link, so members need no extra permission to open
-it. Deleting the route keeps the notice and clears `route`.
+it. `NoticeRouteLink` shows the route's map preview above its name row: the
+same picture a link preview shows, with a marker on every checkpoint, loaded from
+`/routes/<id>/opengraph-image` on the frontend (see
+[route-sharing.md](route-sharing.md#the-preview-image)), lazily, since the home
+feed can hold 50 notices. If the image fails to load, the link falls back to
+the name row alone. Deleting the route keeps the notice and clears `route`.
 
 ## Frontend
 

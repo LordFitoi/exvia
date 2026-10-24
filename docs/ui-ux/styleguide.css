@@ -159,6 +159,7 @@
 
 /* Reserve room for the open dropdown menu and frame the static dialog */
 .dropdown-spacer { block-size: 9.5rem; }
+.dropdown-spacer-tall { block-size: 13.5rem; }
 
 .dialog-preview {
   display: grid;

@@ -96,6 +96,12 @@ Exvia changes the following on purpose:
   switch and slider are restyled native inputs so keyboard and screen readers
   keep working. State is expressed with ARIA attributes (`aria-pressed`,
   `aria-selected`, `aria-current`, `aria-invalid`), not state classes.
+- **Dropdown in a dialog.** The app's `DropdownField` renders the guide's
+  `details.dropdown` markup but opens its menu (`dropdown-menu[popover]`) in
+  the top layer under the summary, so a dialog that scrolls cannot clip it;
+  the menu scrolls inside itself when the list is longer than the room.
+  `dropdown-menu-grid` lays short options (blood types) in `--columns`
+  columns so they show without scrolling.
 - **Slider fill.** The rail is filled up to `--value` (a percentage). In the
   product, set it from the controlled value; `slider.js` does it for the demo.
   Progress bars take `--progress` (0 to 1) the same way, as an inline custom

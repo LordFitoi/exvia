@@ -12,6 +12,10 @@ interface TextFieldProps {
   hint?: string
   maxLength?: number
   defaultValue?: string
+  /** False for a field that may be left empty; true unless told otherwise. */
+  isRequired?: boolean
+  /** "none" unless told otherwise; "words" for names. */
+  autoCapitalize?: 'none' | 'words'
 }
 
 export default function TextField({
@@ -23,6 +27,8 @@ export default function TextField({
   hint,
   maxLength,
   defaultValue,
+  isRequired = true,
+  autoCapitalize = 'none',
 }: TextFieldProps) {
   const id = useId()
   const messageId = `${id}-message`
@@ -39,10 +45,10 @@ export default function TextField({
         name={name}
         type={type}
         autoComplete={autoComplete}
-        autoCapitalize="none"
+        autoCapitalize={autoCapitalize}
         autoCorrect="off"
         spellCheck={false}
-        required
+        required={isRequired}
         maxLength={maxLength}
         defaultValue={defaultValue}
         aria-invalid={hasError}

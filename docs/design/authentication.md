@@ -23,6 +23,10 @@ Mounted at `/api/auth/` (see [config/urls.py](../../config/urls.py)):
 | `token/verify/` | `TokenVerifyView` (simplejwt) | Check whether a token is still valid |
 | `signup/` | `apps.users.views.SignupView` | Public self-serve registration; creates an inactive user from `username`, `email`, `password`, pending admin approval |
 | `me/` | `apps.users.views.CurrentUserView` | Example protected endpoint; returns the authenticated caller's `id`, `username`, `email` and `is_staff` |
+| `profile/` | `apps.users.views.ProfileView` | `GET`: the caller's profile (photo path, bio, blood type, contacts, vehicles, completion); `PATCH`: changes the photo (multipart), bio and blood type. See [user-profile.md](user-profile.md#api) |
+| `profile/contacts/`, `profile/contacts/<id>/` | `ContactCreateView`, `ContactDetailView` | Add, change or delete one of the caller's emergency contacts |
+| `profile/vehicles/`, `profile/vehicles/<id>/` | `VehicleCreateView`, `VehicleDetailView` | Add, change or delete one of the caller's vehicles |
+| `users/<username>/profile/` | `apps.users.views.SharedProfileView` | The public side of another rider's profile (photo, bio, garage), for signed-in riders. See [user-profile.md](user-profile.md#api) |
 | `users/lookup/?username=` | `apps.users.views.UserLookupView` | `{id, username, avatar}` of the active user with exactly that username, `404` otherwise |
 | `users/search/?q=` | `apps.users.views.UserSearchView` | `[{id, username, avatar}]`: up to 5 (`SUGGESTION_LIMIT`) active users, other than the caller, whose username starts with `q` (case-insensitive, ordered by username); a blank `q` gives `[]`. Feeds the username autocomplete of the invite dialogs |
 

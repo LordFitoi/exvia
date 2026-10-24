@@ -162,17 +162,31 @@ Railway, declared in [railway.ts](../../.railway/railway.ts); default
 
 ### The preview image
 
-`opengraph-image.ts` returns a PNG that **Mapbox draws** (Static Images API,
-`dark-v11`, the route as a 6px line in the primary green with a light-green
-`a` pin at the start and `b` pin at the finish, framed with `auto` and 80px padding).
-The route handler fetches it and passes the bytes through; the token never
-reaches the preview, only the exact image does.
+`opengraph-image.tsx` returns a PNG made in two steps. **Mapbox draws the map**
+(Static Images API, `dark-v11`, the route as a 6px line in the primary green, no
+pins) and `next/og` lays **a marker on every checkpoint** over it, the way the
+route map of the app draws them: a flag at the start, a checkered flag at the
+finish, and in between either the number of the point (the start is 1, so the
+first is 2) or, for a point that is a saved place, the icon of its kind on a blue
+disc (`PreviewImage.tsx`, `previewMarkers.ts`). A route saved before waypoints
+were stored shows only the start and the finish. The glyphs are the `icon-*`
+drawings of the style guide copied as SVG (`previewMarkerIcons.ts`), since the
+renderer has no CSS: a new place category needs its icon added there too.
+
+The markers sit at the right pixel because the app frames the map itself instead
+of asking Mapbox for `auto`: `fitMapView` picks the centre and zoom that show the
+path and every waypoint with 90px to spare, Mapbox draws exactly that view, and
+`projectToImage` applies the same Web Mercator maths to place each marker. The
+token never reaches the preview, only the finished image does.
 
 - **1200×630 on the dark style.** The size is the standard Open Graph one
   (1.91:1). The dark style is deliberate: it matches the app's dark theme and
   is also far lighter than the light one, which came out at ~350 KB at this
   size for a dense city. WhatsApp drops to a small thumbnail above ~300 KB;
-  the dark PNG is ~110 KB. PNG weight follows pixel count and map detail, so
+  the dark PNG was ~110 KB when Mapbox's own PNG was passed through. Re-drawn by
+  `next/og` with the markers it is ~400 KB (lossless, 24-bit), above that limit;
+  quantising it to a palette with `sharp` brings it to ~110 KB, and is not done yet.
+  PNG weight follows pixel count and map detail, so
   if the style or size changes, re-measure.
 - **The path is thinned to fit the URL.** Mapbox refuses URLs over 8,192
   characters and a street path has up to 20,000 points. `simplifyPath`
@@ -187,6 +201,8 @@ reaches the preview, only the exact image does.
   the URL (it carries the access token). Cached by browsers for an hour;
   platforms keep their own copy of a preview for much longer, so an edited
   route may keep its old picture in a chat until they refresh.
+- The app reuses the same image: a clan notice with a route shows it as the
+  route's preview ([clans.md](clans.md#attached-route)).
 - It needs `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` at runtime on the server. A token
   restricted to the app's URL (as [frontend.md](frontend.md) recommends) would
   refuse a server request that sends no `Referer`; the token in use today
@@ -213,8 +229,8 @@ reaches the preview, only the exact image does.
   the first byte of this page waits for the route fetch (cached for minutes).
 - **The waypoints carry their own names and categories.** The viewer is usually anonymous and the places belong to the
   author, so the page cannot look them up; it reads what the route stored when it was saved. The link
-  preview image is unchanged: Mapbox's static image shows only the `a` and `b`
-  pins.
+  preview image does show them: every checkpoint has its marker, with the icon of
+  its category.
 - **Own image route instead of pointing `og:image` at Mapbox**: the URL is on
   the app's domain, stable, and keeps the token out of the page source.
 - **The link is given from the route list**: its Share button

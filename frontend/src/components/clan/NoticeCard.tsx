@@ -1,8 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-
-import RouteItemBody from '@/components/route/RouteItemBody'
+import NoticeRouteLink from '@/components/clan/NoticeRouteLink'
 import { useAuth } from '@/hooks/useAuth'
 import { formatRelativeTime } from '@/services/formatRelativeTime'
 import type { ClanNotice } from '@/types/clan'
@@ -46,12 +44,7 @@ export default function NoticeCard({ notice, isClanShown, onEdit }: NoticeCardPr
       </div>
       <h3 className="text-subtitle">{title}</h3>
       <p className="text-small">{description}</p>
-      {route && (
-        <Link className="list-item notice-route" href={`/routes/${route.id}/`}>
-          <RouteItemBody route={route} />
-          <span className="icon icon-chevron-right" aria-hidden="true"></span>
-        </Link>
-      )}
+      {route && <NoticeRouteLink route={route} />}
     </article>
   )
 }

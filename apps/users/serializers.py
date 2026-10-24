@@ -3,7 +3,11 @@ from typing import Any
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models.fields.files import ImageFieldFile
 from rest_framework import serializers
+
+from apps.users.completion import ProfileCompletion, calculate_completion
+from apps.users.models import Contact, UserProfile, Vehicle
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -48,3 +52,68 @@ class UserBriefSerializer(serializers.ModelSerializer):
     def get_avatar(self, user: User) -> str | None:
         avatar = user.profile.avatar
         return avatar.url if avatar else None
+
+
+class RelativeImageField(serializers.ImageField):
+    """An image shown as its path under `MEDIA_URL` (null when empty), so it works behind the frontend proxy."""
+
+    def to_representation(self, value: ImageFieldFile) -> str | None:
+        return value.url if value else None
+
+
+class ContactSerializer(serializers.ModelSerializer):
+    """An emergency contact of the caller's profile."""
+
+    class Meta:
+        model = Contact
+        fields = ('id', 'name', 'phone_number', 'relationship')
+
+
+class VehicleSerializer(serializers.ModelSerializer):
+    """A vehicle in the garage of the caller's profile."""
+
+    class Meta:
+        model = Vehicle
+        fields = ('id', 'brand', 'model', 'year', 'license_plate', 'color')
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """The caller's profile with its contacts, vehicles and how complete it is.
+    Only `avatar`, `description` and `blood_type` are written here; contacts and vehicles have their own endpoints.
+    Read `emergency_contacts` and `vehicles` with `prefetch_related` to avoid a query per list."""
+
+    avatar = RelativeImageField(required=False)
+    emergency_contacts = ContactSerializer(many=True, read_only=True)
+    vehicles = VehicleSerializer(many=True, read_only=True)
+    completion = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = ('avatar', 'description', 'blood_type', 'emergency_contacts', 'vehicles', 'completion')
+
+    def get_completion(self, profile: UserProfile) -> ProfileCompletion:
+        return calculate_completion(profile)
+
+
+class SharedVehicleSerializer(serializers.ModelSerializer):
+    """A vehicle as other riders see it: no license plate."""
+
+    class Meta:
+        model = Vehicle
+        fields = ('id', 'brand', 'model', 'year', 'color')
+        read_only_fields = fields
+
+
+class SharedProfileSerializer(serializers.ModelSerializer):
+    """A profile as any signed-in rider sees it: who they are, their bio and their garage.
+    Blood type, emergency contacts and license plates stay private to the owner.
+    Read it with `select_related('user')` and `prefetch_related('vehicles')`."""
+
+    username = serializers.CharField(source='user.username', read_only=True)
+    avatar = RelativeImageField(read_only=True)
+    vehicles = SharedVehicleSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = ('username', 'avatar', 'description', 'vehicles')
+        read_only_fields = fields

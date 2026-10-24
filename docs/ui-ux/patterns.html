@@ -108,10 +108,13 @@
                   <button class="icon-button" type="button" aria-label="Edit notice"><span class="icon icon-edit" aria-hidden="true"></span></button>
                 </div>
                 <p class="text-small">Fuel stop moved to the north station. Bring a jacket, it gets cold near the coast.</p>
-                <a class="list-item notice-route" href="#">
-                  <span class="list-item-icon" aria-hidden="true"><span class="icon icon-route"></span></span>
-                  <span class="list-item-body"><span class="list-item-title">Coast loop</span><span class="list-item-meta">12.4 km &middot; 38 min</span></span>
-                  <span class="icon icon-chevron-right" aria-hidden="true"></span>
+                <a class="notice-route" href="#">
+                  <span class="notice-route-image" aria-hidden="true"></span>
+                  <span class="list-item">
+                    <span class="list-item-icon" aria-hidden="true"><span class="icon icon-route"></span></span>
+                    <span class="list-item-body"><span class="list-item-title">Coast loop</span><span class="list-item-meta">12.4 km &middot; 38 min</span></span>
+                    <span class="icon icon-chevron-right" aria-hidden="true"></span>
+                  </span>
                 </a>
                 <div class="notice-image"></div>
               </article>
@@ -379,7 +382,6 @@
           <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
           <header class="app-bar">
             <h2 class="app-bar-title">Profile</h2>
-            <button class="button button-text button-primary" type="button">Edit</button>
           </header>
           <div class="phone-body">
             <div class="profile-header">
@@ -389,6 +391,10 @@
               </div>
               <h3 class="profile-name">Marta Ruiz</h3>
               <p class="profile-bio">Weekend rider. Coffee stops, coastal roads and the occasional gravel detour.</p>
+            </div>
+            <div class="button-row button-row-even">
+              <button class="button button-soft" type="button"><span class="icon icon-sm icon-edit" aria-hidden="true"></span>Edit profile</button>
+              <button class="button button-soft" type="button"><span class="icon icon-sm icon-share" aria-hidden="true"></span>Share profile</button>
             </div>
             <article class="card stack stack-sm">
               <div class="stepper">
@@ -439,7 +445,41 @@
             <a class="tab-bar-item" href="#" aria-current="page"><span class="icon icon-lg icon-user" aria-hidden="true"></span>Profile</a>
           </nav>
         </div>
-        <figcaption class="phone-caption">Profile: what is missing first, then stats, medical info, garage, contacts</figcaption>
+        <figcaption class="phone-caption">Profile: under the header, Edit profile and Share profile as two equal soft buttons (an even button row), then what is missing first, stats, medical info, garage, contacts</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="phone-status" aria-hidden="true"><span>9:41</span><span class="phone-battery"></span></div>
+          <header class="app-bar">
+            <button class="icon-button" type="button" aria-label="Back"><span class="icon icon-chevron-left" aria-hidden="true"></span></button>
+            <h2 class="app-bar-title">Profile</h2>
+          </header>
+          <div class="phone-body">
+            <div class="profile-header">
+              <span class="avatar avatar-xl">MR</span>
+              <h3 class="profile-name">Marta Ruiz</h3>
+              <p class="profile-bio">Weekend rider. Coffee stops, coastal roads and the occasional gravel detour.</p>
+            </div>
+            <section aria-labelledby="shared-garage-title">
+              <div class="section-heading"><h3 id="shared-garage-title">Garage</h3></div>
+              <div class="garage">
+                <article class="card vehicle-card">
+                  <span class="list-item-icon"><span class="icon icon-bike" aria-hidden="true"></span></span>
+                  <div><h4 class="text-subtitle">Triumph Tiger 900</h4><p class="text-caption">2022 &middot; Matte grey</p></div>
+                </article>
+              </div>
+            </section>
+          </div>
+          <nav class="tab-bar" aria-label="Main">
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-home" aria-hidden="true"></span>Home</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-pin" aria-hidden="true"></span>Map</a>
+            <a class="tab-bar-item tab-bar-action" href="#"><span class="tab-bar-action-icon"><span class="icon icon-lg icon-flag-checkered" aria-hidden="true"></span></span>Ride</a>
+            <a class="tab-bar-item" href="#"><span class="icon icon-lg icon-users" aria-hidden="true"></span>Clans</a>
+            <a class="tab-bar-item" href="#" aria-current="page"><span class="icon icon-lg icon-user" aria-hidden="true"></span>Profile</a>
+          </nav>
+        </div>
+        <figcaption class="phone-caption">Shared profile: what any signed-in rider sees of another rider (photo, name, bio, garage without plates). No edit button, no blood type, no emergency contacts</figcaption>
       </figure>
     </div>
   </main>

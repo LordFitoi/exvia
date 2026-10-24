@@ -21,7 +21,8 @@ both: it is public and has no layout of its own.
 | `(app)` | `/ride` | Ride, see [ride.md](ride.md) | authenticated only |
 | `(app)` | `/ride/<group uuid>` | The ride of a group the rider accepted, see [ride.md](ride.md#pieces) | authenticated only |
 | `(app)` | `/clans` | Clans, see [clans.md](clans.md#frontend) | authenticated only |
-| `(app)` | `/profile` | Profile, with log out and, for staff, a link to the admin site | authenticated only |
+| `(app)` | `/profile` | Profile: photo, bio, completion, blood type, garage, emergency contacts, an Edit button, log out and, for staff, a link to the admin site, see [user-profile.md](user-profile.md#frontend) | authenticated only |
+| `(app)` | `/profile/<username>` | Another rider's profile, read only, see [user-profile.md](user-profile.md#frontend) | authenticated only |
 | none | `/routes/<uuid>` | Shared route, see [route-sharing.md](route-sharing.md) | public |
 
 - Logged out: only login and signup are reachable. Any other path redirects
@@ -119,7 +120,8 @@ within about 10 s. A refresh that fails hides the section instead of keeping a g
 The "Next ride" block on Home still shows the guide's empty `state-view`
 ("No rides planned"): clan rides have no endpoints yet. Clans and the Home
 feed of notices are real, see [clans.md](clans.md#frontend). Profile shows
-what `me/` returns: username and email. When `me/` reports `is_staff`, an
+the rider's profile ([user-profile.md](user-profile.md#frontend)) and, from what `me/` returns, the
+email. When `me/` reports `is_staff`, an
 "Administration" section adds a link row to `/admin/`. It is a plain `<a>`
 (a full page load), because `/admin/` is Django, proxied by
 [next.config.ts](../../frontend/next.config.ts) outside the Next.js router.

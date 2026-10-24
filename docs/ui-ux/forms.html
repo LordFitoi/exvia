@@ -82,7 +82,7 @@
 
     <section class="guide-section" id="selects" aria-labelledby="selects-title">
       <h2 id="selects-title">Select, dropdown and suggestions</h2>
-      <p>Prefer the native <code>select</code> on mobile: it opens the OS picker. Use the custom dropdown for short lists (7 options or fewer) that need rich rows. Group longer lists, and preselect the common choice. When the answer is a name the person types (a rider's username), complete it with suggestions under the field instead of a list to scroll.</p>
+      <p>Prefer the native <code>select</code> on mobile: it opens the OS picker. Use the custom dropdown for short lists (7 options or fewer) that need rich rows, or when the native picker would break the look of the form (the blood type). Inside a dialog, which would clip an in-flow menu, the menu goes to the top layer (<code>dropdown-menu</code> with <code>popover</code>) always under its summary, as wide as it, and scrolls inside itself when the list is longer than the room; it closes on a press outside, on Escape (the dialog stays open) and on choosing an option, and the arrow keys move between the options. Group longer lists, and preselect the common choice. When the answer is a name the person types (a rider's username), complete it with suggestions under the field instead of a list to scroll.</p>
       <div class="specimen-grid">
         <div class="specimen">
           <span class="specimen-title">Native select</span>
@@ -109,6 +109,28 @@
             </ul>
           </details>
           <div class="dropdown-spacer"></div>
+        </div>
+        <div class="specimen">
+          <span class="specimen-title">Compact dropdown (open)</span>
+          <p class="text-small text-muted">For a list of short values, such as the blood type: the options sit in <code>--columns</code> columns (<code>dropdown-menu-grid</code>) so they all show at once, under the summary. A choice that means "none" takes a full row (<code>dropdown-item-wide</code>).</p>
+          <div class="field">
+            <span class="field-label" id="dd-blood-label">Blood type</span>
+            <details class="dropdown" open>
+              <summary aria-labelledby="dd-blood-label"><span>O+</span><span class="icon icon-chevron-down" aria-hidden="true"></span></summary>
+              <ul class="dropdown-menu dropdown-menu-grid" role="listbox" aria-labelledby="dd-blood-label">
+                <li class="dropdown-item-wide" role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">Not set</button></li>
+                <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">A+</button></li>
+                <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">A-</button></li>
+                <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">B+</button></li>
+                <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">B-</button></li>
+                <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">AB+</button></li>
+                <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">AB-</button></li>
+                <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="true">O+</button></li>
+                <li role="presentation"><button class="dropdown-option" type="button" role="option" aria-selected="false">O-</button></li>
+              </ul>
+            </details>
+          </div>
+          <div class="dropdown-spacer dropdown-spacer-tall"></div>
         </div>
         <div class="specimen">
           <span class="specimen-title">Suggestions (open)</span>

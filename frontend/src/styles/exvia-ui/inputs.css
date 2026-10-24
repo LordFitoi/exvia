@@ -201,6 +201,35 @@
   .dropdown-option[aria-selected="true"]:hover { background: var(--color-surface-sunken); }
 }
 
+/* Compact menu: short options (blood types) side by side in `--columns` columns, so a list of nine shows in
+   four rows without scrolling. The options keep the 44px target. A wide item (a "none" choice) takes a
+   full row, and the chosen option shows by its tint and weight, since a check would crowd the cell */
+.dropdown-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 4), 1fr);
+}
+
+.dropdown-menu-grid > .dropdown-item-wide { grid-column: 1 / -1; }
+.dropdown-menu-grid .dropdown-option { justify-content: center; }
+.dropdown-menu-grid .dropdown-option .icon { display: none; }
+
+/* In a box that scrolls or clips (a dialog) the menu goes to the top layer, like the suggestion list: fixed,
+   with `top`, `left`, `width` and `max-height` set by the app from the summary's rectangle and the part of
+   the screen that is free. It shows what fits and scrolls inside itself, without passing the scroll on to
+   the page. Opaque, because the blur of the in-flow menu does not reach the top layer */
+.dropdown-menu[popover] {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  border: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.dropdown-menu[popover]:not(:popover-open) { display: none; }
+
 /* Suggestions: a text field that completes what is typed offers the matches in a list under it
    (WAI-ARIA combobox: the input is role="combobox" with aria-controls and aria-activedescendant,
    the list a listbox of options). The focus stays in the input, so the arrow keys move the active

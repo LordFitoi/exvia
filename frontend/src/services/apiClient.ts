@@ -19,6 +19,7 @@ export class ApiError extends Error {
 
 export interface RequestOptions {
   readonly method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+  /** Sent as JSON, or as multipart when it is a `FormData` (file uploads). */
   readonly body?: unknown
   readonly accessToken?: string
   /** Cancels the request, for answers that stop mattering (the map moved on). */
@@ -57,11 +58,18 @@ const toApiError = (status: number, payload: unknown): ApiError => {
   return new ApiError(status, message, fieldErrors)
 }
 
+const encodeBody = (body: unknown): BodyInit | undefined => {
+  if (body instanceof FormData) return body
+  return body ? JSON.stringify(body) : undefined
+}
+
 export const requestJson = async (
   path: string,
   { method = 'GET', body, accessToken, signal }: RequestOptions = {},
 ): Promise<unknown> => {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const isMultipart = body instanceof FormData
+  // A multipart body gets its Content-Type (with the boundary) from the browser.
+  const headers: Record<string, string> = isMultipart ? {} : { 'Content-Type': 'application/json' }
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`
 
   let response: Response
@@ -69,7 +77,7 @@ export const requestJson = async (
     response = await fetch(path, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: encodeBody(body),
       signal: AbortSignal.any([AbortSignal.timeout(REQUEST_TIMEOUT_MS), ...(signal ? [signal] : [])]),
     })
   } catch (error) {

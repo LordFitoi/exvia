@@ -1,8 +1,8 @@
 # User Profile
 
 Profile information attached to a user account: avatar, description, blood
-type, emergency contacts and a vehicle garage. Models and Django admin only
-for now: no serializers or endpoints exist yet.
+type, emergency contacts and a vehicle garage, with an API under
+`/api/auth/profile/` and the Profile tab of the app that shows and edits it.
 
 ## Base model
 
@@ -60,6 +60,83 @@ existed before the signal. It is idempotent and its reverse is a no-op.
 
 Caveats: `bulk_create` on `User` does not fire `post_save`, so it bypasses
 the signal; call it only if profiles are created separately.
+
+## API
+
+All endpoints are under `/api/auth/` and need a JWT; the caller only ever
+sees and changes their own profile.
+
+| Path | Methods | Purpose |
+|------|---------|---------|
+| `profile/` | `GET`, `PATCH` | The profile: `avatar` (path under `/media/`, or `null`), `description`, `blood_type`, `emergency_contacts`, `vehicles` and `completion`. `PATCH` takes JSON, or multipart when it carries the `avatar` image; contacts and vehicles are read-only here |
+| `profile/contacts/` | `POST` | Adds a contact (`name`, `phone_number` required; `relationship` optional) |
+| `profile/contacts/<id>/` | `GET`, `PATCH`, `DELETE` | Another user's contact is `404` |
+| `profile/vehicles/` | `POST` | Adds a vehicle (`brand`, `model` required; `year`, `license_plate`, `color` optional) |
+| `profile/vehicles/<id>/` | `GET`, `PATCH`, `DELETE` | Another user's vehicle is `404` |
+| `users/<username>/profile/` | `GET` | What any signed-in rider sees of another rider (`SharedProfileSerializer`): `username`, `avatar`, `description` and `vehicles` without the license plate. `404` for an unknown or inactive user. Read only |
+
+- The avatar is sent back as a relative path (`RelativeImageField`), like
+  `UserBriefSerializer` does, so it resolves through the frontend's
+  `/media/` proxy instead of the backend host.
+- There is no endpoint to remove the photo, only to replace it.
+- **Privacy of the shared profile.** Blood type, emergency contacts (their phone
+  numbers belong to other people) and license plates are only ever in the
+  owner's `profile/`; the shared serializer does not list them, and a test
+  asserts the exact set of keys. Any signed-in rider can read the shared
+  profile of any active user, so what it holds must be fine to show them all.
+- Contacts and vehicles have no list endpoints: the profile already carries
+  them (prefetched, two queries).
+
+## Completion
+
+[completion.py](../../apps/users/completion.py) `calculate_completion`
+scores the profile in five equal steps, 20% each: photo, bio (not just
+whitespace), blood type, at least one emergency contact and at least one
+vehicle. The profile returns `completion: {percentage, missing}`, where
+`missing` lists the keys left (`avatar`, `description`, `blood_type`,
+`emergency_contact`, `vehicle`) in that order. It is computed on every
+read, not stored, so it can never go stale.
+
+## Frontend
+
+The `/profile` tab ([frontend-screens.md](frontend-screens.md)) is built in
+`frontend/src/views/profile/`, following the profile pattern of the style
+guide ([patterns.html](../ui-ux/patterns.html)):
+
+- **Header**: photo (initials when none) with the round edit button that
+  opens the image picker and uploads at once, name and bio.
+- **Actions row** under the header: **Edit profile** and **Share profile** as
+  two equal soft buttons (the guide's even button row, each with an icon). Share copies
+  `<origin>/profile/<username>/` to the clipboard and shows the "Link copied"
+  toast (the same messages as route sharing).
+- **Completion card**: "Profile N% complete", the steps left, a progress bar
+  and one link for the next missing step (add a photo, write a bio, add a
+  contact...) that opens the matching picker or form.
+- **Blood type** (a read-only row, changed in the Edit profile sheet),
+  **Garage** (sideways-scrolling vehicle cards) and
+  **Emergency contacts** (call button and edit button per row). Garage and
+  contacts each have an **Add** link and an empty message.
+- **Edit profile** opens a sheet with the bio and blood type, which is the
+  only place to change the blood type (the completion card's "Add your blood
+  type" opens it too). The blood type field is the guide's compact custom
+  dropdown (`DropdownField`, not the native `select`): "Not set" on a row of
+  its own and the eight types in four columns, so all show without scrolling.
+  The menu opens in the top layer under the field, and flips above only when
+  there is no room below, as in this sheet near the bottom of the screen.
+- Contacts and vehicles open their own sheet from Add or their edit button;
+  editing one also offers **Delete**, which asks first.
+- **Shared profile** (`/profile/<username>/`, `SharedProfileScreen`, inside the
+  authenticated app group, so a signed-out visitor is sent to `/login`): the
+  same header and garage components without their edit controls, a back
+  button, "Rider not found" for a 404 and a retry for other failures.
+  The username is URL-encoded in the link (`encodeURIComponent`), since
+  usernames may contain `.`, `+` and `@`. After logging in the visitor lands
+  on Home, not on the profile they were sent.
+- Every save reloads the profile (`useProfile.reload`), keeping the old one
+  on screen meanwhile, so the completion always comes from the server.
+- `apiClient.requestJson` sends a `FormData` body as multipart (no
+  `Content-Type` header, so the browser adds the boundary); everything else
+  is still JSON.
 
 ## Media storage
 
