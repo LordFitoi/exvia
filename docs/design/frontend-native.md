@@ -32,7 +32,8 @@ holds that fallback page and nothing else.
 | `frontend/capacitor.config.ts` | App id `app.exvia.mobile`, name, `server.url`, background color |
 | `frontend/capacitor-www/` | Offline fallback page |
 | `frontend/android/` | Generated native project (Gradle). Committed, except build output and `local.properties` |
-| `Makefile` (`android_*`) | `android_sync`, `android_build`, `android_studio` |
+| `frontend/scripts/android-run.sh` | Behind `make android_run`: creates the `exvia_pixel` virtual device (Pixel 8, Android 36, 4 GB RAM) if missing, boots it, installs the APK and launches the app |
+| `Makefile` (`android_*`) | `android_sync`, `android_build`, `android_run`, `android_studio` |
 
 ## Server URL
 
@@ -67,18 +68,50 @@ Everything lives in `~/Android` inside WSL and is wired through `~/.bashrc`:
   `org.gradle.java.home`, so set Studio's Gradle JDK to that one if it asks.
 - `frontend/android/local.properties` (`sdk.dir`) is machine-specific and
   git-ignored; Studio recreates it on open.
+- Do not accept Studio's Android Gradle Plugin upgrade prompt. It moves AGP to
+  9.x and Gradle to 9.x, which rejects the `proguard-android.txt` line in
+  Capacitor's `app/build.gradle` and breaks `make android_build`. Capacitor 8
+  pins AGP 8.13 and Gradle 8.14; they only change with a Capacitor upgrade.
 - Capacitor 8 needs Node 22+, compile/target SDK 36 and min SDK 24.
 
 ## Workflow
 
 ```bash
 make android_build     # sync + debug APK in frontend/android/app/build/outputs/apk/debug/
+make android_run       # build, boot the emulator, install and launch the app
 make android_studio    # sync + open the project in Android Studio
 ```
 
-Run the app from Studio on an emulator or a USB device. A physical device
-under WSL needs the USB attached to WSL (`usbipd`); the emulator needs
-`/dev/kvm` access (`sudo usermod -aG kvm $USER`, then restart WSL).
+`android_run` reuses an emulator that is already running and logs its output to
+`/tmp/exvia-emulator.log`. It stops with the fix when a prerequisite is missing.
+The emulator needs, once, on the WSL side:
+
+```bash
+sudo usermod -aG kvm $USER   # then run `wsl --shutdown` from Windows and reopen WSL
+sudo apt-get install -y libpulse0 libnss3 libxkbfile1 libasound2t64 libsm6 libice6 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 libxcb-xinerama0 libxkbcommon-x11-0
+```
+
+To run on a physical phone, turn on Wireless debugging in Developer options,
+then:
+
+```bash
+make android_connect   # asks for the phone's IP and ports (and the pairing code on first use)
+make android_install   # build and install on the connected phone
+```
+
+`android_connect` ([android-connect.sh](../../frontend/scripts/android-connect.sh))
+asks for three fields: the phone's IP, the port and the pairing code. It runs
+`adb pair` with them and then waits up to 20 seconds for the phone to appear in
+`adb devices`. It does not run `adb connect`: after pairing, adb connects to the
+phone by itself (mDNS) on its real connection port, and connecting to the
+pairing port, which closes once pairing is done, only adds an `offline` entry
+and fails. The phone
+and the PC must be on the same Wi-Fi, and the pairing dialog ("Pair device with
+pairing code") must stay open until the script finishes.
+
+Alternatively, copy `app-debug.apk` to the phone and open it, allowing installs
+from unknown sources. Over USB, the device must first be attached to WSL
+with `usbipd`.
 
 ## Not done yet
 
