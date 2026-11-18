@@ -19,7 +19,7 @@ components come from the style guide ([map.css](../ui-ux/map.css), "Map" in
 | Screen | `views/map/MapOverview.tsx` | Reads the position and picks the map or a waiting/blocked message |
 | Map | `views/map/UserMap.tsx` | The canvas, the "center on me" button, the load-failure message |
 | Message | `views/map/MapStatusView.tsx` | Title plus `StateView` under the "Map" heading |
-| Position | `hooks/useGeolocation.ts` | `watchPosition` state: `pending`, `ready`, `denied`, `unavailable` |
+| Position | `hooks/useGeolocation.ts` | `watchPosition` state: `pending`, `ready`, `denied`, `unavailable`; in the Android app, group rides use the background watch (`services/backgroundLocationWatch.ts`, [frontend-native.md](frontend-native.md#background-location-group-rides)) |
 | Street snap | `hooks/useStreetPosition.ts` | Snaps each GPS fix to the nearest street; keeps the last street position |
 | Snap request | `services/streetSnapApi.ts` | Mapbox Directions call that returns the snapped point, or `null` |
 | Search | `views/routes/PlaceSearch.tsx` | The same place search as the route creator, at the top of the map; picking a place shows it on the map with a card, from which the rider can [ride to it](#riding-to-a-place) |

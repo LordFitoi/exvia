@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from apps.notifications.models import AnswerStatus, EventType, NotificationEvent
+from apps.notifications.models import DEVICE_TOKEN_MAX_LENGTH, AnswerStatus, EventType, NotificationEvent
 from apps.notifications.services import is_invitation_expired
 from apps.routes import group_meta
 from apps.routes.group_meta import ParticipantStatus
@@ -63,3 +63,9 @@ class NotificationSerializer(serializers.ModelSerializer):
             return ENDED_STATUS
         status = group_meta.get_status(event.route_group.meta_json, self.context['request'].user.pk)
         return JOINED_STATUS if status == ParticipantStatus.ACCEPTED else OPEN_STATUS
+
+
+class DeviceTokenSerializer(serializers.Serializer):
+    """The body of the device endpoints: the Firebase token of one app install."""
+
+    token = serializers.CharField(max_length=DEVICE_TOKEN_MAX_LENGTH)

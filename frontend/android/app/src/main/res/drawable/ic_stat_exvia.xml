@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status bar icon of push notifications: the brand arrow in one color, which Android tints. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <group
+        android:pivotX="256"
+        android:pivotY="256"
+        android:scaleX="1.4"
+        android:scaleY="1.4">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M388 118 262 392a8 8 0 0 1-15-1l-17-108a8 8 0 0 0-6-6l-107-31a8 8 0 0 1-1-15L388 118Z" />
+    </group>
+</vector>

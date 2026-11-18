@@ -20,7 +20,7 @@ interface GroupRideSessionProps {
  */
 export default function GroupRideSession({ onLeave }: GroupRideSessionProps) {
   const { group } = useLiveGroup()
-  const location = useGeolocation()
+  const location = useGeolocation({ shouldTrackInBackground: true })
   const street = useStreetPosition({
     accessToken: MAPBOX_ACCESS_TOKEN,
     coordinates: location.coordinates,

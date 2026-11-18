@@ -55,6 +55,8 @@ export default defineRailway(() => {
       PGHOST: db.env.PGHOST,
       PGPORT: db.env.PGPORT,
       REDIS_URL: cache.env.REDIS_URL,
+      // Firebase service account key (JSON), set once in the Railway dashboard; without it pushes are skipped.
+      FIREBASE_SERVICE_ACCOUNT_JSON: preserve(),
     },
   });
 
@@ -72,6 +74,8 @@ export default defineRailway(() => {
       PGHOST: db.env.PGHOST,
       PGPORT: db.env.PGPORT,
       REDIS_URL: cache.env.REDIS_URL,
+      // Firebase service account key (JSON), set once in the Railway dashboard; without it pushes are skipped.
+      FIREBASE_SERVICE_ACCOUNT_JSON: preserve(),
     },
   });
 

@@ -28,10 +28,14 @@ def build_notification(event: NotificationEvent) -> dict[str, object]:
     return {'id': event.pk, 'title': title, 'body': body}
 
 
+def load_event(event_id: int) -> NotificationEvent:
+    """The event with everything `build_notification` reads."""
+    return NotificationEvent.objects.select_related('author', 'route_group__route', 'scheduled_event').get(pk=event_id)
+
+
 def broadcast_event(event_id: int, user_ids: list[int]) -> None:
     """Best effort: a user with no open app hears nothing here, and finds the event in the list instead."""
-    event = NotificationEvent.objects.select_related('author', 'route_group__route', 'scheduled_event').get(pk=event_id)
-    notification = build_notification(event)
+    notification = build_notification(load_event(event_id))
     channel_layer = get_channel_layer()
     try:
         for user_id in user_ids:
