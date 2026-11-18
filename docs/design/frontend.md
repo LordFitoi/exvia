@@ -6,7 +6,8 @@ Next.js web client, separate from the Django backend. It lives in
 profile, with a bottom tab bar once logged in. It talks to the backend for
 authentication, for saving routes (see [map.md](map.md#route-creator)) and for
 listing and riding them (see [ride.md](ride.md)). It is an installable, full-screen PWA; see
-[frontend-pwa.md](frontend-pwa.md).
+[frontend-pwa.md](frontend-pwa.md), and it is wrapped as a native Android app with
+Capacitor; see [frontend-native.md](frontend-native.md).
 
 ## Stack
 

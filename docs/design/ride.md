@@ -436,7 +436,9 @@ Ride mode and the free ride share the group's live channel
   whenever the page is hidden. When the app becomes visible again the wake lock is requested again,
   the GPS watch is registered again (`useGeolocation`), a position is sent at once
   (`useSharePosition`) and the socket reconnects at once. Sharing that continues with the app in the
-  background needs a native app with background location, which this PWA is not. A rider who comes
+  background needs a native app with background location, which this PWA is not: the Android app has it
+  ([frontend-native.md](frontend-native.md#background-location-group-rides)), so there sharing goes on with
+  the screen locked or another app in front, and stops when the app is closed. A rider who comes
   back after being away finds the ride on Home ([Join back](#join-back)).
 - **Others on the map.** Each rider who reported recently is a **bubble above a dot**
   (`rider-marker`, the style guide's [Group rides](../ui-ux/group.html)): their picture, or

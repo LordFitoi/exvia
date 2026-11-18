@@ -7,12 +7,16 @@ import Toast from '@/components/feedback/Toast'
 import { LiveNotificationContext } from '@/context/LiveNotificationContext'
 import { startNotificationConnection } from '@/services/notificationConnection'
 import type { LiveNotification } from '@/services/notificationMessages'
+import { startPushNotifications } from '@/services/pushNotifications'
 
 interface LiveNotificationProviderProps {
   children: ReactNode
 }
 
-/** Listens for new notifications while the app is open, shows each one as a toast and shares the latest with the screens. */
+/**
+ * Listens for new notifications while the app is open, shows each one as a toast and shares the latest with the screens.
+ * In the native app it also registers the phone for push, which covers the app being closed or in the background.
+ */
 export default function LiveNotificationProvider({ children }: LiveNotificationProviderProps) {
   const [latest, setLatest] = useState<LiveNotification | null>(null)
   const [shown, setShown] = useState<LiveNotification | null>(null)
@@ -27,6 +31,8 @@ export default function LiveNotificationProvider({ children }: LiveNotificationP
     })
     return connection.stop
   }, [])
+
+  useEffect(() => startPushNotifications(), [])
 
   const dismiss = useCallback(() => setShown(null), [])
   const value = useMemo(() => ({ latest }), [latest])
