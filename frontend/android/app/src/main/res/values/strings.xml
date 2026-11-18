@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Exvia</string>
+    <string name="title_activity_main">Exvia</string>
+    <string name="package_name">app.exvia.mobile</string>
+    <string name="custom_url_scheme">app.exvia.mobile</string>
+</resources>

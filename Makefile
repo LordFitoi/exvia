@@ -11,7 +11,7 @@ export PGDATABASE PGUSER PGPASSWORD PGHOST PGPORT REDIS_URL
 
 STYLEGUIDE = docs/ui-ux/index.html
 
-.PHONY: help install railway_install railway_login db_setup redis_setup db_migrate db_shell db_seed run_redis stop_redis run_server run_scheduler run_frontend open_styleguide railway_plan railway_apply create_app
+.PHONY: help install railway_install railway_login db_setup redis_setup db_migrate db_shell db_seed run_redis stop_redis run_server run_scheduler run_frontend android_sync android_build android_studio open_styleguide railway_plan railway_apply create_app
 
 ##@ Help
 
@@ -70,6 +70,19 @@ open_styleguide: ## Open the UI/UX style guide (docs/ui-ux/) in the browser
 	elif command -v xdg-open >/dev/null 2>&1; then xdg-open $(STYLEGUIDE); \
 	elif command -v open >/dev/null 2>&1; then open $(STYLEGUIDE); \
 	else echo "No browser opener found. Open $(CURDIR)/$(STYLEGUIDE) manually."; exit 1; fi
+
+##@ Android (Capacitor)
+
+ANDROID_ENV = JAVA_HOME=$(HOME)/Android/jdk-21 ANDROID_HOME=$(HOME)/Android/Sdk
+
+android_sync: ## Copy the Capacitor config and plugins into the Android project (CAPACITOR_SERVER_URL overrides the server)
+	cd frontend && $(ANDROID_ENV) ./node_modules/.bin/cap sync android
+
+android_build: android_sync ## Build the debug APK (frontend/android/app/build/outputs/apk/debug/)
+	cd frontend/android && $(ANDROID_ENV) ./gradlew assembleDebug
+
+android_studio: android_sync ## Open the Android project in Android Studio (installed in WSL)
+	@nohup env STUDIO_JDK=$(HOME)/Android/android-studio/jbr $(HOME)/Android/android-studio/bin/studio.sh frontend/android >/dev/null 2>&1 &
 
 ##@ Railway
 

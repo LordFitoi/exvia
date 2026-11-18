@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Capacitor native project; its build output holds generated JS.
+    "android/**",
   ]),
 ]);
 
