@@ -7,6 +7,7 @@ import { useGroupRouteChange } from '@/hooks/useGroupRouteChange'
 import { useLiveGroup } from '@/hooks/useLiveGroup'
 import { useMyRoutes } from '@/hooks/useMyRoutes'
 import type { Coordinates } from '@/types/geolocation'
+import { getGroupSelection, isSameSelection } from '@/services/rideSelection'
 import type { SavedRoute } from '@/types/route'
 import type { RideSelection } from '@/types/rideSelection'
 import RouteChoiceDialog from '@/views/ride/RouteChoiceDialog'
@@ -18,8 +19,6 @@ interface ChangeRouteDialogProps {
   onClose: () => void
 }
 
-const FREE_SELECTION: RideSelection = { kind: 'free' }
-
 /**
  * The route picker for the ride under way. Saving changes the route of the whole group; it loads the routes
  * when opened. The leader can also draw a new route without leaving the ride: the creator opens over it in
@@ -30,17 +29,15 @@ export default function ChangeRouteDialog({ rider, onClose }: ChangeRouteDialogP
   const [createdRouteId, setCreatedRouteId] = useState<string | null>(null)
   const { group, replaceGroup } = useLiveGroup()
   const myRoutes = useMyRoutes()
-  const currentRouteId = group.route?.id ?? null
-  const shownRouteId = createdRouteId ?? currentRouteId
-  const current: RideSelection = shownRouteId ? { kind: 'route', id: shownRouteId } : FREE_SELECTION
+  const current = getGroupSelection(group)
+  const shown: RideSelection = createdRouteId ? { kind: 'route', id: createdRouteId } : current
   const routeChange = useGroupRouteChange(group.id, (changed) => {
     replaceGroup(changed)
     onClose()
   })
 
   const handleSave = (selection: RideSelection) => {
-    const chosenRouteId = selection.kind === 'route' ? selection.id : null
-    if (chosenRouteId === currentRouteId) onClose()
+    if (isSameSelection(selection, current)) onClose()
     else routeChange.change(selection)
   }
 
@@ -62,7 +59,7 @@ export default function ChangeRouteDialog({ rider, onClose }: ChangeRouteDialogP
   return (
     <RouteChoiceDialog
       myRoutes={myRoutes}
-      selection={current}
+      selection={shown}
       isPending={routeChange.isPending}
       formError={routeChange.error}
       onSave={handleSave}

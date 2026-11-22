@@ -13,11 +13,12 @@ from apps.users.serializers import UserBriefSerializer
 OPEN_STATUS = 'open'
 JOINED_STATUS = 'joined'
 ENDED_STATUS = 'ended'
+TRACK_MODE_NAME = 'Track mode'
 
 
 class NotificationSerializer(serializers.ModelSerializer):
     """A notification as one of its destinations sees it. For a route invitation, `route_group` is
-    the group, `route_name` the route (null in free mode) and `status` the caller's answer; all three
+    the group, `route_name` what it rides (the route's name, "Track mode", or null in free mode) and `status` the caller's answer; all three
     are null for other events. For a started clan event (`event_started`), `route_group` is its group,
     `scheduled_event` its id, `event_title` and `clan_name` say what and whose it is, and `status` is `open`
     (the caller can join), `joined` or `ended`. `status` is `expired` for an invitation that can no longer be answered:
@@ -49,7 +50,11 @@ class NotificationSerializer(serializers.ModelSerializer):
 
     def get_route_name(self, event: NotificationEvent) -> str | None:
         group = event.route_group
-        return group.route.name if group and group.route else None
+        if group is None:
+            return None
+        if group.route is not None:
+            return group.route.name
+        return TRACK_MODE_NAME if group.is_track else None
 
     def get_status(self, event: NotificationEvent) -> str | None:
         if event.route_group is None:

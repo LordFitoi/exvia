@@ -1,6 +1,11 @@
 import type { RouteGroup } from '@/types/routeGroup'
 import { describeGroup, getGroupTitle } from '@/services/groupRules'
 
+const getGroupIconClass = ({ route, isTrack }: RouteGroup): string => {
+  if (route) return 'icon-route'
+  return isTrack ? 'icon-locate' : 'icon-navigation'
+}
+
 interface ActiveGroupSectionProps {
   group: RouteGroup
   onJoin: () => void
@@ -8,7 +13,7 @@ interface ActiveGroupSectionProps {
 
 /** The group ride that is still rolling, with a way back into it. Render it only when there is one. */
 export default function ActiveGroupSection({ group, onJoin }: ActiveGroupSectionProps) {
-  const iconClass = group.route ? 'icon-route' : 'icon-navigation'
+  const iconClass = getGroupIconClass(group)
 
   return (
     <section className="stack-sm" aria-labelledby="active-group-title">

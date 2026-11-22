@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 
 from apps.routes import group_meta
@@ -22,6 +22,11 @@ class RouteGroupTests(TestCase):
         self.assertIsNone(self.group.route)
         self.assertEqual(self.group.meta_json, {})
         self.assertEqual(len(str(self.group.id)), 36)
+
+    def test_a_track_group_cannot_have_a_route(self) -> None:
+        route = Route.objects.create(name='Loop', points=EQUATOR_STRAIGHT_LINE, author=self.owner)
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            RouteGroup.objects.create(author=self.owner, route=route, is_track=True)
 
     def test_deleting_route_keeps_group_in_free_mode(self) -> None:
         route = Route.objects.create(name='Loop', points=EQUATOR_STRAIGHT_LINE, author=self.owner)

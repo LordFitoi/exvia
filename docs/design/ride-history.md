@@ -82,6 +82,13 @@ estimated time, and its distance is the kilometres the rider covered, so it is s
 when the ride was quit before reaching the place (`isDistanceCovered`); it still carries the **Not finished** badge
 then.
 
+## Rides of a track
+
+A [track ride](track-mode.md) is saved as a ride of the route it made, so it is listed like any ride of a route: the route
+is named "Track" and the day it ended (`Track 22 Nov 2026`), the summary has its preview, checkpoint times and stats, and it
+carries the **Ride mode** flag (it has `route_type` `ride`; there is no flag of its own). The checkpoints are the waypoints
+the track needed, so they are titled "Checkpoint N" and have times.
+
 ## Delete
 
 The app has no button to delete a ride: the history only grows. The API still has `DELETE

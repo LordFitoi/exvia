@@ -82,7 +82,7 @@ export const useGroupRide = ({ rider, location }: GroupRideOptions): GroupRide =
     if (status === 'denied') announce(LOST_PLACE_MESSAGE)
   }, [status, announce])
   useSharePosition({ send, status, rider, location })
-  useStatsResetNotice(group.route?.id ?? null, announce)
+  useStatsResetNotice(group, announce)
   // Riders drop off the map when their reports stop, so staleness is checked as often as they report.
   const now = useNow(POSITION_INTERVAL_MS)
 

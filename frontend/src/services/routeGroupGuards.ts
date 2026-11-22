@@ -32,11 +32,12 @@ const parseRideRoute = (value: unknown): RideRoute | null => {
   return { id, name, distance, estimated_time, points, waypoints }
 }
 
-/** Reads a group from the API; null when it is not shaped as expected. `route` is null in free mode. */
+/** Reads a group from the API; null when it is not shaped as expected. `route` is null in free mode and track mode. */
 export const parseRouteGroup = (value: unknown): RouteGroup | null => {
   if (!isRecord(value) || typeof value.id !== 'string' || !isRiderProfile(value.author)) return null
   if (!Array.isArray(value.participants) || !value.participants.every(isGroupParticipant)) return null
   const route = value.route === null ? null : parseRideRoute(value.route)
   if (value.route !== null && route === null) return null
-  return { id: value.id, route, author: value.author, participants: value.participants }
+  if (typeof value.is_track !== 'boolean') return null
+  return { id: value.id, route, isTrack: value.is_track, author: value.author, participants: value.participants }
 }

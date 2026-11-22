@@ -22,7 +22,7 @@ interface RouteChoiceDialogProps {
   onClose: () => void
 }
 
-/** A centered dialog to pick the route to ride, or free mode. Closing it leaves the choice as it was. */
+/** A centered dialog to pick the route to ride, or free or track mode. Closing it leaves the choice as it was. */
 export default function RouteChoiceDialog({
   myRoutes,
   selection,

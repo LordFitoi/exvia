@@ -32,7 +32,7 @@ class RouteSummaryAdmin(admin.ModelAdmin):
 @admin.register(RouteGroup)
 class RouteGroupAdmin(admin.ModelAdmin):
     form = RouteGroupAdminForm
-    list_display = ('id', 'route', 'author', 'created_at')
+    list_display = ('id', 'route', 'is_track', 'author', 'created_at')
     search_fields = ('route__name', 'author__username', 'participants__username')
     readonly_fields = ('created_at', 'updated_at')
     autocomplete_fields = ('route', 'author', 'participants')

@@ -7,9 +7,11 @@ export const MAX_GROUP_RIDERS = 10
 export const MAX_INVITEES = MAX_GROUP_RIDERS - 1
 
 const FREE_MODE_LABEL = 'Free mode'
+const TRACK_MODE_LABEL = 'Track mode'
 
-/** What a group rides: its route's name, or "Free mode" when it has none. */
-export const getGroupTitle = (group: RouteGroup): string => group.route?.name ?? FREE_MODE_LABEL
+/** What a group rides: its route's name, or "Track mode" or "Free mode" when it has none. */
+export const getGroupTitle = ({ route, isTrack }: RouteGroup): string =>
+  route?.name ?? (isTrack ? TRACK_MODE_LABEL : FREE_MODE_LABEL)
 
 /** "Led by ana · 3 riders": the riders are the ones who accepted, the author included. */
 export const describeGroup = (group: RouteGroup): string => {

@@ -1,6 +1,7 @@
 import LoadFailedState from '@/components/feedback/LoadFailedState'
 import FreeModeItemBody from '@/components/route/FreeModeItemBody'
 import RouteItemBody from '@/components/route/RouteItemBody'
+import TrackModeItemBody from '@/components/route/TrackModeItemBody'
 import type { RideSelection } from '@/types/rideSelection'
 import type { RouteSummary } from '@/types/route'
 
@@ -14,9 +15,10 @@ interface RideChoiceListProps {
 
 const CHECK = <span className="icon icon-check" aria-hidden="true"></span>
 
-/** Free mode first, then the rider's routes, as rows of one list where exactly one is chosen. */
+/** Free mode and track mode first, then the rider's routes, as rows of one list where exactly one is chosen. */
 export default function RideChoiceList({ selection, status, routes, onSelect, onRetry }: RideChoiceListProps) {
   const isFreeSelected = selection?.kind === 'free'
+  const isTrackSelected = selection?.kind === 'track'
   const selectedRouteId = selection?.kind === 'route' ? selection.id : null
 
   return (
@@ -32,6 +34,17 @@ export default function RideChoiceList({ selection, status, routes, onSelect, on
             >
               <FreeModeItemBody />
               {isFreeSelected && CHECK}
+            </button>
+          </li>
+          <li>
+            <button
+              className="list-item"
+              type="button"
+              aria-pressed={isTrackSelected}
+              onClick={() => onSelect({ kind: 'track' })}
+            >
+              <TrackModeItemBody />
+              {isTrackSelected && CHECK}
             </button>
           </li>
           {routes.map((route) => (

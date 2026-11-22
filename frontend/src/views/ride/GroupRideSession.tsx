@@ -8,6 +8,7 @@ import { MAPBOX_ACCESS_TOKEN } from '@/services/mapboxConfig'
 import FreeRideSessionView from '@/views/ride/FreeRideSessionView'
 import FreeRideWaitingView from '@/views/ride/FreeRideWaitingView'
 import RideModeView from '@/views/ride/RideModeView'
+import TrackRideSessionView from '@/views/ride/TrackRideSessionView'
 
 interface GroupRideSessionProps {
   /** Leaves the ride and the group. */
@@ -17,6 +18,7 @@ interface GroupRideSessionProps {
 /**
  * The part of a group ride that outlives the route: the GPS and the live channel. The leader can change the
  * route at any moment, and the ride screen below follows it without the rider leaving and rejoining the channel.
+ * A group with no route rides free, or records its track when it is a track group.
  */
 export default function GroupRideSession({ onLeave }: GroupRideSessionProps) {
   const { group } = useLiveGroup()
@@ -42,6 +44,25 @@ export default function GroupRideSession({ onLeave }: GroupRideSessionProps) {
       />
     )
   }
-  if (!rider) return <FreeRideWaitingView status={location.status} onClose={onLeave} />
+  if (!rider) {
+    return (
+      <FreeRideWaitingView
+        title={group.isTrack ? 'Track ride' : 'Free ride'}
+        status={location.status}
+        onClose={onLeave}
+      />
+    )
+  }
+  if (group.isTrack) {
+    return (
+      <TrackRideSessionView
+        groupId={group.id}
+        location={location}
+        rider={rider}
+        groupRide={groupRide}
+        onLeave={onLeave}
+      />
+    )
+  }
   return <FreeRideSessionView location={location} rider={rider} groupRide={groupRide} onLeave={onLeave} />
 }

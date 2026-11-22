@@ -91,6 +91,13 @@ class NotificationTextTests(TestCase):
         )
         self.assertEqual(build_notification(event)['body'], 'owner invited you to ride in free mode.')
 
+    def test_a_track_mode_invitation_says_so(self) -> None:
+        group = create_group(self.owner, None, [], is_track=True)
+        event = NotificationEvent.objects.create(
+            event_type=EventType.ROUTE_INVITATION, author=self.owner, route_group=group,
+        )
+        self.assertEqual(build_notification(event)['body'], 'owner invited you to ride in track mode.')
+
     def test_a_clan_invitation_names_the_author(self) -> None:
         event = NotificationEvent.objects.create(event_type=EventType.CLAN_INVITATION, author=self.owner)
         self.assertEqual(build_notification(event)['title'], 'Clan invitation')

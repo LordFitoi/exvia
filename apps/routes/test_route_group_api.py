@@ -66,7 +66,21 @@ class GroupCreateTests(GroupApiTestCase):
         self.assertEqual(NotificationEvent.objects.count(), 0)
 
     def test_route_and_invitees_may_be_left_out(self) -> None:
-        self.assertIsNone(self._create_group()['route'])
+        data = self._create_group()
+        self.assertIsNone(data['route'])
+        self.assertFalse(data['is_track'])
+
+    def test_creates_a_track_group_without_a_route(self) -> None:
+        data = self._create_group(route=None, is_track=True)
+        self.assertEqual((data['route'], data['is_track']), (None, True))
+
+    def test_a_track_group_with_a_route_is_refused(self) -> None:
+        response = self._client_for(self.owner).post(
+            reverse('routes:group_create'), {'route': str(self.route.id), 'is_track': True}, format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('is_track', response.data)
+        self.assertEqual(RouteGroup.objects.count(), 0)
 
     def test_repeated_usernames_are_invited_once(self) -> None:
         data = self._create_group(invitees=['ana', ' ana ', 'ana'])

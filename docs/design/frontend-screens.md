@@ -100,7 +100,7 @@ Home has a **bell** at the right of its title (`icon-button-badged`): its badge 
 invitations to ride waiting for an answer plus the started clan rides the rider can still join ([scheduled-events.md](scheduled-events.md#frontend)), and the button's label says it ("Notifications, 2
 waiting for you"). It opens `NotificationsSheet`, a modal sheet listing the invitations
 (`GET /api/notifications/`, see [notifications.md](notifications.md#api)): who invited you, the
-route (or "Free mode") and how long ago, with **Reject** and **Accept**; an answered one keeps
+route (or "Free mode" or "Track mode") and how long ago, with **Reject** and **Accept**; an answered one keeps
 its row with an **Accepted** or **Rejected** badge for good, even if the same rider is invited again to that group; one never answered shows **Expired** once it is an hour old, after the rider accepted another invitation, or when it was replaced. A new invitation that arrives while the app is open also appears as a toast and refreshes the list ([live channel](notifications.md#live-channel)). **Accept** goes straight to
 `/ride/<group id>`, where the ride starts at once; **Reject** only refreshes the list. The list
 loads when Home opens and again whenever the app comes back to the foreground
@@ -108,7 +108,7 @@ loads when Home opens and again whenever the app comes back to the foreground
 Home stays in front.
 
 Above everything else on Home, **Riding now** (`ActiveGroupSection`) shows the group the rider can join
-back: a list row with the route name (or Free mode), "Led by ana · 3 riders" and a **Join back** button
+back: a list row with the route name (or Free mode or Track mode), "Led by ana · 3 riders" and a **Join back** button
 that goes to `/ride/<group id>`. It is there while `GET /api/routes/groups/active/` answers a group (one the
 rider accepted and has not left, with activity in the last 2 hours, whether or not anybody is connected right
 now, see [route-groups.md](route-groups.md#active-group)); a rider who minimized or closed the app mid-ride

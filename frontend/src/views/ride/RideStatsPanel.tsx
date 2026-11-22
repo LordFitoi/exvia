@@ -40,6 +40,8 @@ interface RideStatsPanelProps {
   isToGo?: boolean
   /** The kilometres covered so far, which the average speed of the ride is worked out from. */
   coveredKilometres: number
+  /** A track ride has no route, but it records the path, so it shows the distance and the average speed. */
+  isTrack?: boolean
   /** The checkpoints of the route and when each was reached so far; null in free mode, which has none. */
   checkpoints: CheckpointTimesProps | null
 }
@@ -55,6 +57,7 @@ export default function RideStatsPanel({
   route,
   isToGo = false,
   coveredKilometres,
+  isTrack = false,
   checkpoints,
 }: RideStatsPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false)
@@ -81,6 +84,12 @@ export default function RideStatsPanel({
           <>
             <RideStat value={formatDistance(route.distance)} label={isToGo ? 'Distance left' : 'Distance'} />
             <RideStat value={formatDuration(route.estimated_time)} label={isToGo ? 'Time left' : 'Estimated'} />
+            <RideStat value={formatAverageSpeed(coveredKilometres, elapsedSeconds)} label="Avg km/h" />
+          </>
+        )}
+        {!route && isTrack && (
+          <>
+            <RideStat value={formatDistance(coveredKilometres)} label="Distance" />
             <RideStat value={formatAverageSpeed(coveredKilometres, elapsedSeconds)} label="Avg km/h" />
           </>
         )}

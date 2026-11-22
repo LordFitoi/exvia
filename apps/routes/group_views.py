@@ -203,13 +203,13 @@ class GroupLeaderView(APIView):
 
 
 class GroupRouteView(APIView):
-    """The leader changes the route of a group that is rolling, or switches it to free mode; answers the group."""
+    """The leader changes the route of a group that is rolling, or switches it to free or track mode; answers the group."""
 
     @transaction.atomic
     def post(self, request: Request, pk: str) -> Response:
         group = lock_group_led_by(request.user, pk)
         serializer = GroupRouteChoiceSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-        change_route(group, serializer.validated_data['route'])
+        change_route(group, serializer.validated_data['route'], serializer.validated_data['is_track'])
         transaction.on_commit(lambda: broadcast_route_change(group.pk, request.user.pk))
         return Response(GroupSerializer(group_queryset().get(pk=group.pk)).data)

@@ -65,7 +65,7 @@ first, in one query, unpaginated:
 `title` and `body` are the text of the system notification and of the live toast (`build_notification` in
 [live.py](../../apps/notifications/live.py)), computed from the event with the relations the query already loads.
 `?after=<id>` keeps only the events with a larger id (a value that is not a number is a `400`), which is how the native
-app asks for what it has not shown yet. `route_name` is `null` in free mode. `status` is the caller's answer **to that event** and `null` for events
+app asks for what it has not shown yet. `route_name` is the route's name, `"Track mode"` for a [track ride](track-mode.md) and `null` in free mode (the live text says "in track mode" for the first of those too). `status` is the caller's answer **to that event** and `null` for events
 that are not about a group. An `event_started` event also carries `scheduled_event` (id), `event_title` and
 `clan_name` (all `null` for other events), and its `status` is `open` (its group is `live` and the caller is not in
 it, so they can join), `joined` or `ended` (the group saw no activity for `RESUME_WINDOW`); it is sent to every

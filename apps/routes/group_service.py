@@ -58,10 +58,11 @@ class AlreadyLeader(ValueError):
 
 
 @transaction.atomic
-def create_group(author: User, route: Route | None, invitees: list[User]) -> RouteGroup:
+def create_group(author: User, route: Route | None, invitees: list[User], is_track: bool = False) -> RouteGroup:
     """A group led by `author` (already in, accepted) with the invitees waiting for their answer.
-    The invitees are notified at once, with one event for all of them."""
-    group = RouteGroup(author=author, route=route)
+    The invitees are notified at once, with one event for all of them. `is_track` makes it a track ride,
+    which has no route."""
+    group = RouteGroup(author=author, route=route, is_track=is_track)
     group_meta.set_status(group.meta_json, author.pk, ParticipantStatus.ACCEPTED)
     for invitee in invitees:
         group_meta.set_status(group.meta_json, invitee.pk, ParticipantStatus.INVITED)
@@ -191,11 +192,13 @@ def promote_rider(group: RouteGroup, rider: User) -> None:
     group.save(update_fields=['author', 'updated_at'])
 
 
-def change_route(group: RouteGroup, route: Route | None) -> None:
-    """Sets the route the group rides, or free mode when it is None. Every rider follows it: they
-    read the group again when told. Call it inside a transaction that holds a lock on `group`."""
+def change_route(group: RouteGroup, route: Route | None, is_track: bool = False) -> None:
+    """Sets the route the group rides, or free mode when it is None (track mode when `is_track` is set too).
+    Every rider follows it: they read the group again when told.
+    Call it inside a transaction that holds a lock on `group`."""
     group.route = route
-    group.save(update_fields=['route', 'updated_at'])
+    group.is_track = is_track
+    group.save(update_fields=['route', 'is_track', 'updated_at'])
 
 
 def load_positions(group_id: object, user_id: int) -> dict[str, dict[str, Any]] | None:

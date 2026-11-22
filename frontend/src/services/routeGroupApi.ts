@@ -16,9 +16,12 @@ const expectGroup = (payload: unknown): RouteGroup => {
 }
 
 /** Creates a group led by the caller; the server invites `invitees` and notifies them at once. */
-export const createRouteGroup = async ({ routeId, invitees }: NewRouteGroup): Promise<RouteGroup> =>
+export const createRouteGroup = async ({ routeId, isTrack, invitees }: NewRouteGroup): Promise<RouteGroup> =>
   expectGroup(
-    await requestJsonAuthorized(GROUPS_PATH, { method: 'POST', body: { route: routeId, invitees } }),
+    await requestJsonAuthorized(GROUPS_PATH, {
+      method: 'POST',
+      body: { route: routeId, is_track: isTrack, invitees },
+    }),
   )
 
 /** A group the caller is in or was invited to, with the path of its route. */
@@ -51,10 +54,16 @@ export const inviteRider = async (groupId: string, username: string): Promise<Ro
     await requestJsonAuthorized(`${GROUPS_PATH}${groupId}/invite/`, { method: 'POST', body: { username } }),
   )
 
-/** The leader changes the route the group rides, or goes to free mode with null; answers the updated group. */
-export const changeGroupRoute = async (groupId: string, routeId: string | null): Promise<RouteGroup> =>
+/** The leader changes the route the group rides, or goes to free or track mode; answers the updated group. */
+export const changeGroupRoute = async (
+  groupId: string,
+  { routeId, isTrack }: Pick<NewRouteGroup, 'routeId' | 'isTrack'>,
+): Promise<RouteGroup> =>
   expectGroup(
-    await requestJsonAuthorized(`${GROUPS_PATH}${groupId}/route/`, { method: 'POST', body: { route: routeId } }),
+    await requestJsonAuthorized(`${GROUPS_PATH}${groupId}/route/`, {
+      method: 'POST',
+      body: { route: routeId, is_track: isTrack },
+    }),
   )
 
 /** The leader takes a rider, invited or riding, out of the group; answers the updated group. */

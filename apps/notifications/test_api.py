@@ -64,6 +64,12 @@ class NotificationListTests(NotificationApiTestCase):
         self._invite(None)
         self.assertIsNone(self._client_for(self.ana).get(LIST_URL).data[0]['route_name'])
 
+    def test_a_track_mode_invitation_is_named_track_mode(self) -> None:
+        self._client_for(self.owner).post(
+            reverse('routes:group_create'), {'route': None, 'is_track': True, 'invitees': ['ana']}, format='json',
+        )
+        self.assertEqual(self._client_for(self.ana).get(LIST_URL).data[0]['route_name'], 'Track mode')
+
     def test_the_status_follows_the_answer(self) -> None:
         group_id = self._invite(self.route)
         self._client_for(self.ana).post(reverse('routes:group_accept', args=[group_id]))

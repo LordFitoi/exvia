@@ -113,12 +113,17 @@ class RouteSummary(TimeStampedModel):
 
 
 class RouteGroup(TimeStampedModel):
-    """Riders rolling together, led by the author; the route is optional (none means free mode)."""
+    """Riders rolling together, led by the author; the route is optional (none means free mode, or track
+    mode when `is_track` is set)."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     route = models.ForeignKey(
         Route, on_delete=models.SET_NULL, null=True, blank=True, related_name='groups',
         help_text='Empty for free mode; the author can change it at any moment.',
+    )
+    is_track = models.BooleanField(
+        default=False,
+        help_text='Track mode: free mode in which each rider records the path ridden and saves it as a route; needs no route.',
     )
     participants = models.ManyToManyField(
         User, related_name='route_groups', blank=True,
@@ -132,6 +137,12 @@ class RouteGroup(TimeStampedModel):
 
     class Meta:
         ordering = ('-created_at',)
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(is_track=False) | models.Q(route__isnull=True),
+                name='route_group_track_has_no_route',
+            ),
+        ]
 
     def __str__(self) -> str:
-        return f'{self.route or "Free ride"} ({self.author})'
+        return f'{self.route or ("Track ride" if self.is_track else "Free ride")} ({self.author})'

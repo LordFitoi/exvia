@@ -48,6 +48,26 @@ class GroupRouteTests(TestCase):
         self.assertIsNone(RouteGroup.objects.get(pk=self.group.pk).route)
         self.assertEqual(self._change(self.owner, str(self.first.pk)).data['route']['id'], str(self.first.pk))
 
+    def test_the_leader_switches_to_track_mode_and_back(self) -> None:
+        response = client_for(self.owner).post(self.url, {'route': None, 'is_track': True}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual((response.data['route'], response.data['is_track']), (None, True))
+        self.assertTrue(RouteGroup.objects.get(pk=self.group.pk).is_track)
+        self.assertFalse(self._change(self.owner, str(self.first.pk)).data['is_track'])
+        self.assertFalse(RouteGroup.objects.get(pk=self.group.pk).is_track)
+
+    def test_free_mode_is_not_track_mode(self) -> None:
+        client_for(self.owner).post(self.url, {'route': None, 'is_track': True}, format='json')
+        self.assertFalse(self._change(self.owner, None).data['is_track'])
+
+    def test_track_mode_with_a_route_is_refused(self) -> None:
+        response = client_for(self.owner).post(
+            self.url, {'route': str(self.second.pk), 'is_track': True}, format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('is_track', response.data)
+        self.assertEqual(RouteGroup.objects.get(pk=self.group.pk).route, self.first)
+
     def test_an_invited_rider_cannot_change_the_route(self) -> None:
         response = self._change(self.ana, None)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

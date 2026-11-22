@@ -9,6 +9,7 @@ import { useHideTabBar } from '@/hooks/useHideTabBar'
 import type { useRideSetup } from '@/hooks/useRideSetup'
 import type { useStartGroupRide } from '@/hooks/useStartGroupRide'
 import { MAX_INVITEES } from '@/services/groupRules'
+import { toRouteChoice } from '@/services/rideSelection'
 import type { NewRouteGroup } from '@/types/routeGroup'
 import InvitationsSection from '@/views/ride/InvitationsSection'
 import InviteRiderDialog from '@/views/ride/InviteRiderDialog'
@@ -33,8 +34,8 @@ export default function RoutePickerView({ setup, start, isChecking, onRide, onCl
   const { user } = useAuth()
   const [openDialog, setOpenDialog] = useState<PickerDialog>(null)
   const { myRoutes, selection, detail, invitees } = setup
-  const isFreeMode = selection?.kind === 'free'
-  const canRide = isFreeMode || detail.route !== null
+  const isRouteless = selection?.kind === 'free' || selection?.kind === 'track'
+  const canRide = isRouteless || detail.route !== null
   const isStarting = start.isPending || isChecking
 
   const handleSave = (chosen: Parameters<typeof setup.select>[0]) => {
@@ -49,7 +50,7 @@ export default function RoutePickerView({ setup, start, isChecking, onRide, onCl
 
   const handleRideClick = () =>
     onRide({
-      routeId: selection?.kind === 'route' ? selection.id : null,
+      ...toRouteChoice(selection),
       invitees: invitees.map(({ username }) => username),
     })
 
@@ -66,7 +67,7 @@ export default function RoutePickerView({ setup, start, isChecking, onRide, onCl
           size="compact"
           status={detail.status}
           route={detail.shownRoute}
-          isFreeMode={isFreeMode}
+          mode={selection?.kind === 'free' || selection?.kind === 'track' ? selection.kind : null}
           onRetry={detail.retry}
         />
         <RideRouteSection myRoutes={myRoutes} selection={selection} onChange={() => setOpenDialog('route')} />

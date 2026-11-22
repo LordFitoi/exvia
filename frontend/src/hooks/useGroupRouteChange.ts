@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { ApiError } from '@/services/apiClient'
 import { changeGroupRoute } from '@/services/routeGroupApi'
+import { toRouteChoice } from '@/services/rideSelection'
 import type { RideSelection } from '@/types/rideSelection'
 import type { RouteGroup } from '@/types/routeGroup'
 
@@ -29,7 +30,7 @@ export const useGroupRouteChange = (
       setIsPending(true)
       setError(null)
       try {
-        onChanged(await changeGroupRoute(groupId, selection.kind === 'route' ? selection.id : null))
+        onChanged(await changeGroupRoute(groupId, toRouteChoice(selection)))
       } catch (failure) {
         console.error(`Could not change the route of the group ${groupId}`, failure)
         setError(failure instanceof ApiError ? failure.message : CHANGE_FAILED_MESSAGE)

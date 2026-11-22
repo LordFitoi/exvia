@@ -7,11 +7,19 @@ from redis.exceptions import RedisError
 
 from apps.notifications.consumers import user_channel_group
 from apps.notifications.models import EventType, NotificationEvent
+from apps.routes.models import RouteGroup
 
 logger = logging.getLogger(__name__)
 
 APP_TITLE = 'Exvia'
 FREE_MODE_LABEL = 'in free mode'
+TRACK_MODE_LABEL = 'in track mode'
+
+
+def _describe_ride(group: RouteGroup | None) -> str:
+    if group is None or group.route is None:
+        return TRACK_MODE_LABEL if group is not None and group.is_track else FREE_MODE_LABEL
+    return group.route.name
 
 
 def build_notification(event: NotificationEvent) -> dict[str, object]:
@@ -19,8 +27,8 @@ def build_notification(event: NotificationEvent) -> dict[str, object]:
     author = event.author.username if event.author else APP_TITLE
     title, body = APP_TITLE, 'You have a new notification.'
     if event.event_type == EventType.ROUTE_INVITATION:
-        route = event.route_group.route if event.route_group else None
-        title, body = 'Ride invitation', f'{author} invited you to ride {route.name if route else FREE_MODE_LABEL}.'
+        group = event.route_group
+        title, body = 'Ride invitation', f'{author} invited you to ride {_describe_ride(group)}.'
     elif event.event_type == EventType.CLAN_INVITATION:
         title, body = 'Clan invitation', f'{author} invited you to join a clan.'
     elif event.event_type == EventType.EVENT_STARTED and event.scheduled_event:

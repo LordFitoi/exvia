@@ -1,7 +1,7 @@
 # Route groups
 
 A `RouteGroup` is a set of riders rolling together under one leader (the author), on a
-route or in free mode. The leader creates it from the Ride tab, invites riders by
+route, in free mode or in [track mode](track-mode.md). The leader creates it from the Ride tab, invites riders by
 username, and each invitee accepts or rejects from their notifications
 ([notifications.md](notifications.md)). The route model itself is in
 [routes.md](routes.md); the screens are in [ride.md](ride.md).
@@ -29,13 +29,14 @@ Django admin.
 | Field | Type | Notes |
 |-------|------|-------|
 | `id` | `UUIDField` | Primary key, `uuid4`, `editable=False` |
-| `route` | FK to `Route` | Optional (`null`, `blank`), `related_name='groups'`, `SET_NULL`; empty means free mode |
+| `route` | FK to `Route` | Optional (`null`, `blank`), `related_name='groups'`, `SET_NULL`; empty means free mode, or track mode with `is_track` |
+| `is_track` | `BooleanField` | Default `false`; track mode is free mode in which every rider records their path and saves it as a route ([track-mode.md](track-mode.md)). A check constraint (`route_group_track_has_no_route`) refuses it together with a route |
 | `participants` | M2M to `auth.User` | `related_name='route_groups'`, `blank=True`, at most `MAX_GROUP_PARTICIPANTS` |
 | `author` | FK to `auth.User` | The group owner, `related_name='authored_route_groups'`, `CASCADE` |
 | `meta_json` | `JSONField` | Default `{}`; status and latest position of each participant, validated by `validate_group_meta` (see [Group meta](#group-meta)) |
 
 - **The route is optional and changeable**: the owner can swap it while the
-  group is rolling, or leave it empty for free mode. Deleting a route sets it
+  group is rolling, or leave it empty for free mode (or track mode, see `is_track`). Deleting a route sets it
   to `NULL` instead of deleting the group.
 - **The participant limit is one constant**: `MAX_GROUP_PARTICIPANTS = 10` in
   `models.py`. It is not a column or a database constraint, so raising it
@@ -89,12 +90,13 @@ All endpoints need a JWT, like the rest of `/api/routes/`.
 | `POST /api/routes/groups/<uuid>/invite/` | The leader invites one more rider to a group that is rolling; answers the group (see [Inviting and removing](#inviting-and-removing)) |
 | `POST /api/routes/groups/<uuid>/remove/` | The leader takes a rider out of the group; answers the group |
 | `POST /api/routes/groups/<uuid>/leader/` | The leader hands the group to a rider who is riding in it; answers the group (see [Changing the leader](#changing-the-leader)) |
-| `POST /api/routes/groups/<uuid>/route/` | The leader changes the route of a group that is rolling, or switches it to free mode; answers the group (see [Changing the route](#changing-the-route)) |
+| `POST /api/routes/groups/<uuid>/route/` | The leader changes the route of a group that is rolling, or switches it to free or track mode; answers the group (see [Changing the route](#changing-the-route)) |
 | `POST /api/routes/groups/<uuid>/leave/` | Takes a rider who accepted out of the group; `204` (see [Leaving](#leaving)) |
 | `GET /api/routes/groups/active/` | The newest group the caller accepted, has not left and that saw activity in the last 2 h (see [Active group](#active-group)); `204` when there is none |
 
-**Create** takes `{"route": "<uuid>" | null, "invitees": ["ana", "ben"]}`; both are optional
-(`null`/empty is free mode with nobody invited). In one transaction it creates the group,
+**Create** takes `{"route": "<uuid>" | null, "is_track": false, "invitees": ["ana", "ben"]}`; all are optional
+(`null`/empty is free mode with nobody invited; `"is_track": true` with a null route is track mode, and with a route
+it is an error on `is_track`: `Track mode has no route to follow.`). In one transaction it creates the group,
 puts the author in `participants` with status `accepted` and the invitees with `invited`,
 and, when there are invitees, creates **one** `NotificationEvent` (`route_invitation`) for all
 of them. Field errors come back per field, like the clan invitation: `route` is not one of the
@@ -118,7 +120,7 @@ has an unknown or inactive username, the caller's own name, or the group would h
 }
 ```
 
-`route` is `null` in free mode. It carries the path (and the `waypoints`, drawn as checkpoints on the ride map) because an invitee cannot read the
+`route` is `null` in free mode and in track mode, which `is_track` (`false` by default) tells apart. It carries the path (and the `waypoints`, drawn as checkpoints on the ride map) because an invitee cannot read the
 author's route through `GET /api/routes/<uuid>/` (that only returns the caller's own).
 `avatar` is a site-relative URL (`/media/...`, forwarded to the backend by the frontend's
 rewrite) or `null`, which the client shows as initials. Groups the caller is not in are `404`.
@@ -203,8 +205,10 @@ Best effort: a rider who is not connected learns the new leader when they read t
 The leader can swap the route while the group rolls (`change_route` in
 [group_service.py](../../apps/routes/group_service.py), `GroupRouteView`). Like inviting and removing it locks
 the group row and needs the **author**: another rider of the group gets `403`, a stranger `404`. It takes
-`{"route": "<uuid>" | null}`; `null` is free mode. The field is required, and errors are on `route`: not one of
-the caller's routes (`No route with this id.`, same check as the create call, `GroupRouteChoiceSerializer`). It
+`{"route": "<uuid>" | null, "is_track": false}`; `null` is free mode, and `null` with `"is_track": true` is track mode.
+`route` is required, and errors are on `route`: not one of the caller's routes (`No route with this id.`, same check
+as the create call, `GroupRouteChoiceSerializer`), or on `is_track`: set together with a route. Every call sets both, so
+changing to a route or to free mode clears `is_track`. It
 answers the updated group, with the body of a read, and bumps `updated_at`, which counts as activity.
 
 Once the change is committed, `broadcast_route_change` ([live.py](../../apps/routes/live.py)) sends

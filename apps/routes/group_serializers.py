@@ -12,6 +12,7 @@ INVITED_YOURSELF_MESSAGE = 'You are already in your own group.'
 UNKNOWN_RIDER_MESSAGE = 'No rider with this username.'
 NOT_IN_GROUP_MESSAGE = 'This rider is not in the group.'
 TOO_MANY_MESSAGE = f'A group has at most {MAX_GROUP_PARTICIPANTS} riders, you included.'
+TRACK_WITH_ROUTE_MESSAGE = 'Track mode has no route to follow.'
 
 
 class GroupRouteSerializer(RouteSerializer):
@@ -23,8 +24,8 @@ class GroupRouteSerializer(RouteSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    """A group with its route (null in free mode) and its riders with their answer.
-    Read it with `participants` prefetched as users with their `profile`."""
+    """A group with its route (null in free mode and track mode, which `is_track` tells apart) and its
+    riders with their answer. Read it with `participants` prefetched as users with their `profile`."""
 
     route = GroupRouteSerializer(read_only=True)
     author = UserBriefSerializer(read_only=True)
@@ -32,7 +33,7 @@ class GroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RouteGroup
-        fields = ('id', 'route', 'author', 'participants', 'created_at')
+        fields = ('id', 'route', 'is_track', 'author', 'participants', 'created_at')
         read_only_fields = fields
 
     def get_participants(self, group: RouteGroup) -> list[dict[str, object]]:
@@ -43,14 +44,21 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class GroupRouteChoiceSerializer(serializers.Serializer):
-    """The route to ride (one of the caller's), or null for free mode."""
+    """The route to ride (one of the caller's), or null for free mode; `is_track` (default false) with a
+    null route is track mode."""
 
     route = serializers.PrimaryKeyRelatedField(queryset=Route.objects.all(), allow_null=True)
+    is_track = serializers.BooleanField(default=False)
 
     def validate_route(self, route: Route | None) -> Route | None:
         if route is not None and route.author_id != self.context['request'].user.pk:
             raise serializers.ValidationError(UNKNOWN_ROUTE_MESSAGE)
         return route
+
+    def validate(self, attrs: dict[str, object]) -> dict[str, object]:
+        if attrs['is_track'] and attrs['route'] is not None:
+            raise serializers.ValidationError({'is_track': TRACK_WITH_ROUTE_MESSAGE})
+        return attrs
 
 
 class GroupCreateSerializer(GroupRouteChoiceSerializer):

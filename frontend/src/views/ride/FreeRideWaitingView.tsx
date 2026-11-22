@@ -20,7 +20,7 @@ const WAITING_MESSAGES: Record<GeolocationStatus, WaitingMessage> = {
   denied: {
     title: 'Location is turned off',
     description:
-      'A free ride needs your position. Allow location access for Exvia in your browser or phone settings, then try again.',
+      'This ride needs your position. Allow location access for Exvia in your browser or phone settings, then try again.',
   },
   unavailable: {
     title: 'Location unavailable',
@@ -29,20 +29,22 @@ const WAITING_MESSAGES: Record<GeolocationStatus, WaitingMessage> = {
 }
 
 interface FreeRideWaitingViewProps {
+  /** What the ride is called: a free ride or a track ride. */
+  title: string
   status: GeolocationStatus
   /** Goes back to the route picker. */
   onClose: () => void
 }
 
-/** Shown until the first GPS fix arrives: a free ride cannot start without knowing where the rider is. */
-export default function FreeRideWaitingView({ status, onClose }: FreeRideWaitingViewProps) {
+/** Shown until the first GPS fix arrives: a ride with no route cannot start without knowing where the rider is. */
+export default function FreeRideWaitingView({ title: rideTitle, status, onClose }: FreeRideWaitingViewProps) {
   useHideTabBar(true)
   const { title, description } = WAITING_MESSAGES[status]
 
   return (
     <main className="screen-body">
       <div className="screen-header">
-        <h1 className="text-heading">Free ride</h1>
+        <h1 className="text-heading">{rideTitle}</h1>
         <button className="icon-button" type="button" aria-label="Close" onClick={onClose}>
           <span className="icon icon-x" aria-hidden="true"></span>
         </button>

@@ -2,23 +2,31 @@
 
 import { useEffect, useRef } from 'react'
 
-const STATS_RESET_MESSAGE = 'Ride stats were reset for the new route'
-const STATS_RESET_FREE_MESSAGE = 'Ride stats were reset for the free ride'
+import { getGroupSelection, isSameSelection } from '@/services/rideSelection'
+import type { RideSelection } from '@/types/rideSelection'
+import type { RouteGroup } from '@/types/routeGroup'
+
 const STATS_RESET_ICON_CLASS = 'icon-info'
+const STATS_RESET_MESSAGES: Readonly<Record<RideSelection['kind'], string>> = {
+  route: 'Ride stats were reset for the new route',
+  free: 'Ride stats were reset for the free ride',
+  track: 'Ride stats were reset for the track ride',
+}
 
 /**
- * Tells the rider their stats started over when the group moves to another route, or to free mode:
- * the ride screen is a new ride then, with its own clock and speeds. `routeId` is null in free mode.
+ * Tells the rider their stats started over when the group moves to another route, or to free or track mode:
+ * the ride screen is a new ride then, with its own clock and speeds.
  */
 export const useStatsResetNotice = (
-  routeId: string | null,
+  group: RouteGroup,
   announce: (message: string, iconClass: string) => void,
 ): void => {
-  const shownRouteId = useRef(routeId)
+  const selection = getGroupSelection(group)
+  const shownSelection = useRef(selection)
 
   useEffect(() => {
-    if (shownRouteId.current === routeId) return
-    shownRouteId.current = routeId
-    announce(routeId === null ? STATS_RESET_FREE_MESSAGE : STATS_RESET_MESSAGE, STATS_RESET_ICON_CLASS)
-  }, [routeId, announce])
+    if (isSameSelection(shownSelection.current, selection)) return
+    shownSelection.current = selection
+    announce(STATS_RESET_MESSAGES[selection.kind], STATS_RESET_ICON_CLASS)
+  }, [selection, announce])
 }

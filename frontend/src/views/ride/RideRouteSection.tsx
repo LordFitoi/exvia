@@ -1,5 +1,6 @@
 import FreeModeItemBody from '@/components/route/FreeModeItemBody'
 import RouteItemBody from '@/components/route/RouteItemBody'
+import TrackModeItemBody from '@/components/route/TrackModeItemBody'
 import type { useMyRoutes } from '@/hooks/useMyRoutes'
 import type { RideSelection } from '@/types/rideSelection'
 
@@ -11,13 +12,14 @@ interface RideRouteSectionProps {
   onChange: () => void
 }
 
-/** The route (or free mode) the ride will use, with a way to change it. */
+/** The route (or free or track mode) the ride will use, with a way to change it. */
 export default function RideRouteSection({ myRoutes, selection, onChange }: RideRouteSectionProps) {
   const route =
     selection?.kind === 'route' ? myRoutes.routes.find(({ id }) => id === selection.id) : undefined
 
   const renderItem = () => {
     if (selection?.kind === 'free') return <FreeModeItemBody />
+    if (selection?.kind === 'track') return <TrackModeItemBody />
     if (route) return <RouteItemBody route={route} />
     if (myRoutes.status === 'failed') return <span className="text-small text-muted">Could not load your routes.</span>
     return (

@@ -1,7 +1,7 @@
 # Ride
 
 The Ride tab in [frontend/](../../frontend/): choose one of your own routes (or free
-mode), invite riders, preview the route, then ride it in a 3D map, alone or with the
+mode, or [track mode](track-mode.md)), invite riders, preview the route, then ride it in a 3D map, alone or with the
 group the **Ride** button creates ([route-groups.md](route-groups.md)). The routes come
 from the API in [routes.md](routes.md); the route creator that makes them is in
 [map.md](map.md#route-creator). The shell and tab bar are in
@@ -27,17 +27,19 @@ one.
 | Joined ride | `views/ride/JoinedRideView.tsx`, `hooks/useRouteGroup.ts` | Loads the group of `/ride/<id>` and rides in it at once, whether the rider created the group, accepted an invitation or joined back; quitting, leaving or finishing replaces the page with the Map tab (`/map`) |
 | Group ride | `views/ride/GroupRideView.tsx`, `views/ride/GroupRideSession.tsx` | Ride mode on the group's route, or a free ride when it has none; the session owns the GPS and the live channel, so they outlive a change of route |
 | Change route | `views/ride/ChangeRouteControl.tsx`, `views/ride/ChangeRouteDialog.tsx`, `hooks/useGroupRouteChange.ts` | The leader's route button on the ride map and the picker it opens; see [Changing the route](#changing-the-route) |
-| Setup state | `hooks/useRideSetup.ts` | The routes, what is selected (default: the newest route, or free mode with no routes) and the invitees |
+| Setup state | `hooks/useRideSetup.ts` | The routes, what is selected (default: the newest route, or free mode with no routes) and the invitees; `services/rideSelection.ts` turns the selection into what the server takes (`routeId`, `isTrack`) and back |
 | Join back | `hooks/useActiveGroupPrompt.ts`, `views/ride/ActiveGroupDialog.tsx` | Before **Ride** creates a group, asks whether to join the group that is still rolling; see [Join back](#join-back) |
 | Starting | `hooks/useStartGroupRide.ts`, `services/routeGroupApi.ts` | `POST /api/routes/groups/`; errors of `invitees` and `route` become the message under the button |
 | Picker | `views/ride/RoutePickerView.tsx` | "Ride" heading, preview, the Route and Invitations sections, the Ride button |
-| Sections | `views/ride/RideRouteSection.tsx`, `views/ride/InvitationsSection.tsx` | The chosen route (or free mode) with **Change**; the invited riders with **Add** and a remove X each |
-| Dialogs | `views/ride/RouteChoiceDialog.tsx`, `views/ride/RideChoiceList.tsx`, `views/ride/InviteRiderDialog.tsx` | Choose the route (Free mode first) with **Save**; add a rider by username; both are centered panel dialogs |
-| Preview | `components/route/RoutePreview.tsx` | Placeholder (or free mode), loading and failure states, or the preview map |
-| Rows | `components/route/RouteItemBody.tsx`, `components/route/FreeModeItemBody.tsx`, `components/rider/RiderAvatar.tsx` | The inside of a route row, of the free mode row, and a rider's picture or initials |
+| Sections | `views/ride/RideRouteSection.tsx`, `views/ride/InvitationsSection.tsx` | The chosen route (or free or track mode) with **Change**; the invited riders with **Add** and a remove X each |
+| Dialogs | `views/ride/RouteChoiceDialog.tsx`, `views/ride/RideChoiceList.tsx`, `views/ride/InviteRiderDialog.tsx` | Choose the route (Free mode and Track mode first) with **Save**; add a rider by username; both are centered panel dialogs |
+| Preview | `components/route/RoutePreview.tsx` | Placeholder (or free or track mode), loading and failure states, or the preview map |
+| Rows | `components/route/RouteItemBody.tsx`, `components/route/FreeModeItemBody.tsx`, `components/route/TrackModeItemBody.tsx`, `components/rider/RiderAvatar.tsx` | The inside of a route row, of the free mode and track mode rows, and a rider's picture or initials |
 | List | `components/route/RouteChoiceList.tsx` | Skeleton, error, empty and ready states of the routes (used by the route list screen) |
 | Ride mode | `views/ride/RideModeView.tsx` | Full-bleed 3D map with the quit and recenter buttons |
 | Free ride | `views/ride/FreeRideWaitingView.tsx`, `FreeRideSessionView.tsx`, `FinishFreeRideDialog.tsx` | Ride with no route: waits for the first fix, then shows the rider and the group, recording nothing; see [Free ride](#free-ride) |
+| Ride with no route | `views/ride/FollowRideScreen.tsx` | The screen both the free ride and the [track ride](track-mode.md) are: the map, the stats strip, the group and a flag button; what finishing does is up to the ride |
+| Track ride | `views/ride/TrackRideSessionView.tsx`, `FinishTrackSheet.tsx`, `hooks/useTrackRecorder.ts`, `hooks/useSaveTrack.ts` | A free ride that records its path and saves it as a route; see [track-mode.md](track-mode.md) |
 | Free ride map | `hooks/useFreeRideMap.ts` | The pitched map that follows the rider; draws no path |
 | Quit | `views/ride/ConfirmQuitRideDialog.tsx`, `hooks/useQuitRide.ts` | "Quit this ride?" dialog opened by the X, and saving the unfinished ride before leaving |
 | Routes | `hooks/useMyRoutes.ts` | `GET /api/routes/`, with `reload` |
@@ -86,11 +88,12 @@ style guide's [Group rides](../ui-ux/group.html) page.
   screen, between the header and the pinned button; with many invitees the screen scrolls
   instead of squashing the map.
 - **Route section.** One row, the selected route (icon, name, distance and estimated time)
-  or **Free mode** (primary icon tile, "No route, ride wherever you want"), with **Change**
+  **Free mode** (primary icon tile, "No route, ride wherever you want") or **Track mode** (target icon,
+  "Ride anywhere and save the path as a route"), with **Change**
   on the heading's right. The default is the **newest route**; a rider with no routes starts
   in free mode. While the routes load the row is a skeleton and Ride is disabled.
-- **Change** opens `RouteChoiceDialog`, a centered panel dialog ("Choose a route"): **Free mode first,
-  then the routes**, newest first, in a box exactly four rows tall that scrolls. The chosen
+- **Change** opens `RouteChoiceDialog`, a centered panel dialog ("Choose a route"): **Free mode and Track mode
+  first, then the routes**, newest first, in a box exactly four rows tall that scrolls. The chosen
   row has `aria-pressed` and a check, as before. **Save** applies the choice and closes the
   sheet; the X or Esc closes it and leaves the choice as it was. Free mode is **not a button
   below Ride any more**: it is a row of this list, so it is chosen like a route. Loading and
@@ -98,8 +101,8 @@ style guide's [Group rides](../ui-ux/group.html) page.
   always choosable.
 - **Preview.** A route's path is fetched when it is chosen (the list does not carry points)
   and the map frames it with a start flag and a finish flag; the previous route stays on
-  the map until the next has loaded. Free mode shows "Free mode: no route to follow".
-  Ride is enabled when free mode is chosen, or the **chosen** route has loaded (not a
+  the map until the next has loaded. Free mode shows "Free mode: no route to follow", and track mode "Track mode: your path is saved as a new route when you finish".
+  Ride is enabled when free mode or track mode is chosen, or the **chosen** route has loaded (not a
   previous one).
 - **Invitations section.** Empty: "Riding solo. Add riders by username to ride together."
   **Add** opens `InviteRiderDialog` (the guide's centered panel dialog with a form, label above the field):
@@ -373,7 +376,7 @@ it see each other on the map.
   GPS fix arrives `FreeRideWaitingView` shows the status ("Finding your location", "Location
   is turned off", "Location unavailable") with an X back to the picker. The fix (snapped to a
   street when possible, as in ride mode) then opens `FreeRideSessionView`.
-- **Screen** (`FreeRideSessionView`): the same layout as ride mode: pitched 3D map that follows
+- **Screen** (`FreeRideSessionView`, drawn by `FollowRideScreen`): the same layout as ride mode: pitched 3D map that follows
   the rider (`useFreeRideMap`, which reuses `useRiderFollow`/`useRiderHeading`), the stats strip
   (time and speed), the locate button, no tab bar, screen kept on. Only the rider and the other
   riders show on the map. The top-right button is a checkered flag, **Finish ride**, not an X:
@@ -382,6 +385,9 @@ it see each other on the map.
   "A free ride is not recorded, so nothing is saved"). Confirming goes back to the picker and
   takes the rider out of the group like any exit (see [Group ride](#group-ride)). Nothing is
   sent to the server, so there is no failure to retry.
+
+A ride in **track mode** is a free ride that does record: same screen, same group, and when the rider finishes the
+path becomes a route named "Track" and the day, with the ride saved in the history. See [track-mode.md](track-mode.md).
 
 ## Key decisions
 
@@ -573,7 +579,7 @@ Ride mode and the free ride share the group's live channel
 
 ## Changing the route
 
-The leader can change the route of the ride, or go to free mode, at any moment, in ride mode and in
+The leader can change the route of the ride, or go to free mode or track mode, at any moment, in ride mode and in
 a free ride. The **route** button (`icon-route`, "Change route") is the last of the top-right control
 block; riders who are not the leader do not see it, since the route is the group's and
 [only the leader manages the group](route-groups.md#key-decisions).
@@ -595,7 +601,7 @@ block; riders who are not the leader do not see it, since the route is the group
 - **The ride follows the group.** `GroupRideSession` renders ride mode from `group.route` and keys it by
   the route id, so a new route starts a **new ride**: the clock, the top speed, the progress and the map
   start over, and the ride on the old route is **not saved** (it is neither finished nor quit). Going
-  to or from free mode swaps the free-ride screen for ride mode the same way. Every rider, the leader
+  to or from free mode (or track mode) swaps the free-ride screen for ride mode the same way, and between free and track mode swaps the two screens. Every rider, the leader
   included, gets the toast "Ride stats were reset for the new route" (or "...for the free ride") once
   their group shows the other route (`useStatsResetNotice`), after "ana changed the route" for the others.
   The strip's open or closed state also starts closed again.
@@ -611,7 +617,7 @@ block; riders who are not the leader do not see it, since the route is the group
 
 Distance left, off-route detection and a way back to the track after leaving
 it (only the way to the start is drawn), voice guidance, and terrain elevation.
-Neither a route ride nor a free ride records the rider's track, and a free ride is never saved. A free ride does not
+Neither a route ride nor a free ride records the rider's track (only [track mode](track-mode.md) does), and a free ride is never saved. A free ride does not
 pause, and a reload loses it. For group rides: changing
 the route of a group while it rides, a trail or history of the other riders, a connection indicator on the ride screen, a camera that keeps following another rider, riders other than the leader inviting or removing, and leaving a group in the middle of
 a ride (a rider who quits just stops reporting).
