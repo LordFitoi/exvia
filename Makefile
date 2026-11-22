@@ -87,8 +87,14 @@ android_run: android_build ## Boot the Android emulator and run the built app in
 android_connect: ## Ask for the phone's Wireless debugging IP and port, pair it if needed and connect adb
 	@cd frontend && ANDROID_HOME=$(HOME)/Android/Sdk ./scripts/android-connect.sh
 
-android_install: android_build ## Install the built app on a phone connected through adb (USB or Wi-Fi pairing)
-	$(HOME)/Android/Sdk/platform-tools/adb install -r frontend/android/app/build/outputs/apk/debug/app-debug.apk
+ADB = $(HOME)/Android/Sdk/platform-tools/adb
+APK = frontend/android/app/build/outputs/apk/debug/app-debug.apk
+
+android_install: android_build ## Install the built app on the phone connected through adb, ignoring emulators (ANDROID_SERIAL=<name> picks another device)
+	@serial="$${ANDROID_SERIAL:-$$($(ADB) devices | awk 'NR > 1 && $$2 == "device" && $$1 !~ /^emulator-/ {print $$1; exit}')}"; \
+	[ -n "$$serial" ] || { echo "android_install: no phone connected through adb; run make android_connect (or make android_run for the emulator)." >&2; exit 1; }; \
+	echo "Installing on $$serial"; \
+	$(ADB) -s "$$serial" install -r $(APK)
 
 android_studio: android_sync ## Open the Android project in Android Studio (installed in WSL)
 	@nohup env STUDIO_JDK=$(HOME)/Android/android-studio/jbr $(HOME)/Android/android-studio/bin/studio.sh frontend/android >/dev/null 2>&1 &
