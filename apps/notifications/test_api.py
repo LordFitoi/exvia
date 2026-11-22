@@ -118,8 +118,8 @@ class NotificationListTests(NotificationApiTestCase):
     def test_an_invitation_carries_the_title_and_text_the_phone_shows(self) -> None:
         self._invite(self.route)
         notification = self._client_for(self.ana).get(LIST_URL).data[0]
-        self.assertEqual(notification['title'], 'Ride invitation')
-        self.assertEqual(notification['body'], 'owner invited you to ride Loop.')
+        self.assertEqual(notification['title'], 'owner invited you to a ride')
+        self.assertEqual(notification['body'], 'Loop')
 
     def test_after_keeps_only_the_notifications_created_since_that_one(self) -> None:
         self._invite(self.route)

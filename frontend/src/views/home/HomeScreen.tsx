@@ -9,6 +9,7 @@ import StateView from '@/components/feedback/StateView'
 import { useActiveGroup } from '@/hooks/useActiveGroup'
 import { useAuth } from '@/hooks/useAuth'
 import { useClanEventJoin } from '@/hooks/useClanEventJoin'
+import { useLiveNotifications } from '@/hooks/useLiveNotifications'
 import { useNextClanEvent } from '@/hooks/useNextClanEvent'
 import { useRemoteList } from '@/hooks/useRemoteList'
 import { useRideNotifications } from '@/hooks/useRideNotifications'
@@ -26,13 +27,20 @@ export default function HomeScreen() {
   const notifications = useRideNotifications()
   const { event: nextEvent } = useNextClanEvent()
   const { group: activeGroup } = useActiveGroup()
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [isBellOpened, setIsBellOpened] = useState(false)
+  const { isListRequested, clearListRequest } = useLiveNotifications()
+  const isNotificationsOpen = isBellOpened || isListRequested
   const answer = useRouteInvitationAnswer({
     onAccepted: (groupId) => router.push(`/ride/${groupId}`),
     onRejected: notifications.reload,
   })
   const rideJoin = useClanEventJoin((groupId) => router.push(`/ride/${groupId}`))
   const { pendingCount } = notifications
+
+  const handleNotificationsClose = () => {
+    setIsBellOpened(false)
+    clearListRequest()
+  }
   const bellLabel = pendingCount > 0 ? `Notifications, ${pendingCount} waiting for you` : 'Notifications'
 
   return (
@@ -44,7 +52,7 @@ export default function HomeScreen() {
             className="icon-button icon-button-badged"
             type="button"
             aria-label={bellLabel}
-            onClick={() => setIsNotificationsOpen(true)}
+            onClick={() => setIsBellOpened(true)}
           >
             <span className="icon icon-bell" aria-hidden="true"></span>
             {pendingCount > 0 && (
@@ -93,7 +101,7 @@ export default function HomeScreen() {
           notifications={notifications}
           answer={answer}
           rideJoin={rideJoin}
-          onClose={() => setIsNotificationsOpen(false)}
+          onClose={handleNotificationsClose}
         />
       )}
     </main>

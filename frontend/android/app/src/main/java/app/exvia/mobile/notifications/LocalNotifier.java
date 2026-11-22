@@ -24,6 +24,11 @@ final class LocalNotifier {
     private static final String BACKGROUND_TEXT = "Checking for invitations";
     // Events are posted under this tag so their ids (the event ids) never clash with the service's notification.
     private static final String EVENT_TAG = "exvia-event";
+    // Extra of the intent behind an event notification: the page opens the list of notifications for it.
+    static final String OPEN_NOTIFICATIONS_EXTRA = "app.exvia.mobile.OPEN_NOTIFICATIONS";
+    // Each pending intent needs its own request code, or the one of the service would reuse the extra of the events.
+    private static final int OPEN_APP_REQUEST_CODE = 0;
+    private static final int OPEN_NOTIFICATIONS_REQUEST_CODE = 1;
 
     private LocalNotifier() {}
 
@@ -54,6 +59,7 @@ final class LocalNotifier {
         }
         createChannels(context);
         Notification notification = newBuilder(context, EVENTS_CHANNEL_ID, title, body)
+                .setContentIntent(buildOpenIntent(context, OPEN_NOTIFICATIONS_REQUEST_CODE, true))
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
@@ -67,12 +73,13 @@ final class LocalNotifier {
                 .setColor(ContextCompat.getColor(context, R.color.ic_launcher_background))
                 .setContentTitle(title)
                 .setContentText(text)
-                .setContentIntent(buildOpenAppIntent(context));
+                .setContentIntent(buildOpenIntent(context, OPEN_APP_REQUEST_CODE, false));
     }
 
-    private static PendingIntent buildOpenAppIntent(Context context) {
+    private static PendingIntent buildOpenIntent(Context context, int requestCode, boolean shouldOpenNotifications) {
         Intent intent = new Intent(context, MainActivity.class)
-                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                .putExtra(OPEN_NOTIFICATIONS_EXTRA, shouldOpenNotifications);
+        return PendingIntent.getActivity(context, requestCode, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
     }
 }

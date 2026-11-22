@@ -12,8 +12,8 @@ from apps.routes.models import RouteGroup
 logger = logging.getLogger(__name__)
 
 APP_TITLE = 'Exvia'
-FREE_MODE_LABEL = 'in free mode'
-TRACK_MODE_LABEL = 'in track mode'
+FREE_MODE_LABEL = 'Free mode'
+TRACK_MODE_LABEL = 'Track mode'
 
 
 def _describe_ride(group: RouteGroup | None) -> str:
@@ -27,8 +27,7 @@ def build_notification(event: NotificationEvent) -> dict[str, object]:
     author = event.author.username if event.author else APP_TITLE
     title, body = APP_TITLE, 'You have a new notification.'
     if event.event_type == EventType.ROUTE_INVITATION:
-        group = event.route_group
-        title, body = 'Ride invitation', f'{author} invited you to ride {_describe_ride(group)}.'
+        title, body = f'{author} invited you to a ride', _describe_ride(event.route_group)
     elif event.event_type == EventType.CLAN_INVITATION:
         title, body = 'Clan invitation', f'{author} invited you to join a clan.'
     elif event.event_type == EventType.EVENT_STARTED and event.scheduled_event:

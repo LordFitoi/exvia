@@ -48,7 +48,7 @@ class NotificationConsumerTests(TransactionTestCase):
         event_id = await self._invite(self.ana)
         self.assertEqual(
             await client.receive_json(),
-            {'type': 'notification', 'id': event_id, 'title': 'Ride invitation', 'body': 'owner invited you to ride Loop.'},
+            {'type': 'notification', 'id': event_id, 'title': 'owner invited you to a ride', 'body': 'Loop'},
         )
 
     async def test_only_the_invited_users_hear_it(self) -> None:
@@ -89,14 +89,15 @@ class NotificationTextTests(TestCase):
         event = NotificationEvent.objects.create(
             event_type=EventType.ROUTE_INVITATION, author=self.owner, route_group=create_group(self.owner, None, []),
         )
-        self.assertEqual(build_notification(event)['body'], 'owner invited you to ride in free mode.')
+        self.assertEqual(build_notification(event)['title'], 'owner invited you to a ride')
+        self.assertEqual(build_notification(event)['body'], 'Free mode')
 
     def test_a_track_mode_invitation_says_so(self) -> None:
         group = create_group(self.owner, None, [], is_track=True)
         event = NotificationEvent.objects.create(
             event_type=EventType.ROUTE_INVITATION, author=self.owner, route_group=group,
         )
-        self.assertEqual(build_notification(event)['body'], 'owner invited you to ride in track mode.')
+        self.assertEqual(build_notification(event)['body'], 'Track mode')
 
     def test_a_clan_invitation_names_the_author(self) -> None:
         event = NotificationEvent.objects.create(event_type=EventType.CLAN_INVITATION, author=self.owner)

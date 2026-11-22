@@ -230,9 +230,13 @@ asks the server itself, in two ways. With the app in front the live websocket to
   after signing in (or as another user) only records the newest id, so the rider is not flooded with old events.
   While the app is in front nothing is posted (the toast covers it) but the id still moves on.
 - The status bar icon is [ic_stat_exvia.xml](../../frontend/android/app/src/main/res/drawable/ic_stat_exvia.xml) (the
-  brand arrow, white; tinted with `ic_launcher_background`, the brand green). Tapping a notification opens the app where
-  it was left (or Home after a cold start); it does not navigate, so a tap during a ride cannot pull the rider out of it.
-  The invitation is in the Home bell.
+  brand arrow, white; tinted with `ic_launcher_background`, the brand green).
+- **Tapping an event notification opens the list.** Its intent carries `OPEN_NOTIFICATIONS_EXTRA` (own request code, so
+  the service's notification does not share it). `NotificationCheckerPlugin` turns it into the `notificationTapped`
+  event when the app is alive (`handleOnNewIntent`), and into a pending flag the page reads with `takePendingTap` when
+  the tap launched the app (the page cannot listen yet). `LiveNotificationProvider` (through `listenForNotificationTap`)
+  then sets `isListRequested` and sends the rider to Home, where `HomeScreen` shows the notifications sheet until it is
+  closed. The ongoing "Checking for invitations" notification only opens the app where it was left.
 - The checker's requests are native, so Android's cleartext rule applies to them (the WebView is lenient, they are
   not). Debug builds carry a network security config
   ([debug/](../../frontend/android/app/src/debug/)) that allows `http` to `10.0.2.2` and `localhost`, so the checker

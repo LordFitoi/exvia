@@ -1,4 +1,5 @@
 import { Capacitor, registerPlugin } from '@capacitor/core'
+import type { PluginListenerHandle } from '@capacitor/core'
 
 import { loadTokens } from '@/services/tokenStorage'
 
@@ -6,6 +7,9 @@ import { loadTokens } from '@/services/tokenStorage'
 interface NotificationCheckerPlugin {
   start: (session: { apiBaseUrl: string; refreshToken: string; userId: number }) => Promise<void>
   stop: () => Promise<void>
+  /** Whether a tap on a notification started the app, and the page has not been told yet. */
+  takePendingTap: () => Promise<{ isPending: boolean }>
+  addListener: (eventName: 'notificationTapped', listener: () => void) => Promise<PluginListenerHandle>
 }
 const NotificationChecker = registerPlugin<NotificationCheckerPlugin>('NotificationChecker')
 
@@ -32,5 +36,22 @@ export const stopNotificationChecker = async (): Promise<void> => {
     await NotificationChecker.stop()
   } catch (error) {
     console.error('Could not stop the native check for notifications', error)
+  }
+}
+
+/**
+ * Calls `onTap` when the rider taps a notification of the native check: at once if the app was open or in the
+ * background, and on start if the tap is what launched the app. Returns the function that stops listening.
+ */
+export const listenForNotificationTap = (onTap: () => void): (() => void) => {
+  if (!Capacitor.isNativePlatform()) return () => {}
+  const listener = NotificationChecker.addListener('notificationTapped', onTap)
+  NotificationChecker.takePendingTap()
+    .then(({ isPending }) => {
+      if (isPending) onTap()
+    })
+    .catch((error: unknown) => console.error('Could not read the notification tap', error))
+  return () => {
+    listener.then((handle) => handle.remove()).catch((error: unknown) => console.error('Could not stop listening', error))
   }
 }

@@ -1,8 +1,10 @@
 package app.exvia.mobile.notifications;
 
 import android.Manifest;
+import android.content.Intent;
 import android.os.Build;
 
+import com.getcapacitor.JSObject;
 import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -20,6 +22,33 @@ import com.getcapacitor.annotation.PermissionCallback;
         permissions = {@Permission(alias = NotificationCheckerPlugin.NOTIFICATIONS_ALIAS, strings = {Manifest.permission.POST_NOTIFICATIONS})})
 public class NotificationCheckerPlugin extends Plugin {
     static final String NOTIFICATIONS_ALIAS = "notifications";
+    private static final String TAPPED_EVENT = "notificationTapped";
+    private static final String IS_PENDING_KEY = "isPending";
+
+    // True when a tap on an event notification started the app and the page has not asked for it yet.
+    private boolean hasPendingTap;
+
+    @Override
+    public void load() {
+        hasPendingTap = isTapIntent(getActivity().getIntent());
+    }
+
+    /** The page asks once it is ready: a cold start from a tap happens before it can listen to the event. */
+    @PluginMethod
+    public void takePendingTap(PluginCall call) {
+        JSObject answer = new JSObject();
+        answer.put(IS_PENDING_KEY, hasPendingTap);
+        hasPendingTap = false;
+        call.resolve(answer);
+    }
+
+    @Override
+    protected void handleOnNewIntent(Intent intent) {
+        super.handleOnNewIntent(intent);
+        if (isTapIntent(intent)) {
+            notifyListeners(TAPPED_EVENT, new JSObject());
+        }
+    }
 
     @PluginMethod
     public void start(PluginCall call) {
@@ -61,6 +90,10 @@ public class NotificationCheckerPlugin extends Plugin {
     @PermissionCallback
     private void handlePermissionAnswer(PluginCall call) {
         beginChecking(call);
+    }
+
+    private static boolean isTapIntent(Intent intent) {
+        return intent != null && intent.getBooleanExtra(LocalNotifier.OPEN_NOTIFICATIONS_EXTRA, false);
     }
 
     private boolean shouldAskForPermission() {
