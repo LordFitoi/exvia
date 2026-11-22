@@ -10,7 +10,7 @@ from rest_framework.generics import (
     RetrieveDestroyAPIView,
     RetrieveUpdateDestroyAPIView,
 )
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import SAFE_METHODS, AllowAny
 from rest_framework.request import Request
 from rest_framework.serializers import BaseSerializer
 
@@ -47,7 +47,13 @@ class RouteListCreateView(OwnRoutesMixin, ListCreateAPIView):
 
 
 class RouteDetailView(OwnRoutesMixin, RetrieveUpdateDestroyAPIView):
-    """Returns, updates or deletes one of the caller's routes; other users' routes are 404."""
+    """Returns a route the caller can read (see `readable_routes`); updates and deletes only the caller's
+    own routes. Any other route is 404."""
+
+    def get_queryset(self) -> QuerySet[Route]:
+        if self.request.method in SAFE_METHODS:
+            return readable_routes(self.request.user)
+        return super().get_queryset()
 
 
 class SharedRouteView(RetrieveAPIView):
@@ -60,10 +66,20 @@ class SharedRouteView(RetrieveAPIView):
     queryset = Route.objects.select_related('author')
 
 
+def _is_rideable(user: User) -> Q:
+    accepted_in_group = Q(**{f'groups__meta_json__participants__{user.pk}__status': ParticipantStatus.ACCEPTED})
+    return Q(author=user) | accepted_in_group
+
+
 def rideable_routes(user: User) -> QuerySet[Route]:
     """The caller's routes, and the routes of the groups the caller has accepted to ride in."""
-    accepted_in_group = Q(**{f'groups__meta_json__participants__{user.pk}__status': ParticipantStatus.ACCEPTED})
-    return Route.objects.filter(Q(author=user) | accepted_in_group).distinct()
+    return Route.objects.filter(_is_rideable(user)).distinct()
+
+
+def readable_routes(user: User) -> QuerySet[Route]:
+    """The routes the caller can ride, and the routes of the rides the caller took part in, so a rider can
+    still see the route of a ride after the group is gone."""
+    return Route.objects.filter(_is_rideable(user) | Q(summaries__participants=user)).distinct()
 
 
 class RideSummaryCreateView(CreateAPIView):
@@ -97,14 +113,16 @@ class DestinationSummaryCreateView(CreateAPIView):
 
 
 class MyRideSummariesMixin:
-    """Limits every query to the rides the authenticated caller took part in."""
+    """Limits every query to the rides the authenticated caller saved. Every rider of a group ride saves
+    their own copy, which lists the riders connected at that moment as participants, so the rides the
+    caller only appears in would show the same ride again."""
 
     def get_queryset(self) -> QuerySet[RouteSummary]:
-        return RouteSummary.objects.filter(participants=self.request.user).select_related('route')
+        return RouteSummary.objects.filter(author=self.request.user).select_related('route')
 
 
 class RideSummaryListView(MyRideSummariesMixin, ListAPIView):
-    """Lists the caller's rides, most recently saved first (no pagination)."""
+    """Lists the rides the caller saved, most recently saved first (no pagination)."""
 
     serializer_class = RideSummaryListSerializer
 
@@ -113,13 +131,9 @@ class RideSummaryListView(MyRideSummariesMixin, ListAPIView):
 
 
 class RideSummaryDetailView(MyRideSummariesMixin, RetrieveDestroyAPIView):
-    """Returns one ride the caller took part in, with its participants, or deletes one the caller wrote
-    (it disappears for every participant). Any other ride is 404."""
+    """Returns one ride the caller saved, with its participants, or deletes it. Any other ride is 404."""
 
     serializer_class = RideSummarySerializer
 
     def get_queryset(self) -> QuerySet[RouteSummary]:
-        queryset = super().get_queryset().prefetch_related('participants')
-        if self.request.method == 'DELETE':
-            return queryset.filter(author=self.request.user)
-        return queryset
+        return super().get_queryset().prefetch_related('participants')

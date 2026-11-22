@@ -179,10 +179,11 @@ class RideHistoryApiTests(TestCase):
         self.assertEqual(response.data[0]['route_name'], 'Loop')
         self.assertNotIn('participants', response.data[0])
 
-    def test_lists_rides_the_caller_only_took_part_in(self) -> None:
-        summary = self._create_summary([self.friend, self.rider])
+    def test_does_not_list_the_copy_of_a_ride_another_rider_saved(self) -> None:
+        own = self._create_summary([self.rider, self.friend])
+        self._create_summary([self.friend, self.rider])
         response = self.client.get(reverse('routes:ride_summary_list'))
-        self.assertEqual([row['id'] for row in response.data], [summary.pk])
+        self.assertEqual([row['id'] for row in response.data], [own.pk])
 
     def test_detail_has_participants_route_and_speeds(self) -> None:
         summary = self._create_summary([self.rider, self.friend])
@@ -207,8 +208,8 @@ class RideHistoryApiTests(TestCase):
         listing = self.client.get(reverse('routes:ride_summary_list'))
         self.assertNotIn('reached_at', listing.data[0])
 
-    def test_detail_of_a_ride_the_caller_did_not_take_is_not_found(self) -> None:
-        summary = self._create_summary([self.stranger])
+    def test_detail_of_a_ride_the_caller_did_not_save_is_not_found(self) -> None:
+        summary = self._create_summary([self.stranger, self.rider])
         response = self.client.get(reverse('routes:ride_summary_detail', args=[summary.pk]))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -218,7 +219,7 @@ class RideHistoryApiTests(TestCase):
         response = self.client.get(reverse('routes:ride_summary_detail', args=[summary.pk]))
         self.assertTrue(response.data['is_finished'])
 
-    def test_author_deletes_a_ride_for_everyone(self) -> None:
+    def test_author_deletes_a_ride(self) -> None:
         summary = self._create_summary([self.rider, self.friend])
         response = self.client.delete(reverse('routes:ride_summary_detail', args=[summary.pk]))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -229,7 +230,7 @@ class RideHistoryApiTests(TestCase):
         summary = self._create_summary([self.friend, self.rider])
         url = reverse('routes:ride_summary_detail', args=[summary.pk])
         self.assertEqual(self.client.delete(url).status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(self.client.get(url).status_code, status.HTTP_200_OK)
+        self.assertTrue(RouteSummary.objects.filter(pk=summary.pk).exists())
 
     def test_cannot_delete_a_ride_of_a_stranger(self) -> None:
         summary = self._create_summary([self.stranger])
@@ -242,3 +243,36 @@ class RideHistoryApiTests(TestCase):
         self.client.force_authenticate(None)
         response = self.client.delete(reverse('routes:ride_summary_detail', args=[summary.pk]))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class RideRouteReadTests(TestCase):
+    """A rider who took part in a ride of someone else's route can read that route, to preview it."""
+
+    def setUp(self) -> None:
+        self.leader = User.objects.create_user('leader', password='pw')
+        self.guest = User.objects.create_user('guest', password='pw')
+        self.stranger = User.objects.create_user('stranger', password='pw')
+        self.route = Route.objects.create(name='Loop', points=EQUATOR_STRAIGHT_LINE, author=self.leader)
+        self.url = reverse('routes:route_detail', args=[self.route.pk])
+        self.client = APIClient()
+        self.client.force_authenticate(self.guest)
+        start_at = datetime(2026, 10, 15, 9, 0, tzinfo=timezone.utc)
+        self.summary = RouteSummary.objects.create(
+            route=self.route, author=self.guest, start_at=start_at, end_at=start_at + timedelta(minutes=30),
+        )
+
+    def test_the_author_of_a_ride_reads_the_route_of_someone_else(self) -> None:
+        self.summary.participants.set([self.guest, self.leader])
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['points'], EQUATOR_STRAIGHT_LINE)
+
+    def test_a_rider_with_no_ride_on_the_route_cannot_read_it(self) -> None:
+        self.client.force_authenticate(self.stranger)
+        self.assertEqual(self.client.get(self.url).status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_reading_does_not_open_the_route_to_changes(self) -> None:
+        self.summary.participants.set([self.guest])
+        self.assertEqual(self.client.patch(self.url, {'name': 'Hijack'}, format='json').status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.delete(self.url).status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(Route.objects.filter(pk=self.route.pk).exists())

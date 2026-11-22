@@ -145,7 +145,8 @@ accepted one; two riders accepting crosswise at the same moment could still dead
 **Saving the ride**: `POST /api/routes/<uuid>/summaries/` (see [routes.md](routes.md#route-summaries))
 now also accepts the route of a group the caller has **accepted** (looked up in `meta_json`);
 an invited-only or rejected rider still gets `404`. The summary is the caller's, and lists as participants the riders
-connected to the group when it is saved (`group`, see [routes.md](routes.md#ride-participants)).
+connected to the group when it is saved (`group`, see [routes.md](routes.md#ride-participants)). Each rider's
+history lists only the copy they saved ([ride-history.md](ride-history.md#key-decisions)), so a group ride is one record per rider.
 
 Also new, in the users app: `GET /api/auth/users/lookup/?username=<name>` returns
 `{"id", "username", "avatar"}` for an active user with exactly that username, `404` otherwise.

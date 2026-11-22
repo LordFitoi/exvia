@@ -128,13 +128,15 @@ is none, and the caller is the `author` and the only participant. An empty `dest
 
 ### Reading rides
 
-Both endpoints need a JWT and only see the rides the caller took part in
-(`participants`, which always includes the author); any other ride is `404`.
+Both endpoints need a JWT and only see the rides the caller **saved** (`author`); any other ride is `404`. A
+ride of a group is saved once by each rider, and every copy lists the riders connected at that moment as
+`participants`, so reading by `participants` showed the same ride once per rider. Each rider's history has just
+their own copy, with their own times, speeds and checkpoint times.
 
 | Method and path | Result |
 |-----------------|--------|
 | `GET /api/routes/summaries/` | `200` with a plain JSON array of the caller's rides, by `created_at`, newest first (no pagination) |
-| `GET /api/routes/summaries/<id>/` | `200` with one ride, with its participants |
+| `GET /api/routes/summaries/<id>/` | `200` with one ride, with its participants (the `participants` are only shown, they do not give access) |
 | `DELETE /api/routes/summaries/<id>/` | `204`; only the ride's **author** can, anyone else gets `404` |
 
 A ride (the detail, and the answer to the `POST`):
@@ -167,9 +169,7 @@ route. The list rows (`RideSummaryListSerializer`) carry only `id`, `route_type`
 `created_at`, so the row can be drawn without the participants or the top speed.
 
 Deleting a ride removes the `RouteSummary` row (and its participant links) for
-everyone who rode it, and leaves the route alone. It is limited to the author
-because a delete is shared: a participant who did not write the ride can read it
-but not erase it for the others.
+the ride's author, and leaves the route alone. Other riders' copies of the same ride are theirs and stay.
 
 
 ## Route groups
@@ -230,14 +230,14 @@ derived fields are added to `update_fields` so they are not left stale.
 ## API
 
 All endpoints are under `/api/routes/`, need a JWT (except the [shared route](#shared-route)) (`Authorization: Bearer
-<access>`, see [authentication.md](authentication.md)) and only ever see the
-caller's own routes.
+<access>`, see [authentication.md](authentication.md)) and only ever change the
+caller's own routes. Reading one route is wider, see the table.
 
 | Method and path | Result |
 |-----------------|--------|
 | `POST /api/routes/` | `201` with the created route; `author` is the caller |
 | `GET /api/routes/` | `200` with a plain JSON array of the caller's routes, newest first (no pagination), **without `points`** |
-| `GET /api/routes/<uuid>/` | `200` with one route, with its `points` and `waypoints` |
+| `GET /api/routes/<uuid>/` | `200` with one route, with its `points` and `waypoints`: the caller's own, the route of a group the caller has accepted, and the route of any ride the caller took part in (`participants`), so a ride of someone else's route can be previewed in the history; any other route is `404` |
 | `PUT /api/routes/<uuid>/` | `200` with the updated route; `name` and `points` required |
 | `PATCH /api/routes/<uuid>/` | `200` with the updated route; any of the writable fields |
 | `DELETE /api/routes/<uuid>/` | `204` |
@@ -289,10 +289,10 @@ knows its UUID, with the author's username instead of their id. It is read-only 
   `0007_route_uuid_primary_key` converted the existing integer ids in place and
   kept each ride attached to its route. It cannot be reversed: the integer ids
   are gone once it has run. `RouteSummary` keeps its integer id.
-- **Other users' routes are `404`, not `403`**: retrieve and delete filter
-  the queryset by author, so a route id does not reveal whether it exists.
-  Opening routes to other riders (for example through a clan) means changing
-  `OwnRoutesMixin.get_queryset`. The only open door is the separate shared
+- **Other users' routes are `404`, not `403`**: update and delete filter
+  the queryset by author, and retrieve by `readable_routes` (own routes, routes
+  of accepted groups and routes of rides the caller took part in), so a route id
+  does not reveal whether it exists. The other open door is the separate shared
   route endpoint, which needs the UUID.
 - **Unpaginated list**: DRF has no default pagination configured here, so
   the list returns every route of the user. Add pagination when a user can

@@ -94,12 +94,13 @@ The app has no button to delete a ride: the history only grows. The API still ha
   highest GPS reading (`services/rideSpeed.ts`) and sends it with the ride; see
   [ride.md](ride.md#ride-mode). The lowest and the moving (mean) speeds are not kept:
   the lowest was always about zero at a stop, and the mean is close to "Avg km/h".
-- **Whose rides**: the ones the caller took part in (`participants`), which
-  includes every ride they saved, since the author is always a participant.
-- **The preview uses the route endpoint**, which only returns routes the
-  caller wrote. Riders can only ride their own routes today, so it always
-  works; opening rides on someone else's route would need the summary to carry
-  the path or the route endpoint to open up.
+- **Whose rides**: the ones the caller saved (`author`). In a group ride every rider saves their own copy and
+  each copy lists the riders connected at that moment, so listing by `participants` showed the same ride once per
+  rider (and the copies of the others, with their times and speeds, were not the caller's). The participants
+  are shown on the summary, they do not put the ride in their history.
+- **The preview uses the route endpoint**, which also returns the route of any ride the caller took part in
+  ([routes.md](routes.md#api)), so an invited rider sees the leader's route in the preview, the checkpoint times
+  and the leg speeds; it stays readable after the group is gone. Changing a route stays with its author.
 - **No pagination**: the list is every ride of the user, like the route list.
   Add it when a user can have hundreds.
 - **The list reloads when the screen opens**, not when a ride is saved, so a
