@@ -70,7 +70,7 @@ final class LocalNotifier {
     private static NotificationCompat.Builder newBuilder(Context context, String channelId, String title, String text) {
         return new NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.drawable.ic_stat_exvia)
-                .setColor(ContextCompat.getColor(context, R.color.ic_launcher_background))
+                .setColor(ContextCompat.getColor(context, R.color.brand_green))
                 .setContentTitle(title)
                 .setContentText(text)
                 .setContentIntent(buildOpenIntent(context, OPEN_APP_REQUEST_CODE, false));

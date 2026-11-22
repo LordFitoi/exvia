@@ -1,4 +1,5 @@
 import { ApiError } from '@/services/apiClient'
+import { preloadAvatars } from '@/services/avatarPreload'
 import { requestJsonAuthorized } from '@/services/authorizedRequest'
 import { isRiderProfile } from '@/services/routeGroupGuards'
 import type { RiderProfile } from '@/types/routeGroup'
@@ -12,5 +13,6 @@ export const searchRiders = async (prefix: string): Promise<RiderProfile[]> => {
   if (!Array.isArray(riders) || !riders.every(isRiderProfile)) {
     throw new ApiError(502, UNEXPECTED_RESPONSE_MESSAGE)
   }
+  preloadAvatars(riders.map((rider) => rider.avatar))
   return riders
 }

@@ -1,4 +1,5 @@
 import { ApiError } from '@/services/apiClient'
+import { preloadAvatars } from '@/services/avatarPreload'
 import { requestJsonAuthorized } from '@/services/authorizedRequest'
 import { isParticipantStatus, isRiderProfile } from '@/services/routeGroupGuards'
 import { isRecord } from '@/services/typeGuards'
@@ -43,5 +44,7 @@ const isRideNotification = (value: unknown): value is RideNotification =>
 export const fetchRideNotifications = async (): Promise<RideNotification[]> => {
   const notifications = await requestJsonAuthorized(NOTIFICATIONS_PATH)
   if (!Array.isArray(notifications)) throw new ApiError(502, UNEXPECTED_RESPONSE_MESSAGE)
-  return notifications.filter(isRideNotification)
+  const rideNotifications = notifications.filter(isRideNotification)
+  preloadAvatars(rideNotifications.map(({ author }) => author.avatar))
+  return rideNotifications
 }

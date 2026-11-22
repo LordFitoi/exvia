@@ -27,7 +27,7 @@ holds that fallback page and nothing else.
 
 ### Offline page
 
-"Can't reach Exvia": the brand arrow on a pulsing radar badge with a crossed-out
+"Can't reach Exvia": the brand mark on a pulsing radar badge with a crossed-out
 signal icon, a short message, a **Try again** button and three tips (airplane
 mode, signal, reopen). It follows the style guide look (Minimals green, Barlow
 heading, Public Sans body, light and dark through `prefers-color-scheme`, reduced
@@ -230,7 +230,7 @@ asks the server itself, in two ways. With the app in front the live websocket to
   after signing in (or as another user) only records the newest id, so the rider is not flooded with old events.
   While the app is in front nothing is posted (the toast covers it) but the id still moves on.
 - The status bar icon is [ic_stat_exvia.xml](../../frontend/android/app/src/main/res/drawable/ic_stat_exvia.xml) (the
-  brand arrow, white; tinted with `ic_launcher_background`, the brand green).
+  brand mark in one color, with the route gap cut into the path; tinted with `brand_green`).
 - **Tapping an event notification opens the list.** Its intent carries `OPEN_NOTIFICATIONS_EXTRA` (own request code, so
   the service's notification does not share it). `NotificationCheckerPlugin` turns it into the `notificationTapped`
   event when the app is alive (`handleOnNewIntent`), and into a pending flag the page reads with `takePendingTap` when
@@ -260,17 +260,21 @@ Trade-offs:
 - iOS (needs macOS).
 - Native plugins: status bar. Location outside group rides (the map
   screen) still uses the web geolocation API.
-- Splash screen: the project still has Capacitor's default.
 - Release signing and Play Store build.
+
+## Splash screen
+
+`drawable*/splash.png` (the launch theme background on Android 11 and older):
+the app icon, 30% of the short side, centered on the app background `#141a21`.
+Android 12+ draws its own splash from the launcher icon.
 
 ## App icon
 
-Same brand arrow as the PWA icons ([frontend-pwa.md](frontend-pwa.md#icons)).
-Adaptive icon (Android 8+): background is the color `ic_launcher_background`
-(`#00A76F`), foreground is `mipmap-*/ic_launcher_foreground.png`, the white
-arrow on transparent, made from `icon-maskable-512.png` so it stays inside the
-safe zone for any launcher mask. Older devices use `ic_launcher.png` (rounded
-square) and `ic_launcher_round.png`, resized from `icon-512.png`. The PNGs were
-generated once with `sharp`; there is no generator in the repo, so redo them
-from the PWA icons if the logo changes (foreground 108dp, legacy 48dp, per
-density).
+Same brand mark as the PWA icons ([frontend-pwa.md](frontend-pwa.md#icons)).
+Adaptive icon (Android 8+): the background is the gradient vector
+`drawable/ic_launcher_background.xml`, the foreground is
+`mipmap-*/ic_launcher_foreground.png`, the mark at 74% on transparent so it stays
+inside the safe zone for any launcher mask. Older devices use `ic_launcher.png`
+(rounded square) and `ic_launcher_round.png`. All rendered from
+`frontend/brand/icon.svg` with headless Chrome (foreground 108dp, legacy 48dp,
+per density).

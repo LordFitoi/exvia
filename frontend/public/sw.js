@@ -1,11 +1,12 @@
 // Service worker: makes the app installable and keeps the shell usable offline.
-// It never touches the API: only same-origin GET navigations and static assets.
+// It never touches the API: only same-origin GET navigations, static assets and profile pictures.
 
-const CACHE_VERSION = "exvia-v4";
+const CACHE_VERSION = "exvia-v5";
 const OFFLINE_URL = "/offline/";
 const NAVIGATION_TIMEOUT_MS = 5000;
 const PRECACHE_URLS = [OFFLINE_URL, "/icons/icon-192.png"];
-const STATIC_PREFIXES = ["/_next/static/", "/icons/"];
+// Profile pictures: an upload never reuses a file name, so a cached picture never goes stale.
+const STATIC_PREFIXES = ["/_next/static/", "/icons/", "/media/avatars/"];
 const BYPASS_PREFIXES = ["/api/", "/admin/", "/static/"];
 
 self.addEventListener("install", (event) => {

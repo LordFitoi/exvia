@@ -115,7 +115,7 @@ body {
   animation: float 4s ease-in-out infinite;
 }
 
-.badge-arrow { inline-size: 70%; block-size: 70%; fill: var(--color-on-primary); }
+.badge-mark { inline-size: 76%; block-size: 76%; }
 
 .signal {
   position: absolute;

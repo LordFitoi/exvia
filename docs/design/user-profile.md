@@ -79,6 +79,8 @@ sees and changes their own profile.
   `UserBriefSerializer` does, so it resolves through the frontend's
   `/media/` proxy instead of the backend host.
 - There is no endpoint to remove the photo, only to replace it.
+- Replacing the photo stores the new file under a fresh name (Django never reuses an existing file name in
+  `avatars/`), so a given avatar URL always serves the same image. That is what makes the caching below safe.
 - **Privacy of the shared profile.** Blood type, emergency contacts (their phone
   numbers belong to other people) and license plates are only ever in the
   owner's `profile/`; the shared serializer does not list them, and a test
@@ -182,3 +184,13 @@ crashed on every admin page that uses an inclusion tag (user list, change
 and add forms) when run on Python 3.14: `Context.__copy__` raised
 `AttributeError`. 5.2 supports Python 3.10 to 3.14, so it works with both
 the local 3.14 venv and the 3.11 in [runtime.txt](../../runtime.txt).
+
+## Avatar loading and caching
+
+Pictures are ready before a screen asks for them, in three layers:
+
+| Layer | Where | What it does |
+|-------|-------|--------------|
+| Preload | [avatarPreload.ts](../../frontend/src/services/avatarPreload.ts) | `preloadAvatars(urls)` starts loading each URL with an `Image` as soon as an API response carrying riders is validated: the caller's and shared profiles, route groups (author and participants), rider lookup and search, and ride notifications. The images are held in memory (at most 100, oldest dropped; failed ones forgotten so they can be retried), so rows, the profile header and map bubbles draw them at once. Null avatars and URLs already loaded are skipped |
+| HTTP cache | [config/urls.py](../../config/urls.py) | The media route for `avatars/*` sends `Cache-Control: public, max-age=31536000, immutable` (test: [test_avatar_cache.py](../../apps/users/test_avatar_cache.py)). It is set in Django because the frontend's `/media` rewrite proxies the response untouched, so `headers` in `next.config.ts` would not apply |
+| Service worker | [sw.js](../../frontend/public/sw.js) | `/media/avatars/*` is cache first, so pictures survive restarts and show offline once seen |

@@ -1,4 +1,5 @@
 import { ApiError } from '@/services/apiClient'
+import { preloadAvatars } from '@/services/avatarPreload'
 import { requestJsonAuthorized } from '@/services/authorizedRequest'
 import { isEmergencyContact, isProfile, isSharedProfile, isVehicle } from '@/services/profileGuards'
 import type {
@@ -22,6 +23,7 @@ const unexpectedResponse = (): ApiError => new ApiError(502, UNEXPECTED_RESPONSE
 
 const readProfile = (payload: unknown): Profile => {
   if (!isProfile(payload)) throw unexpectedResponse()
+  preloadAvatars([payload.avatar])
   return payload
 }
 
@@ -75,5 +77,6 @@ export const deleteVehicle = async (id: number): Promise<void> => {
 export const fetchSharedProfile = async (username: string): Promise<SharedProfile> => {
   const profile = await requestJsonAuthorized(`${USERS_PATH}${encodeURIComponent(username)}/profile/`)
   if (!isSharedProfile(profile)) throw unexpectedResponse()
+  preloadAvatars([profile.avatar])
   return profile
 }

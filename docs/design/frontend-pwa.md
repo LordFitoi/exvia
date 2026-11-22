@@ -40,16 +40,21 @@ legible.
 
 ## Icons
 
-Brand green (`#00a76f`) full-bleed square with the white navigation arrow
-used on the login screen. `icon-maskable-512.png` keeps the arrow inside the
-80% safe zone so Android can crop it into any shape; the other icons use a
-larger arrow. The PNGs were generated once with Pillow from the arrow path
-of the style guide's `icon-navigation`; there is no generator in the repo, so
-regenerate them by redrawing that polygon on a `#00a76f` square.
+The mark is an **X made of two crossing routes**: a straight white route and a
+winding mint one that passes behind it (a gap separates them) and ends in a
+destination dot. It sits on a diagonal brand gradient (`#14c98a` to `#006b5e`,
+a lighter and a darker step of the brand green). The sources are
+[brand/mark.svg](../../frontend/brand/mark.svg) (mark only, transparent) and
+[brand/icon.svg](../../frontend/brand/icon.svg) (full-bleed icon).
+
+`icon-maskable-512.png` shrinks the mark to 80% so Android can crop it into any
+shape; the other icons use 90%. The PNGs were rendered from the SVG with
+headless Chrome at each exact size (no resampling); there is no generator in
+the repo, so redo them from `brand/icon.svg` if the logo changes.
 
 ## Service worker
 
-Cache name `exvia-v3`; bump it when the worker's caching rules change so the
+Cache name `exvia-v5`; bump it when the worker's caching rules change so the
 old cache is deleted on activate. The worker only handles same-origin `GET`
 requests and never touches `/api/`, `/admin/` or `/static/`.
 
@@ -57,6 +62,7 @@ requests and never touches `/api/`, `/admin/` or `/static/`.
 |---------|----------|
 | Navigation | Network first with a 5s timeout; every OK response is cached. On failure, the cached copy, else a redirect to `/offline/` |
 | `/_next/static/*`, `/icons/*` | Cache first (the build hashes file names) |
+| `/media/avatars/*` | Cache first: an upload never reuses a file name, so a cached picture is never stale ([avatar loading](user-profile.md#avatar-loading-and-caching)) |
 | Everything else (RSC prefetches, API) | Not intercepted |
 
 - `/offline/` and an icon are precached on install.

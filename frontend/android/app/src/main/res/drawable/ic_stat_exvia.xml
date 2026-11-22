@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Status bar icon of push notifications: the brand arrow in one color, which Android tints. -->
+<!-- Status bar icon of push notifications: the brand mark (two crossing routes) in one color, which Android tints. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -11,7 +11,16 @@
         android:scaleX="1.4"
         android:scaleY="1.4">
         <path
+            android:pathData="M140,140L372,372"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineCap="round"
+            android:strokeWidth="60" />
+        <path
+            android:pathData="M140,372C176.9,372 204.6,340.4 229.8,300.5M282.2,211.5C307.4,171.6 335.1,140 372,140"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="60" />
+        <path
             android:fillColor="#FFFFFFFF"
-            android:pathData="M388 118 262 392a8 8 0 0 1-15-1l-17-108a8 8 0 0 0-6-6l-107-31a8 8 0 0 1-1-15L388 118Z" />
+            android:pathData="M110,372a30,30 0 1,0 60,0a30,30 0 1,0 -60,0M342,140a30,30 0 1,0 60,0a30,30 0 1,0 -60,0" />
     </group>
 </vector>

@@ -1,4 +1,5 @@
 import { ApiError } from '@/services/apiClient'
+import { preloadAvatars } from '@/services/avatarPreload'
 import { requestJsonAuthorized } from '@/services/authorizedRequest'
 import { isRiderProfile, parseRouteGroup } from '@/services/routeGroupGuards'
 import type { NewRouteGroup, RiderProfile, RouteGroup } from '@/types/routeGroup'
@@ -12,6 +13,7 @@ const unexpectedResponse = (): ApiError => new ApiError(502, UNEXPECTED_RESPONSE
 const expectGroup = (payload: unknown): RouteGroup => {
   const group = parseRouteGroup(payload)
   if (!group) throw unexpectedResponse()
+  preloadAvatars([group.author, ...group.participants].map((rider) => rider.avatar))
   return group
 }
 
@@ -82,5 +84,6 @@ export const promoteRider = async (groupId: string, userId: number): Promise<Rou
 export const lookupRider = async (username: string): Promise<RiderProfile> => {
   const rider = await requestJsonAuthorized(`${LOOKUP_PATH}?username=${encodeURIComponent(username)}`)
   if (!isRiderProfile(rider)) throw unexpectedResponse()
+  preloadAvatars([rider.avatar])
   return rider
 }

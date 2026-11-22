@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <mask id="route-gap" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+    <rect width="512" height="512" fill="#fff"/>
+    <path d="M140 140 372 372" stroke="#000" stroke-width="96"/>
+  </mask>
+  <path d="M140 372C240 372 272 140 372 140" stroke="#c8fad6" stroke-width="60" stroke-linecap="round" mask="url(#route-gap)"/>
+  <path d="M140 140 372 372" stroke="#fff" stroke-width="60" stroke-linecap="round"/>
+  <circle cx="372" cy="140" r="20" fill="#006b5e"/>
+</svg>
