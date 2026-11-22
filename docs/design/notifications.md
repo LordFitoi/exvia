@@ -3,8 +3,9 @@
 Django app for notifications sent to users. A model, admin and a read endpoint; the
 events created so far are the route invitation of [route-groups.md](route-groups.md) and the start of a clan ride ([scheduled-events.md](scheduled-events.md)).
 The list is fetched by clients; on top of it, every event is also heard at once by the destinations who have the app
-open, as a toast (see [Live channel](#live-channel)), and reaches the phones of the native app as a push (see
-[Push](#push-native-app)). The Home bell and sheet that
+open, as a toast (see [Live channel](#live-channel)), and reaches the phones of the native app with the app closed
+through a check the app runs itself (see
+[Background check](#background-check-native-app)). The Home bell and sheet that
 show the list are in [frontend-screens.md](frontend-screens.md).
 
 ## Layout
@@ -16,15 +17,13 @@ in `config/urls.py`.
 
 | File | Responsibility |
 |------|----------------|
-| [models.py](../../apps/notifications/models.py) | `EventType` choices, the `NotificationEvent`, `InvitationAnswer` and `DeviceToken` models |
+| [models.py](../../apps/notifications/models.py) | `EventType` choices, the `NotificationEvent` and `InvitationAnswer` models |
 | [admin.py](../../apps/notifications/admin.py) | Admin of the models |
 | [services.py](../../apps/notifications/services.py) | `notify_route_invitation` creates events from other apps; `record_invitation_answer` closes one with the answer |
 | [serializers.py](../../apps/notifications/serializers.py), [views.py](../../apps/notifications/views.py), [urls.py](../../apps/notifications/urls.py) | `GET /api/notifications/` |
 | [consumers.py](../../apps/notifications/consumers.py), [routing.py](../../apps/notifications/routing.py) | `NotificationConsumer` at `/ws/notifications/` |
 | [live.py](../../apps/notifications/live.py) | `build_notification` (the title and text of an event) and `broadcast_event`, which sends it to the open apps of its destinations |
-| [push.py](../../apps/notifications/push.py) | `push_event`: sends the same title and text to the destinations' phones through Firebase Cloud Messaging |
-| [device_views.py](../../apps/notifications/device_views.py) | `POST`/`DELETE /api/notifications/devices/`: register and forget a phone's token |
-| [signals.py](../../apps/notifications/signals.py) | Starts the live broadcast and the push when users are added to an event's `destinations` |
+| [signals.py](../../apps/notifications/signals.py) | Starts the live broadcast when users are added to an event's `destinations` |
 
 ## Data model
 
@@ -43,8 +42,6 @@ ordered newest first.
 `rejected` or `expired`, unique per `event` + `user`) is what one destination answered to one event, or
 `expired` when the rider accepted another invitation first. It is written once and never changes.
 
-`DeviceToken` (`user` FK `related_name='device_tokens'`, `token` unique, up to 512 characters) is the Firebase token of one
-app install. A token belongs to one user at a time: registering it again as someone else moves it.
 
 ## API
 
@@ -58,12 +55,17 @@ first, in one query, unpaginated:
   "author": {"id": 3, "username": "owner", "avatar": null},
   "route_group": "5b8f...",
   "route_name": "Sunday loop",
+  "title": "Ride invitation",
+  "body": "owner invited you to ride Sunday loop.",
   "status": "invited",
   "created_at": "2026-10-18T09:00:00Z"
 }]
 ```
 
-`route_name` is `null` in free mode. `status` is the caller's answer **to that event** and `null` for events
+`title` and `body` are the text of the system notification and of the live toast (`build_notification` in
+[live.py](../../apps/notifications/live.py)), computed from the event with the relations the query already loads.
+`?after=<id>` keeps only the events with a larger id (a value that is not a number is a `400`), which is how the native
+app asks for what it has not shown yet. `route_name` is `null` in free mode. `status` is the caller's answer **to that event** and `null` for events
 that are not about a group. An `event_started` event also carries `scheduled_event` (id), `event_title` and
 `clan_name` (all `null` for other events), and its `status` is `open` (its group is `live` and the caller is not in
 it, so they can join), `joined` or `ended` (the group saw no activity for `RESUME_WINDOW`); it is sent to every
@@ -104,27 +106,20 @@ notification shows as a **toast** at once instead of waiting for the next time t
   `useLiveNotifications`. `useRideNotifications` reloads when a new one arrives, so Home's bell badge and
   the sheet are current without a refresh.
 
-## Push (native app)
+## Background check (native app)
 
-The live channel only reaches an open app. In the Android app ([frontend-native.md](frontend-native.md#push-notifications))
-the same event also arrives as a system notification when the app is closed or in the background.
+The live channel only reaches an open app. In the Android app ([frontend-native.md](frontend-native.md#notifications-when-the-app-is-not-in-front))
+the same events also arrive as system notifications with the app in the background or closed, with no push service:
+the app polls the list endpoint itself.
 
-- **Registering.** The app asks the phone's permission, gets its Firebase token and sends it with
-  `POST /api/notifications/devices/` (`{"token": "..."}`, `204`). It is repeated on every start, so a token Firebase
-  rotated is picked up. On sign out the app sends `DELETE` with the same body (only the caller's own token is removed)
-  and Firebase drops the token, so the next person on that phone does not get these pushes.
-- **Sending.** The same `on_commit` signal that does the live broadcast calls `push_event`. It reads the tokens of the
-  destinations in one query and hands them to a single background worker thread, so the request (or the scheduler loop)
-  does not wait for Firebase. The worker calls the FCM HTTP v1 API (`messages:send`) once per token, signed as the
-  service account, with `title` and `body` from `build_notification`, `data.notification_id`, high priority and the
-  Android channel `exvia-notifications`.
-- **Configuration.** `FIREBASE_SERVICE_ACCOUNT_JSON` holds the content of the Firebase project's service account key
-  (Project settings, Service accounts, Generate new private key). It is read by the Server and the Scheduler (both create
-  events). When it is empty `push_event` returns at once, nothing else changes, and a key that is not valid JSON is logged
-  and treated as empty.
-- **Best effort.** A failed or refused send is logged and the token is kept; a `404` (`UNREGISTERED`: the app was
-  uninstalled or its data cleared) deletes the token.
-- **Foreground.** An app in front does not show Firebase's notification itself, so the user sees the toast and not both.
+- **A foreground service** asks `GET /api/notifications/?after=<last id>` every 30 s while the app's process is alive;
+  **a WorkManager job** does the same about every 15 min when it is not (swiped away, killed, after a reboot).
+- The native side keeps its own session, handed over by the page (a refresh token and the user id), and renews the
+  access token on its own. The server needs nothing for this beyond the list endpoint: the first check of a session
+  records the newest id as a baseline, so only events created afterwards are shown.
+- The text shown is the `title` and `body` of each listed event, the same as the live toast.
+- **Best effort.** A failed request is logged and retried at the next check; nothing is lost, since the cursor only
+  moves after the events were handled, and the event is always in the list.
 
 ## Key decisions
 
@@ -153,10 +148,12 @@ the same event also arrives as a system notification when the app is closed or i
 - **The broadcast is a side effect of the destinations, not of each service**: the signal means a new event
   type is heard live with no extra code, only a text. The cost is that adding users to an existing event also
   announces it to them.
-- **Push is native only, through Firebase.** Web Push (a `PushSubscription` model, VAPID keys) was removed from the
-  browser and the PWA; migration `0005_delete_pushsubscription` drops its table. A browser or PWA user with the app
-  closed finds the event in the list the next time they open it. The Android app has `DeviceToken` and FCM instead,
-  because a WebView cannot receive Web Push and Firebase wakes the phone for it.
-- **A thread, not a queue.** Sending is a single in-process worker thread: no Celery or Redis queue to run, and a
-  restart can lose a push that was still waiting, which the list and the live toast make up for.
+- **Polling instead of a push service.** A closed Android app can only be woken through Google's push service
+  (Firebase Cloud Messaging), which needs a Firebase project, a key on the server and a Google config file in the app.
+  This app avoids that: a foreground service polls every 30 s while the app is alive and WorkManager every 15 min
+  otherwise. The cost is latency when the app is closed, an ongoing notification while it is alive, and battery.
+  Web Push and Firebase were both removed (migrations `0005_delete_pushsubscription` and `0009_delete_devicetoken`);
+  a browser or PWA user with the app closed finds the event in the list the next time they open it.
+- **The list carries the text.** `title` and `body` are in the list response so the native checker, which cannot reuse
+  the websocket message, shows exactly what the toast shows without rebuilding the text in Java.
 - **Read state is not modelled**: a read flag is decided with the feature that needs it.

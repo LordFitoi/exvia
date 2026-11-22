@@ -35,17 +35,11 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- How push notifications look: the status bar icon, its accent color and the channel the server sends them to
-             (the same id the app creates in pushNotifications.ts and the server sets in push.py). -->
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_stat_exvia" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/ic_launcher_background" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="exvia-notifications" />
+        <!-- Checks for notifications every 30 seconds while the app's process is alive (the worker covers the rest). -->
+        <service
+            android:name=".notifications.NotificationCheckService"
+            android:exported="false"
+            android:foregroundServiceType="remoteMessaging" />
 
         <!-- The plugin exports its service; only the app itself binds to it. -->
         <service
@@ -59,6 +53,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-feature

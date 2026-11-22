@@ -1,7 +1,8 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from apps.notifications.models import DEVICE_TOKEN_MAX_LENGTH, AnswerStatus, EventType, NotificationEvent
+from apps.notifications.live import build_notification
+from apps.notifications.models import AnswerStatus, EventType, NotificationEvent
 from apps.notifications.services import is_invitation_expired
 from apps.routes import group_meta
 from apps.routes.group_meta import ParticipantStatus
@@ -25,6 +26,8 @@ class NotificationSerializer(serializers.ModelSerializer):
     `is_latest_invitation`."""
 
     author = UserBriefSerializer(read_only=True)
+    title = serializers.SerializerMethodField()
+    body = serializers.SerializerMethodField()
     route_name = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
     event_title = serializers.CharField(source='scheduled_event.title', default=None, read_only=True)
@@ -33,10 +36,16 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationEvent
         fields = (
-            'id', 'event_type', 'author', 'route_group', 'route_name', 'scheduled_event', 'event_title',
-            'clan_name', 'status', 'created_at',
+            'id', 'event_type', 'title', 'body', 'author', 'route_group', 'route_name', 'scheduled_event',
+            'event_title', 'clan_name', 'status', 'created_at',
         )
         read_only_fields = fields
+
+    def get_title(self, event: NotificationEvent) -> str:
+        return str(build_notification(event)['title'])
+
+    def get_body(self, event: NotificationEvent) -> str:
+        return str(build_notification(event)['body'])
 
     def get_route_name(self, event: NotificationEvent) -> str | None:
         group = event.route_group
@@ -64,8 +73,3 @@ class NotificationSerializer(serializers.ModelSerializer):
         status = group_meta.get_status(event.route_group.meta_json, self.context['request'].user.pk)
         return JOINED_STATUS if status == ParticipantStatus.ACCEPTED else OPEN_STATUS
 
-
-class DeviceTokenSerializer(serializers.Serializer):
-    """The body of the device endpoints: the Firebase token of one app install."""
-
-    token = serializers.CharField(max_length=DEVICE_TOKEN_MAX_LENGTH)

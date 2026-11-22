@@ -52,7 +52,7 @@ the site and its stylesheet are unreachable:
 |------|-----|
 | `frontend/capacitor.config.ts` | App id `app.exvia.mobile`, name, `server.url`, background color |
 | `frontend/capacitor-www/` | Offline fallback page |
-| `frontend/android/app/google-services.json` | Firebase config for push; not in the repo until the project is created (see [Push notifications](#push-notifications)) |
+| `frontend/android/app/src/main/java/app/exvia/mobile/notifications/` | The native check for notifications: plugin, foreground service, worker (see [Notifications](#notifications-when-the-app-is-not-in-front)) |
 | `frontend/android/` | Generated native project (Gradle). Committed, except build output and `local.properties` |
 | `frontend/scripts/android-run.sh` | Behind `make android_run`: creates the `exvia_pixel` virtual device (Pixel 8, Android 36, 4 GB RAM) if missing, boots it, installs the APK and launches the app |
 | `Makefile` (`android_*`) | `android_sync`, `android_build`, `android_run`, `android_studio` |
@@ -188,9 +188,8 @@ instead ([backgroundLocationWatch.ts](../../frontend/src/services/backgroundLoca
 
 The plugin's manifest adds `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION`
 and `POST_NOTIFICATIONS`. Our manifest sets its service to `exported="false"`
-(`tools:replace`), since only the app binds to it. `POST_NOTIFICATIONS` is not
-asked at runtime: when the user has not allowed notifications the service still
-runs, only without a visible notification (Android lists it under "Active apps").
+(`tools:replace`), since only the app binds to it. The location plugin does not ask for
+`POST_NOTIFICATIONS`; the notification checker below does, once, when the app starts.
 
 Limits:
 
@@ -200,40 +199,57 @@ Limits:
 - The JavaScript side ships with the web deploy, but the plugin is native: the
   APK must be rebuilt and reinstalled once (`make android_install`) to get it.
 
-## Push notifications
+## Notifications when the app is not in front
 
-A notification event ([notifications.md](notifications.md#push-native-app)) shows as a system notification on the phone
-when the app is closed or in the background, using [@capacitor/push-notifications](https://capacitorjs.com/docs/apis/push-notifications)
-and Firebase Cloud Messaging (FCM). With the app in front, the live websocket toast is shown instead.
+A notification event ([notifications.md](notifications.md#background-check-native-app)) shows as a system
+notification on the phone with the app in the background or closed, without Firebase or any push service: the app
+asks the server itself, in two ways. With the app in front the live websocket toast is shown instead.
 
-- [pushNotifications.ts](../../frontend/src/services/pushNotifications.ts) does nothing outside the native app.
-  `LiveNotificationProvider` calls `startPushNotifications` once a user is signed in: it asks for the notification
-  permission (Android 13+ shows a dialog), creates the `exvia-notifications` channel (high importance, so it pops up)
-  and registers with Firebase. The token goes to the server through
-  [deviceTokensApi.ts](../../frontend/src/services/deviceTokensApi.ts) on every start.
-- `AuthProvider.logout` calls `forgetPushDevice` before clearing the session: the server forgets the token and Firebase
-  deletes it.
+| Situation | What checks | How often |
+|-----------|-------------|-----------|
+| The app's process is alive (open, or in the background) | `NotificationCheckService`, a foreground service of type `remoteMessaging` | every 30 s |
+| The app was swiped away, killed, or the phone restarted | `NotificationCheckWorker`, a WorkManager periodic job that needs a network | about every 15 min (Android's minimum) |
+
+- [notificationChecker.ts](../../frontend/src/services/notificationChecker.ts) does nothing outside the native app.
+  `LiveNotificationProvider` calls `startNotificationChecker(user.id)` once a user is signed in; `AuthProvider.logout`
+  calls `stopNotificationChecker()`.
+- [NotificationCheckerPlugin.java](../../frontend/android/app/src/main/java/app/exvia/mobile/notifications/NotificationCheckerPlugin.java)
+  (`NotificationChecker`, registered in `MainActivity` like `CpuWakeLock`): `start` asks for the notification
+  permission (Android 13+ shows a dialog; the check starts whatever the answer), then starts the service and enqueues the
+  worker; `stop` cancels both and forgets the session. It also tells `AppVisibility` when the app is in front.
+- **Session.** The page's `localStorage` is out of reach while the page is not running, so `start` hands the plugin the
+  API base URL (the page's origin: the API is same-origin through the Next rewrites), the user id and the refresh
+  token. `SessionStore` keeps them in private `SharedPreferences`. `NotificationApi` renews the access token with
+  `POST /api/auth/token/refresh/` when it has none or the server answers `401`, and keeps the rotated pair. Refresh
+  tokens are not blacklisted ([authentication.md](authentication.md)), so the page and the checker each hold their own
+  chain without invalidating the other. A `401` on the refresh itself clears the native session and stops both checks
+  until the user opens the app again.
+- **One check** (`NotificationCheck`) asks `GET /api/notifications/?after=<last handled id>` and posts each new event
+  with its `title` and `body`, oldest first, through `LocalNotifier` (channel `exvia-notifications`, high importance).
+  A lock keeps the service and the worker from running at once, which would post an event twice. The first check
+  after signing in (or as another user) only records the newest id, so the rider is not flooded with old events.
+  While the app is in front nothing is posted (the toast covers it) but the id still moves on.
 - The status bar icon is [ic_stat_exvia.xml](../../frontend/android/app/src/main/res/drawable/ic_stat_exvia.xml) (the
-  brand arrow, white; Android tints it with `ic_launcher_background`, the brand green). Icon, color and default channel are
-  `com.google.firebase.messaging.default_notification_*` entries in `AndroidManifest.xml`, which also declares
-  `POST_NOTIFICATIONS`. The channel id appears in three places that must match: `pushNotifications.ts`, the manifest
-  and `ANDROID_CHANNEL_ID` in [push.py](../../apps/notifications/push.py).
-- Tapping a notification opens the app where it was left (or on Home after a cold start); it does not navigate, so a
-  tap during a ride cannot pull the rider out of it. The invitation is in the Home bell.
+  brand arrow, white; tinted with `ic_launcher_background`, the brand green). Tapping a notification opens the app where
+  it was left (or Home after a cold start); it does not navigate, so a tap during a ride cannot pull the rider out of it.
+  The invitation is in the Home bell.
+- The checker's requests are native, so Android's cleartext rule applies to them (the WebView is lenient, they are
+  not). Debug builds carry a network security config
+  ([debug/](../../frontend/android/app/src/debug/)) that allows `http` to `10.0.2.2` and `localhost`, so the checker
+  works against `CAPACITOR_SERVER_URL=http://10.0.2.2:3000`. Release builds only reach `https` servers.
 
-### Firebase setup (once)
+Trade-offs:
 
-Push needs a Firebase project; none of this is in the repository:
-
-1. In the [Firebase console](https://console.firebase.google.com) create a project and add an Android app with the
-   package name `app.exvia.mobile`.
-2. Download its `google-services.json` into `frontend/android/app/`. `app/build.gradle` applies the Google services
-   plugin only when that file exists, so without it the app builds but cannot register: `register()` fails, the error is
-   logged and nothing else breaks. The file holds no secret (it is shipped inside every APK), so it can be committed.
-3. In Project settings, Service accounts, generate a private key and set the **content of the JSON file** as
-   `FIREBASE_SERVICE_ACCOUNT_JSON` on the Railway `Server` and `Scheduler` services (and in the shell for local runs).
-4. Rebuild and reinstall the APK (`make android_install`): the plugin is native. The Android emulator image must be a
-   **Google APIs** one (it is) for FCM to work.
+- While the service runs, Android shows an ongoing "Checking for invitations" notification (low importance, no sound).
+  During a group ride that is a second ongoing notification next to the location one.
+- A poll every 30 s costs some battery and about 120 small requests an hour per phone. Between the worker's runs an
+  invitation can wait up to ~15 min, and some makers (Xiaomi, Huawei, Samsung's "sleeping apps") delay or skip
+  background work: the rider has to exclude Exvia from battery optimization in the phone's settings.
+- If the phone stays off or offline for over a day the native refresh token expires and checks stop until the app is
+  opened.
+- The `remoteMessaging` foreground service type is meant for messaging apps; Google Play asks for a declaration of it
+  when the app is published.
+- Native changes need the APK rebuilt and reinstalled (`make android_install`).
 
 ## Not done yet
 

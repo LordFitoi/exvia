@@ -116,13 +116,6 @@ CHANNEL_LAYERS = {
 }
 
 
-# Push notifications
-# The service account key (the JSON file's content) of the Firebase project the Android app is registered in.
-# Without it pushes are skipped and the app still hears notifications live while it is open.
-
-FIREBASE_SERVICE_ACCOUNT_JSON = os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON', '')
-
-
 # Django REST Framework
 # https://www.django-rest-framework.org/api-guide/settings/
 

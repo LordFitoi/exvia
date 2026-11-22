@@ -109,6 +109,29 @@ class NotificationListTests(NotificationApiTestCase):
         with self.assertNumQueries(1):
             self._client_for(self.ana).get(LIST_URL)
 
+    def test_an_invitation_carries_the_title_and_text_the_phone_shows(self) -> None:
+        self._invite(self.route)
+        notification = self._client_for(self.ana).get(LIST_URL).data[0]
+        self.assertEqual(notification['title'], 'Ride invitation')
+        self.assertEqual(notification['body'], 'owner invited you to ride Loop.')
+
+    def test_after_keeps_only_the_notifications_created_since_that_one(self) -> None:
+        self._invite(self.route)
+        first_id = self._client_for(self.ana).get(LIST_URL).data[0]['id']
+        self._invite(None)
+        listed = self._client_for(self.ana).get(LIST_URL, {'after': first_id}).data
+        self.assertEqual(len(listed), 1)
+        self.assertGreater(listed[0]['id'], first_id)
+
+    def test_after_the_newest_notification_lists_nothing(self) -> None:
+        self._invite(self.route)
+        newest_id = self._client_for(self.ana).get(LIST_URL).data[0]['id']
+        self.assertEqual(self._client_for(self.ana).get(LIST_URL, {'after': newest_id}).data, [])
+
+    def test_an_after_that_is_not_an_id_is_rejected(self) -> None:
+        response = self._client_for(self.ana).get(LIST_URL, {'after': 'latest'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_requires_authentication(self) -> None:
         self.assertEqual(APIClient().get(LIST_URL).status_code, status.HTTP_401_UNAUTHORIZED)
 

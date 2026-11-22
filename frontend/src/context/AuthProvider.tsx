@@ -6,7 +6,7 @@ import type { ReactNode } from 'react'
 import { AuthContext } from '@/context/AuthContext'
 import type { AuthContextValue, AuthStatus } from '@/context/AuthContext'
 import { createAccount } from '@/services/authApi'
-import { forgetPushDevice } from '@/services/pushNotifications'
+import { stopNotificationChecker } from '@/services/notificationChecker'
 import { endSession, restoreSession, startSession } from '@/services/session'
 import type { LoginCredentials, User } from '@/types/auth'
 
@@ -49,8 +49,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   }, [])
 
   const logout = useCallback(async () => {
-    // Not awaited: it reads the session synchronously, before it is cleared, and a slow network must not delay signing out.
-    forgetPushDevice()
+    // Not awaited: stopping the native check is local, and signing out must not wait for it.
+    stopNotificationChecker()
     endSession()
     setState(ANONYMOUS_STATE)
   }, [])

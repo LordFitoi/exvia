@@ -6,7 +6,6 @@ from apps.routes.models import RouteGroup
 
 ANSWER_STATUS_MAX_LENGTH = 16
 EVENT_TYPE_MAX_LENGTH = 32
-DEVICE_TOKEN_MAX_LENGTH = 512
 
 
 class EventType(models.TextChoices):
@@ -66,16 +65,3 @@ class InvitationAnswer(TimeStampedModel):
     def __str__(self) -> str:
         return f'{self.user} {self.status} event {self.event_id}'
 
-
-class DeviceToken(TimeStampedModel):
-    """The Firebase Cloud Messaging token of one app install, which is how a push reaches that phone. A token
-    belongs to one user at a time: signing in as someone else on the same phone moves it."""
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='device_tokens')
-    token = models.CharField(max_length=DEVICE_TOKEN_MAX_LENGTH, unique=True)
-
-    class Meta:
-        ordering = ('-updated_at',)
-
-    def __str__(self) -> str:
-        return f'{self.user} device {self.token[:8]}'
